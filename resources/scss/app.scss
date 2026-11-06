@@ -1,0 +1,90 @@
+// ---- Design tokens (change colors and fonts HERE only) ----
+$navy: #0d2a52;
+$navy-light: #174c78;
+$teal: #53dacc;
+$page-bg: #f5f8fd;
+$link-blue: #1a62a8;
+
+$primary: $navy;
+$secondary: #5b6b82;
+$success: #1c9d77;
+$warning: #e8a33d;
+$danger: #d6455d;
+$info: $navy-light;
+
+$body-bg: $page-bg;
+$body-color: $navy;
+$link-color: $link-blue;
+$font-family-sans-serif: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 0.9rem;
+$border-radius: 0.65rem;
+$border-radius-lg: 1rem;
+$input-border-color: #d7e0ee;
+$input-padding-y: 0.8rem;
+$input-placeholder-color: #8a97ab;
+
+@import 'bootstrap/scss/bootstrap';
+
+// ---- Brand ----
+.brand { display: flex; align-items: center; gap: 0.7rem; color: #fff; }
+.brand-mark {
+    width: 42px; height: 42px; border-radius: 0.8rem; background: $teal; color: $navy;
+    display: grid; place-items: center; flex: 0 0 42px;
+}
+.brand-text { line-height: 1.1; }
+.brand-text strong { display: block; font-size: 1rem; letter-spacing: 0.04em; }
+.brand-text small { font-size: 0.6rem; letter-spacing: 0.08em; font-weight: 700; }
+
+// ---- App shell ----
+.app-shell { display: flex; min-height: 100vh; }
+.sidebar {
+    width: 260px; flex: 0 0 260px; background: $navy; color: #fff; padding: 1.25rem 1rem;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.sidebar-label {
+    font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9fb4d1;
+    margin: 1.5rem 0.5rem 0.6rem;
+}
+.sidebar .nav-link, .sidebar button.nav-link {
+    display: block; width: 100%; color: #dbe6f5; text-align: center; padding: 0.65rem 1rem;
+    border-radius: 0.6rem; font-size: 0.85rem; background: none; border: 2px solid transparent; margin-bottom: 0.25rem;
+}
+.sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.sidebar .nav-link.active { background: $navy-light; border-color: $teal; color: #fff; font-weight: 600; }
+
+.app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+    background: #fff; border-bottom: 1px solid #e3eaf5; padding: 0.9rem 2rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.topbar-search { max-width: 420px; width: 100%; background: #eef2f8; border: 0; padding: 0.6rem 1rem; }
+.app-content { flex: 1; padding: 1.5rem 2rem; }
+.app-footer { padding: 1rem 2rem; font-size: 0.75rem; color: $secondary; border-top: 1px solid #e3eaf5; margin: 0 2rem; }
+
+.page-title { font-size: 1.35rem; font-weight: 700; margin: 0; }
+.page-subtitle { color: $secondary; margin: 0.15rem 0 0; }
+
+.welcome-banner { background: $navy-light; color: #fff; border-radius: 1rem; padding: 1.5rem 2rem; }
+.welcome-banner .eyebrow { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+.card-sies { background: #fff; border: 1px solid #e3eaf5; border-radius: 1rem; box-shadow: 0 1px 2px rgba(13, 42, 82, 0.04); }
+
+// ---- Login / guest pages ----
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; }
+.auth-hero {
+    background: $navy; color: #fff; border-radius: 1.5rem; padding: 2rem 2.5rem;
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+.auth-hero h2 { font-size: 2.2rem; font-weight: 700; line-height: 1.15; }
+.auth-preview { background: #fff; color: $navy; border-radius: 1rem; padding: 1.25rem; }
+.auth-panel { background: #fff; border-radius: 1.5rem; padding: 2rem; display: flex; flex-direction: column; }
+.auth-form { width: 100%; max-width: 420px; margin: auto; }
+.auth-title { font-size: 1.9rem; font-weight: 700; }
+.btn-navy { background: $navy; color: #fff; padding: 0.8rem; font-weight: 600; }
+.btn-navy:hover { background: darken($navy, 5%); color: #fff; }
+
+@media (max-width: 991px) {
+    .auth-shell { grid-template-columns: 1fr; }
+    .app-shell { flex-direction: column; }
+    .sidebar { position: static; width: 100%; height: auto; flex: none; }
+    .topbar, .app-content { padding-left: 1rem; padding-right: 1rem; }
+}
