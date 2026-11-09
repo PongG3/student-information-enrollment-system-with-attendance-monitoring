@@ -346,6 +346,20 @@ class StageITest extends TestCase
             ->assertDontSee('2026-0002');
     }
 
+    public function test_the_profile_shows_requirement_progress(): void
+    {
+        $photo = \App\Models\Requirement::create(['name' => '2x2 ID Photo']);
+        $psa = \App\Models\Requirement::create(['name' => 'PSA Birth Certificate']);
+        \App\Models\Requirement::create(['name' => 'Good Moral Certificate']);
+        \App\Models\StudentRequirement::create(['student_id' => $this->ana->id, 'requirement_id' => $photo->id, 'status' => 'verified']);
+        \App\Models\StudentRequirement::create(['student_id' => $this->ana->id, 'requirement_id' => $psa->id, 'status' => 'submitted']);
+
+        $this->actingAs($this->anaUser)->get(route('student.profile'))->assertOk()
+            ->assertSee('2 of 3 submitted')->assertSee('1 verified')
+            ->assertSee("Bring the pending documents to the registrar's office", false)
+            ->assertSee('Block section');
+    }
+
     public function test_courses_show_seats_and_my_status(): void
     {
         $this->actingAs($this->anaUser)->get(route('student.courses'))->assertOk()
