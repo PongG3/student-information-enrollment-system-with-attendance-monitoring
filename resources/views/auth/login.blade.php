@@ -2,6 +2,15 @@
     <h1 class="auth-title">Welcome back</h1>
     <p class="text-secondary mb-4">Sign in to access your academic workspace.</p>
 
+    @if ($timedOut ?? false)
+        <div class="alert alert-warning d-flex align-items-start gap-2 py-2 small" role="alert">
+            <x-icon name="alert" :size="16" />
+            <div><strong>Session timed out.</strong> You were signed out after being idle. Please sign in again.</div>
+        </div>
+    @elseif (session('status'))
+        <div class="alert alert-info py-2 small" role="status">{{ session('status') }}</div>
+    @endif
+
     <form method="POST" action="{{ route('login') }}" novalidate>
         @csrf
 

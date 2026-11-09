@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Middleware\SecurityHeaders;
 use App\Models\AuditLog;
 use App\Support\RoleLabel;
+use App\Support\SessionNotice;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -35,11 +36,13 @@ class AppServiceProvider extends ServiceProvider
 
         // Sign-in and sign-out are written to the audit log, with the person's role.
         Event::listen(Login::class, function (Login $event) {
+            SessionNotice::signedIn(); // so an expired session can be told apart later
             $role = $event->user->role ?? null;
             $this->audit('login', $event->user, 'Signed in as ' . (RoleLabel::for($role) ?? 'user'));
         });
 
         Event::listen(Logout::class, function (Logout $event) {
+            SessionNotice::signedOut(); // signing out on purpose is not a timeout
             if ($event->user) {
                 $role = $event->user->role ?? null;
                 $this->audit('logout', $event->user, 'Signed out (' . (RoleLabel::for($role) ?? 'user') . ')');
