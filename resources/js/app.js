@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('canvas[data-chart]')) {
         import('./charts.js');
     }
+    // Signed-in pages: tell the user on the spot when the session has timed out.
+    if (document.querySelector('[data-session-timeout]')) {
+        import('./session-timeout.js');
+    }
     // System Settings: live preview and unsaved-changes bar.
     if (document.querySelector('[data-settings-form]')) {
         import('./settings.js');

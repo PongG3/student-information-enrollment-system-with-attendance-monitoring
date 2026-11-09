@@ -29,6 +29,7 @@
     </div>
     <x-logout-modal />
     <x-confirm-modal />
+    <x-session-timeout-modal />
     <x-toasts />
     @stack('scripts')
 </body>

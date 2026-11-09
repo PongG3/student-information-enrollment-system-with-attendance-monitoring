@@ -102,6 +102,35 @@ class SignInFlowTest extends TestCase
         $this->get('/login')->assertOk()->assertDontSee('Session timed out');
     }
 
+    // ---------- Dialog on the page when the session runs out ----------
+
+    public function test_signed_in_pages_carry_the_timeout_dialog_with_the_admin_setting(): void
+    {
+        \App\Models\Setting::put(\App\Support\SessionTimeout::SETTING, '30');
+        $teacher = $this->makeUser('teacher');
+
+        $this->actingAs($teacher)->get('/account/password')->assertOk()
+            ->assertSee('id="sessionTimeoutModal"', false)
+            ->assertSee('data-lifetime-minutes="30"', false)
+            ->assertSee('Session timed out')
+            ->assertSee('signed out after 30 minutes of inactivity')
+            ->assertSee('Sign in again')
+            ->assertSee('href="' . route('login') . '"', false);
+    }
+
+    public function test_hours_are_written_as_hours(): void
+    {
+        \App\Models\Setting::put(\App\Support\SessionTimeout::SETTING, '120');
+
+        $this->actingAs($this->makeUser('admin'))->get('/account/password')
+            ->assertSee('signed out after 2 hours of inactivity');
+    }
+
+    public function test_the_sign_in_page_has_no_timeout_dialog(): void
+    {
+        $this->get('/login')->assertOk()->assertDontSee('sessionTimeoutModal', false);
+    }
+
     // ---------- Forms sent after the session ended (419) ----------
 
     public function test_an_expired_form_from_a_signed_out_visitor_goes_to_sign_in(): void
