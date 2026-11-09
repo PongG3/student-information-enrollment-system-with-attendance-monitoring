@@ -35,6 +35,31 @@ document.addEventListener('DOMContentLoaded', () => {
         pin.blur();
     });
 
+    // Desktop: keep the menu open across a page change while the pointer is on it.
+    // Clicking inside it marks the next page; that page starts expanded (see the layout's <head>)
+    // and lets go once the pointer is really outside the menu.
+    const panel = document.querySelector('.sidebar-panel');
+    const desktop = window.matchMedia('(min-width: 992px)');
+    panel?.addEventListener('click', (event) => {
+        const link = event.target.closest('a[href]');
+        // Only links that open another page here (not buttons such as Log out, nor new-tab clicks).
+        if (desktop.matches && link && !link.target && !event.ctrlKey && !event.metaKey && !event.shiftKey && link.origin === location.origin) {
+            try { sessionStorage.setItem('sies.sidebar.hold', '1'); } catch (e) { /* private mode: fine */ }
+        }
+    });
+    if (root.classList.contains('sidebar-hold') && panel) {
+        const release = () => root.classList.remove('sidebar-hold');
+        // The first pointer movement tells where the cursor is: outside the menu, close it;
+        // inside, keep it open until the pointer leaves.
+        document.addEventListener('pointermove', (event) => {
+            if (!panel.contains(event.target)) release();
+            else panel.addEventListener('pointerleave', release, { once: true });
+        }, { once: true });
+        // Leaving the window, or using the keyboard elsewhere, also lets go.
+        document.documentElement.addEventListener('pointerleave', release, { once: true });
+        document.addEventListener('focusin', (event) => { if (!panel.contains(event.target)) release(); }, { once: true });
+    }
+
     const closeMenu = () => document.body.classList.remove('sidebar-open');
     document.getElementById('sidebarToggle')?.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
     document.getElementById('sidebarBackdrop')?.addEventListener('click', closeMenu);

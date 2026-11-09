@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $attributes->get('title') ? $attributes->get('title') . ' · ' : '' }}SIES Campus Portal</title>
     <script>try { if (localStorage.getItem('sies.sidebar.pinned') === '1') document.documentElement.classList.add('sidebar-pinned'); } catch (e) {}</script>
+    {{-- A link in the menu was just clicked: open this page with the menu still expanded, before it paints. --}}
+    <script>try { if (sessionStorage.getItem('sies.sidebar.hold') === '1') { sessionStorage.removeItem('sies.sidebar.hold'); document.documentElement.classList.add('sidebar-hold'); } } catch (e) {}</script>
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
 </head>
 <body>

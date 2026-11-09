@@ -84,7 +84,9 @@ $full: 260px;
     background: $warning; color: $navy; font-size: 0.62rem; font-weight: 700; line-height: 16px; text-align: center;
 }
 
-.sidebar-panel:hover, .sidebar-panel:focus-within, .sidebar-pinned .sidebar-panel {
+// .sidebar-hold: the menu was in use when a link in it was clicked; the new page opens with it
+// still expanded until the pointer leaves it (browsers do not re-apply :hover until the mouse moves).
+.sidebar-panel:hover, .sidebar-panel:focus-within, .sidebar-pinned .sidebar-panel, .sidebar-hold .sidebar-panel {
     width: $full; box-shadow: 8px 0 24px rgba(13, 42, 82, 0.25);
     .nav-text, .brand-text { opacity: 1; }
     .sidebar-group { color: #8ea6c6; }
@@ -226,7 +228,7 @@ $full: 260px;
 @media (max-width: 991px) {
     .sidebar, .sidebar-pinned .sidebar { width: 0; flex: 0 0 0; }
     .sidebar-panel, .sidebar-pinned .sidebar-panel { width: $full; transform: translateX(-100%); box-shadow: none; transition: transform 0.2s ease; }
-    .sidebar-panel:hover, .sidebar-panel:focus-within { box-shadow: none; }
+    .sidebar-panel:hover, .sidebar-panel:focus-within, .sidebar-hold .sidebar-panel { box-shadow: none; }
     .sidebar-open .sidebar-panel { transform: none; box-shadow: 8px 0 24px rgba(13, 42, 82, 0.25); }
     .nav-text, .brand-text { opacity: 1; }
     .sidebar-group { color: #8ea6c6; }
