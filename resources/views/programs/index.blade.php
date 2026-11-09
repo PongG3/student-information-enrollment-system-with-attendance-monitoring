@@ -1,4 +1,8 @@
 <x-app-layout title="Programs" subtitle="Degree programs offered by the school.">
+    <x-slot:actions>
+        <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#programModal"><x-icon name="plus" :size="16" /> Add program</button>
+    </x-slot:actions>
+
     <div class="card-sies">
         <div class="card-header-sies">
             <form method="GET" class="filter-bar">
@@ -6,11 +10,16 @@
                 <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
                 @if (request('search')) <a href="{{ route('programs.index') }}" class="small">Clear</a> @endif
             </form>
-            <button type="button" class="btn btn-navy btn-sm-sies px-3" data-bs-toggle="modal" data-bs-target="#programModal">Add program</button>
         </div>
 
         @if ($programs->isEmpty())
-            <x-empty-state message="No programs yet. Add the first one." />
+            @if (request('search'))
+                <x-empty-state message="Nothing matches your search." />
+            @else
+                <x-empty-state icon="layers" message="No programs yet.">
+                    <button type="button" class="btn btn-navy btn-sm-sies" data-bs-toggle="modal" data-bs-target="#programModal"><x-icon name="plus" :size="14" /> Add program</button>
+                </x-empty-state>
+            @endif
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">
@@ -34,7 +43,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $programs->links() }}</div>
+            <x-table-footer :items="$programs" noun="program" />
         @endif
     </div>
 

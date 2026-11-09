@@ -1,7 +1,7 @@
 @php($editing = $user->exists)
 <x-app-layout :title="$editing ? 'Edit User' : 'Add User'"
     :subtitle="$editing ? 'Update this account. Passwords are changed with Reset password.' : 'A temporary password is created for you to hand over once.'">
-    <div class="card-sies p-4" style="max-width: 560px">
+    <div class="card-sies p-4 card-form">
         <form method="POST" action="{{ $editing ? route('users.update', $user) : route('users.store') }}" novalidate>
             @csrf
             @if ($editing) @method('PUT') @endif

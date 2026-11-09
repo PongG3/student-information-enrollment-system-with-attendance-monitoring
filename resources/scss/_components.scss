@@ -163,3 +163,52 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
     .btn.is-busy::before, .skeleton { animation: none; }
 }
 .min-w-0 { min-width: 0; }
+
+// ---- Form sections and the action bar ----
+.section-head, .settings-section-head { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.1rem; }
+.section-icon, .settings-section-icon {
+    flex: none; width: 34px; height: 34px; border-radius: $radius; display: inline-flex; align-items: center; justify-content: center;
+    background: #e8eef8; color: $navy-light;
+}
+.section-title { font-size: 0.95rem; font-weight: 700; color: $navy; margin: 0; }
+.section-help { font-size: 0.8rem; color: $text-muted; margin: 0.1rem 0 0; }
+.form-actionbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-top: 0.25rem;
+    padding: 0.75rem 1rem; background: $surface; border: 1px solid $border; border-radius: $radius-lg; box-shadow: $shadow-sm;
+}
+.form-actionbar.is-sticky { position: sticky; bottom: 0.75rem; z-index: 15; box-shadow: $shadow; }
+@media (max-width: 575px) { .form-actionbar .form-actions { width: 100%; } .form-actionbar .form-actions .btn { flex: 1 1 auto; } }
+
+// ---- Status tabs (All / Pending / Approved ... with counts) ----
+.status-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; list-style: none; padding: 0.25rem; margin: 0; background: $surface; border: 1px solid $border; border-radius: $radius-lg; width: fit-content; max-width: 100%; }
+.status-tabs .nav-link {
+    display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem; border-radius: $radius; font-size: 0.84rem; font-weight: 600;
+    color: $text-muted; text-decoration: none;
+}
+.status-tabs .nav-link:hover { background: $surface-hover; color: $navy; text-decoration: none; }
+.status-tabs .nav-link.active { background: $navy; color: #fff; }
+.status-tab-count { min-width: 1.4rem; padding: 0 0.4rem; border-radius: 999px; background: $border-soft; color: $text; font-size: 0.72rem; text-align: center; }
+.status-tabs .nav-link.active .status-tab-count { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
+// ---- Steps of a multi-step task ----
+.stepper { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; list-style: none; padding: 0; margin: 0; }
+.stepper-step { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: $text-muted; font-weight: 600; }
+.stepper-step + .stepper-step::before { content: ''; width: 2rem; height: 2px; background: $border-strong; margin-right: 0.5rem; }
+.stepper-number { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 0.78rem; background: $border-soft; color: $text-muted; }
+.stepper-step.is-current { color: $navy; }
+.stepper-step.is-current .stepper-number { background: $navy; color: #fff; }
+.stepper-step.is-done .stepper-number { background: $teal; color: $navy; }
+
+// Narrow single-purpose cards and checkbox columns.
+.card-narrow { max-width: 760px; }
+.col-check { width: 40px; }
+
+// ---- Segmented control (Today / This week / This month) ----
+.segmented { display: inline-flex; padding: 0.2rem; gap: 0.15rem; background: $surface-hover; border: 1px solid $border; border-radius: $radius; }
+.segmented-item { padding: 0.3rem 0.75rem; border-radius: $radius-sm; font-weight: 600; font-size: 0.8rem; color: $text-muted; text-decoration: none; }
+.segmented-item:hover { color: $navy; text-decoration: none; background: rgba($surface, 0.7); }
+.segmented-item.is-active { background: $surface; color: $navy; box-shadow: $shadow-sm; }
+
+// Single-card forms (academic year, term, user) share one width.
+.card-form { max-width: 560px; }
+.card-form-sm { max-width: 480px; }

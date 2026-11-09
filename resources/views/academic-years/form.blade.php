@@ -1,6 +1,6 @@
 @php($editing = $year->exists)
 <x-app-layout :title="$editing ? 'Edit Academic Year' : 'Add Academic Year'" subtitle="Dates may not overlap another academic year.">
-    <div class="card-sies p-4" style="max-width: 560px">
+    <div class="card-sies p-4 card-form">
         <form method="POST" action="{{ $editing ? route('academic-years.update', $year) : route('academic-years.store') }}" novalidate>
             @csrf
             @if ($editing) @method('PUT') @endif

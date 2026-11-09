@@ -1,4 +1,8 @@
 <x-app-layout title="Subject Management" subtitle="Subjects that can be offered as classes.">
+    <x-slot:actions>
+        <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#subjectModal"><x-icon name="plus" :size="16" /> Add subject</button>
+    </x-slot:actions>
+
     <div class="card-sies">
         <div class="card-header-sies">
             <form method="GET" class="filter-bar">
@@ -6,11 +10,16 @@
                 <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
                 @if (request('search')) <a href="{{ route('subjects.index') }}" class="small">Clear</a> @endif
             </form>
-            <button type="button" class="btn btn-navy btn-sm-sies px-3" data-bs-toggle="modal" data-bs-target="#subjectModal">Add subject</button>
         </div>
 
         @if ($subjects->isEmpty())
-            <x-empty-state message="No subjects yet. Add the first one." />
+            @if (request('search'))
+                <x-empty-state message="Nothing matches your search." />
+            @else
+                <x-empty-state icon="book" message="No subjects yet.">
+                    <button type="button" class="btn btn-navy btn-sm-sies" data-bs-toggle="modal" data-bs-target="#subjectModal"><x-icon name="plus" :size="14" /> Add subject</button>
+                </x-empty-state>
+            @endif
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">
@@ -36,7 +45,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $subjects->links() }}</div>
+            <x-table-footer :items="$subjects" noun="subject" />
         @endif
     </div>
 

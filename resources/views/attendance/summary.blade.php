@@ -27,7 +27,7 @@
         </div>
 
         @if ($rows->isEmpty())
-            <x-empty-state message="No enrolled students yet." />
+            <x-empty-state icon="students" message="No enrolled students yet." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover align-middle">

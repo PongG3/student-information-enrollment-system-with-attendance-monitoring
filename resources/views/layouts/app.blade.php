@@ -20,7 +20,7 @@
                 @if ($attributes->get('title'))
                     <x-page-header :title="$attributes->get('title')" :subtitle="$attributes->get('subtitle')"
                         :back="$attributes->get('back')" :back-label="$attributes->get('back-label', 'Back')"
-                        :centered="(bool) $attributes->get('centered', false)" />
+                        :centered="(bool) $attributes->get('centered', false)" :actions="$actions ?? null" />
                 @endif
                 {{ $slot }}
             </main>

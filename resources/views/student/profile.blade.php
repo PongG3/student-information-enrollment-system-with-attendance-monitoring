@@ -43,7 +43,7 @@
             <div class="card-sies mb-4">
                 <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Parents / guardians</h2></div>
                 @if ($student->guardians->isEmpty())
-                    <x-empty-state message="No guardian recorded." />
+                    <x-empty-state icon="students" message="No guardian recorded." />
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies mb-0">
@@ -78,7 +78,7 @@
                     @endif
                 </div>
                 @if ($requirements->isEmpty())
-                    <x-empty-state message="No requirements are set up." />
+                    <x-empty-state icon="file" message="No requirements are set up." />
                 @else
                     <div class="px-3 pt-3">
                         <div class="progress" role="progressbar" aria-label="Requirements submitted" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100" style="height: 6px">

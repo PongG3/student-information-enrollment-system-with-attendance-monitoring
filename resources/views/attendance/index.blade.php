@@ -25,11 +25,13 @@
             <input type="date" name="to" value="{{ $to->toDateString() }}" class="form-control" aria-label="To date">
             <button class="btn btn-outline-secondary btn-sm-sies">Show</button>
         </form>
-        <div class="d-flex flex-wrap gap-2 mt-3 small">
-            <span class="text-secondary align-self-center">Quick range:</span>
-            <a class="btn btn-sm-sies {{ $range === 'today' ? 'btn-navy' : 'btn-outline-secondary' }}" href="{{ route('attendance.index', $query + ['range' => 'today']) }}">Today</a>
-            <a class="btn btn-sm-sies {{ $range === 'week' ? 'btn-navy' : 'btn-outline-secondary' }}" href="{{ route('attendance.index', $query + ['range' => 'week']) }}">This week</a>
-            <a class="btn btn-sm-sies {{ $range === 'month' ? 'btn-navy' : 'btn-outline-secondary' }}" href="{{ route('attendance.index', $query + ['range' => 'month']) }}">This month</a>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-3 small">
+            <span class="text-secondary">Quick range:</span>
+            <div class="segmented" role="group" aria-label="Quick range">
+                @foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month'] as $key => $label)
+                    <a @class(['segmented-item', 'is-active' => $range === $key]) href="{{ route('attendance.index', $query + ['range' => $key]) }}" @if ($range === $key) aria-current="true" @endif>{{ $label }}</a>
+                @endforeach
+            </div>
             <span class="text-secondary align-self-center ms-2">Showing {{ $from->format('M j') }}@if (! $from->isSameDay($to)) to {{ $to->format('M j, Y') }}@else, {{ $from->format('Y') }}@endif</span>
         </div>
     </div>
@@ -58,7 +60,7 @@
             <div class="card-sies">
                 <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Attendance sheets</h2></div>
                 @if ($sessions->isEmpty())
-                    <x-empty-state message="No attendance sheets were recorded in this period." />
+                    <x-empty-state icon="check" message="No attendance sheets were recorded in this period." />
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies table-hover align-middle">
@@ -80,7 +82,7 @@
                         </table>
                     </div>
                     <div class="px-3 pt-2 small text-secondary">P present · L late · A absent · E excused</div>
-                    <div class="p-3">{{ $sessions->links() }}</div>
+                    <x-table-footer :items="$sessions" noun="sheet" />
                 @endif
             </div>
         </div>
@@ -92,7 +94,7 @@
                     <span class="text-secondary small">over {{ $threshold }}% this term</span>
                 </div>
                 @if ($flagged->isEmpty())
-                    <x-empty-state message="No student is over the limit." />
+                    <x-empty-state icon="check" message="No student is over the limit." />
                 @else
                     <ul class="list-group list-group-flush">
                         @foreach ($flagged as $row)

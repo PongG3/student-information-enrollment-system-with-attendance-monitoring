@@ -1,4 +1,8 @@
 <x-app-layout title="Enrollment Requests" subtitle="Record requests for students, then approve, enroll, reject or cancel them.">
+    <x-slot:actions>
+        <a href="{{ route('enrollments.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> New request</a>
+    </x-slot:actions>
+
     @if ($errors->has('enrollment'))
         <div class="alert alert-danger">
             <div class="fw-semibold mb-1">That could not be done:</div>
@@ -10,18 +14,18 @@
         </div>
     @endif
 
-    <ul class="nav nav-pills mb-3 gap-1">
+    <ul class="status-tabs mb-3" aria-label="Filter by status">
         <li class="nav-item">
             <a class="nav-link {{ request('status') ? '' : 'active' }}"
                href="{{ route('enrollments.index', array_filter(['term' => $termId, 'search' => request('search')])) }}">
-                All <span class="badge text-bg-light ms-1">{{ array_sum($counts) }}</span>
+                All <span class="status-tab-count">{{ array_sum($counts) }}</span>
             </a>
         </li>
         @foreach (['pending' => 'Pending', 'approved' => 'Approved', 'enrolled' => 'Enrolled', 'rejected' => 'Rejected', 'cancelled' => 'Cancelled'] as $status => $label)
             <li class="nav-item">
                 <a class="nav-link {{ request('status') === $status ? 'active' : '' }}"
                    href="{{ route('enrollments.index', array_filter(['term' => $termId, 'status' => $status, 'search' => request('search')])) }}">
-                    {{ $label }} <span class="badge text-bg-light ms-1">{{ $counts[$status] ?? 0 }}</span>
+                    {{ $label }} <span class="status-tab-count">{{ $counts[$status] ?? 0 }}</span>
                 </a>
             </li>
         @endforeach
@@ -30,7 +34,7 @@
     <div class="card-sies">
         <div class="card-header-sies">
             <form method="GET" class="filter-bar">
-                <select name="term" class="form-select" onchange="this.form.submit()">
+                <select name="term" class="form-select" aria-label="Term" onchange="this.form.submit()">
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" @selected((string) $termId === (string) $term->id)>
                             {{ $term->name }} · {{ $term->academicYear->name }}{{ $term->is_current ? ' (current)' : '' }}
@@ -38,17 +42,18 @@
                     @endforeach
                 </select>
                 @if (request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search student, class or subject">
+                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search student, class or subject" aria-label="Search student, class or subject">
                 <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
                 @if (request()->hasAny(['search', 'status']))
                     <a href="{{ route('enrollments.index', ['term' => $termId]) }}" class="small">Clear</a>
                 @endif
             </form>
-            <a href="{{ route('enrollments.create') }}" class="btn btn-navy btn-sm-sies px-3">New request</a>
         </div>
 
         @if ($enrollments->isEmpty())
-            <x-empty-state message="No enrollment requests match. Use New request to record one." />
+            <x-empty-state icon="clipboard" message="No enrollment requests match.">
+                <a href="{{ route('enrollments.create') }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> New request</a>
+            </x-empty-state>
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover align-middle">
@@ -145,7 +150,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $enrollments->links() }}</div>
+            <x-table-footer :items="$enrollments" noun="request" />
         @endif
     </div>
 

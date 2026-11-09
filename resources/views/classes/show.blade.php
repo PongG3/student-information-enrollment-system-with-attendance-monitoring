@@ -46,7 +46,7 @@
                 </div>
 
                 @if ($roster->isEmpty())
-                    <x-empty-state :message="$isStaff ? 'No student has requested this class yet.' : 'No students are enrolled yet.'" />
+                    <x-empty-state icon="students" :message="$isStaff ? 'No student has requested this class yet.' : 'No students are enrolled yet.'" />
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies table-hover">

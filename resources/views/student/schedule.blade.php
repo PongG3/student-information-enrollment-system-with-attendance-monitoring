@@ -13,13 +13,16 @@
     </div>
 
     @if ($byDay === [])
-        <div class="card-sies"><x-empty-state message="You have no scheduled classes in this term." /></div>
+        <div class="card-sies"><x-empty-state icon="calendar" message="You have no scheduled classes in this term." /></div>
     @else
         <div class="row g-4">
             @foreach ($byDay as $day => $items)
                 <div class="col-lg-6">
-                    <div class="card-sies h-100">
-                        <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">{{ \App\Models\ClassMeeting::DAYS[$day] }}</h2></div>
+                    <div @class(['card-sies', 'h-100', 'is-today' => $day === today()->dayOfWeekIso])>
+                        <div class="card-header-sies">
+                            <h2 class="h6 fw-bold mb-0">{{ \App\Models\ClassMeeting::DAYS[$day] }}</h2>
+                            @if ($day === today()->dayOfWeekIso)<x-status-badge value="current" label="Today" />@endif
+                        </div>
                         <ul class="list-group list-group-flush">
                             @foreach ($items as $item)
                                 <li class="list-group-item">

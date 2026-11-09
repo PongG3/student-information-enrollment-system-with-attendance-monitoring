@@ -1,4 +1,8 @@
 <x-app-layout title="Holidays & Non-class Days" subtitle="These dates are never counted as absences.">
+    <x-slot:actions>
+        <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#holidayModal"><x-icon name="plus" :size="16" /> Add non-class day</button>
+    </x-slot:actions>
+
     <div class="card-sies">
         <div class="card-header-sies">
             <form method="GET" class="filter-bar">
@@ -9,11 +13,10 @@
                 </select>
                 <noscript><button class="btn btn-outline-secondary btn-sm-sies">Show</button></noscript>
             </form>
-            <button type="button" class="btn btn-navy btn-sm-sies px-3" data-bs-toggle="modal" data-bs-target="#holidayModal">Add non-class day</button>
         </div>
 
         @if ($holidays->isEmpty())
-            <x-empty-state :message="'No non-class days recorded for ' . $year . '.'" />
+            <x-empty-state icon="calendar" :message="'No non-class days recorded for ' . $year . '.'" />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">

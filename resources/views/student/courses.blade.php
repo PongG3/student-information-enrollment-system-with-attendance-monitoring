@@ -19,9 +19,9 @@
         </div>
 
         @if (! $term)
-            <x-empty-state message="There is no open term right now." />
+            <x-empty-state icon="calendar" message="There is no open term right now." />
         @elseif ($classes->isEmpty())
-            <x-empty-state message="No classes match." />
+            <x-empty-state icon="book" message="No classes match." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover align-middle mb-0">

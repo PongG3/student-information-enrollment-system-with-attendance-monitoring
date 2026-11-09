@@ -31,7 +31,7 @@
         </div>
 
         @if ($logs->isEmpty())
-            <x-empty-state message="No log entries match your filters." />
+            <x-empty-state icon="file" message="No log entries match your filters." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">
@@ -65,7 +65,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $logs->links() }}</div>
+            <x-table-footer :items="$logs" noun="entry" />
         @endif
     </div>
 </x-app-layout>

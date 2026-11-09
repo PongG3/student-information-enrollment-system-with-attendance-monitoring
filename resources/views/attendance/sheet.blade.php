@@ -53,19 +53,24 @@
                 <div class="small text-secondary mb-2">No sheet yet for this date. Everyone starts as Present. Change the exceptions, then save.</div>
             @endif
 
-            <form method="POST" action="{{ route('attendance.save') }}" novalidate>
+            <form method="POST" action="{{ route('attendance.save') }}" novalidate @if ($editable) data-attendance-sheet @endif>
                 @csrf
                 <input type="hidden" name="class_offering" value="{{ $class->id }}">
                 <input type="hidden" name="date" value="{{ $date->toDateString() }}">
 
                 <div class="card-sies">
                     <div class="card-header-sies">
-                        <h2 class="h6 fw-bold mb-0">{{ $students->count() }} {{ \Illuminate\Support\Str::plural('student', $students->count()) }}</h2>
-                        @if ($editable && $session) <span class="small text-secondary">Editing a saved sheet. Changes are logged.</span> @endif
+                        <div>
+                            <h2 class="h6 fw-bold mb-0">{{ $students->count() }} {{ \Illuminate\Support\Str::plural('student', $students->count()) }}</h2>
+                            @if ($editable && $session) <span class="small text-secondary">Editing a saved sheet. Changes are logged.</span> @endif
+                        </div>
+                        @if ($editable && $students->isNotEmpty())
+                            <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="present">Mark everyone present</button>
+                        @endif
                     </div>
 
                     @if ($students->isEmpty())
-                        <x-empty-state message="No enrolled students for this date." />
+                        <x-empty-state icon="students" message="No enrolled students for this date." />
                     @else
                         <div class="table-responsive">
                             <table class="table table-sies align-middle">
@@ -115,9 +120,16 @@
                             <div class="form-text">This date is outside the teacher edit window. The reason is saved in the audit log.</div>
                         </div>
                     @endif
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="submit" class="btn btn-navy px-4">{{ $session ? 'Save changes' : 'Save attendance' }}</button>
-                        <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary px-4">Back</a>
+                    <div class="form-actionbar is-sticky mt-3">
+                        <div class="attendance-tally" aria-live="polite">
+                            @foreach ($labels as $value => $label)
+                                <span class="tally tally-{{ $colors[$value] }}"><strong data-tally="{{ $value }}">0</strong> {{ $label }}</span>
+                            @endforeach
+                        </div>
+                        <div class="form-actions ms-sm-auto">
+                            <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary px-4">Back</a>
+                            <button type="submit" class="btn btn-navy px-4">{{ $session ? 'Save changes' : 'Save attendance' }}</button>
+                        </div>
                     </div>
                 @endif
             </form>

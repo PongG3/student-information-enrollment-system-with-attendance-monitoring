@@ -1,4 +1,4 @@
-@props(['title', 'subtitle' => null, 'back' => null, 'backLabel' => 'Back', 'centered' => false])
+@props(['title', 'subtitle' => null, 'back' => null, 'backLabel' => 'Back', 'centered' => false, 'actions' => null])
 @php($crumbs = auth()->check() ? \App\Support\Navigation::breadcrumbs(auth()->user(), $title) : [])
 <div @class(['page-header', 'page-header-centered' => $centered])>
     @if ($crumbs || $back)
@@ -23,8 +23,16 @@
             @endif
         </div>
     @endif
-    <h1 class="page-title">{{ $title }}</h1>
-    @if ($subtitle)
-        <p class="page-subtitle">{{ $subtitle }}</p>
-    @endif
+    {{-- Title on the left, the page's main actions (Add, Export...) on the right. --}}
+    <div class="page-heading">
+        <div class="min-w-0">
+            <h1 class="page-title">{{ $title }}</h1>
+            @if ($subtitle)
+                <p class="page-subtitle">{{ $subtitle }}</p>
+            @endif
+        </div>
+        @if ($actions && trim($actions) !== '')
+            <div class="page-actions">{{ $actions }}</div>
+        @endif
+    </div>
 </div>

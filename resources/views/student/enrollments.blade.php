@@ -15,7 +15,7 @@
         </div>
 
         @if ($enrollments->isEmpty())
-            <x-empty-state message="No class requests for this selection." />
+            <x-empty-state icon="clipboard" message="No class requests for this selection." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies align-middle mb-0">

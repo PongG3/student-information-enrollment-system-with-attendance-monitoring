@@ -187,3 +187,9 @@ $full: 260px;
 @media (prefers-reduced-motion: reduce) {
     .sidebar, .sidebar-panel, .nav-text, .brand-text { transition: none; }
 }
+
+// Title and the page's main actions on one line (actions wrap under the title on phones).
+.page-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.75rem 1rem; }
+.page-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.page-header-centered .page-heading { justify-content: center; }
+@media (max-width: 575px) { .page-actions { width: 100%; } .page-actions > .btn { flex: 1 1 auto; } }

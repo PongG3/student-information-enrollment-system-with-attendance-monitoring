@@ -91,6 +91,46 @@ document.addEventListener('DOMContentLoaded', () => {
     // Coming back with the browser's Back button: forms work again.
     window.addEventListener('pageshow', () => document.querySelectorAll('form[data-submitting]').forEach(releaseForm));
 
+    // Attendance sheet: live tally of the choices, "Mark everyone present", and a nudge to the
+    // remarks box when Excused is chosen (remarks are required for Excused).
+    document.querySelectorAll('[data-attendance-sheet]').forEach((sheet) => {
+        const tally = () => {
+            const counts = {};
+            sheet.querySelectorAll('input[type="radio"][name$="[status]"]:checked').forEach((r) => { counts[r.value] = (counts[r.value] || 0) + 1; });
+            sheet.querySelectorAll('[data-tally]').forEach((el) => { el.textContent = counts[el.dataset.tally] || 0; });
+        };
+        sheet.addEventListener('change', (event) => {
+            const radio = event.target;
+            if (radio.type === 'radio' && radio.value === 'excused') {
+                const remarks = radio.closest('tr')?.querySelector('input[name$="[remarks]"]');
+                if (remarks && !remarks.value) remarks.focus();
+            }
+            tally();
+        });
+        sheet.querySelector('[data-mark-all]')?.addEventListener('click', (event) => {
+            const value = event.currentTarget.dataset.markAll;
+            sheet.querySelectorAll(`input[type="radio"][value="${value}"]`).forEach((r) => { r.checked = true; });
+            tally();
+        });
+        tally();
+    });
+
+    // "Copy" buttons (temporary passwords): copy the text and say so on the button.
+    document.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-copy]');
+        if (!button) return;
+        const source = document.querySelector(button.dataset.copy);
+        if (!source) return;
+        try {
+            await navigator.clipboard.writeText(source.textContent.trim());
+            const label = button.textContent;
+            button.textContent = 'Copied';
+            setTimeout(() => { button.textContent = label; }, 2000);
+        } catch (e) {
+            window.getSelection()?.selectAllChildren(source); // no clipboard access: select it for Ctrl+C
+        }
+    });
+
     // One shared confirmation dialog for dangerous or important actions.
     const confirmModal = document.getElementById('confirmModal');
     if (confirmModal) {

@@ -1,4 +1,4 @@
-<x-app-layout :title="$meta['title']" :subtitle="$meta['description']">
+<x-app-layout :title="$meta['title']" :subtitle="$meta['description']" :back="route('reports.index')" back-label="All reports">
     @php
         $query = array_filter($filters, fn ($value) => $value !== null && $value !== '');
         $submitted = ! empty(request()->query());
@@ -43,7 +43,7 @@
             @foreach ($problems as $problem)<div>{{ $problem }}</div>@endforeach
         </div>
     @elseif ($problems)
-        <div class="card-sies p-4 text-center text-secondary">Fill in the filters above and press <strong>Show report</strong>.</div>
+        <div class="card-sies"><x-empty-state icon="chart" message="Fill in the filters above and press Show report." /></div>
     @endif
 
     @if ($report)

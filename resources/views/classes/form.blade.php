@@ -1,12 +1,12 @@
 @php($editing = $class->exists)
 <x-app-layout :title="$editing ? 'Edit Class' : 'Add Class'"
-    subtitle="Teacher and room conflicts are checked when you save.">
+    subtitle="Teacher and room conflicts are checked when you save."
+    :back="$editing ? route('classes.show', $class) : route('classes.index')" :back-label="$editing ? 'Back to class' : 'Back to classes'">
     <form method="POST" action="{{ $editing ? route('classes.update', $class) : route('classes.store') }}" novalidate>
         @csrf
         @if ($editing) @method('PUT') @endif
 
-        <div class="card-sies p-4 mb-4">
-            <h2 class="h6 fw-bold mb-3">Class details</h2>
+        <x-form-section title="Class details" icon="classes" help="Which subject, in which term, taught by whom.">
 
             @if ($hasEnrollments)
                 <div class="alert alert-info small">Students have requested this class, so its term and subject cannot change.</div>
@@ -45,11 +45,9 @@
                         :value="$class->status" required />
                 </div>
             </div>
-        </div>
+        </x-form-section>
 
-        <div class="card-sies p-4 mb-4">
-            <h2 class="h6 fw-bold mb-1">Weekly schedule</h2>
-            <p class="text-secondary small">Fill one row for each meeting. Leave the day empty to skip a row.</p>
+        <x-form-section title="Weekly schedule" icon="calendar" help="Fill one row for each meeting. Leave the day empty to skip a row.">
 
             @foreach ($errors->get('meetings') as $message)
                 <div class="alert alert-danger py-2 small">{{ $message }}</div>
@@ -82,11 +80,8 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </x-form-section>
 
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-navy px-4">{{ $editing ? 'Save changes' : 'Create class' }}</button>
-            <a href="{{ $editing ? route('classes.show', $class) : route('classes.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
-        </div>
+        <x-form-actions sticky :submit="$editing ? 'Save changes' : 'Create class'" :cancel="$editing ? route('classes.show', $class) : route('classes.index')" />
     </form>
 </x-app-layout>

@@ -44,7 +44,7 @@
                     <span class="small text-secondary">{{ today()->format('D, M j') }}</span>
                 </div>
                 @if ($todaysClasses->isEmpty())
-                    <x-empty-state message="No classes today." />
+                    <x-empty-state icon="calendar" message="No classes today." />
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies align-middle mb-0">
@@ -70,7 +70,7 @@
                 <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Attendance alerts</h2></div>
                 @php $alerts = $attendance['rows']->where('flagged', true); @endphp
                 @if ($alerts->isEmpty())
-                    <x-empty-state message="No attendance concerns. Keep it up." />
+                    <x-empty-state icon="check" message="No attendance concerns. Keep it up." />
                 @else
                     <ul class="list-group list-group-flush">
                         @foreach ($alerts as $row)

@@ -17,7 +17,7 @@
     <div class="card-sies">
         <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Meetings</h2></div>
         @if ($records->isEmpty())
-            <x-empty-state message="No attendance has been recorded for you in this class yet." />
+            <x-empty-state icon="check" message="No attendance has been recorded for you in this class yet." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies align-middle mb-0">

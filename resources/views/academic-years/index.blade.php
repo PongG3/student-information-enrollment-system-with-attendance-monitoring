@@ -1,7 +1,7 @@
 <x-app-layout title="Academic Years & Terms" subtitle="Set up the school calendar. Closing a year or term locks its records.">
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{{ route('academic-years.create') }}" class="btn btn-navy btn-sm-sies px-3">Add academic year</a>
-    </div>
+    <x-slot:actions>
+        <a href="{{ route('academic-years.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add academic year</a>
+    </x-slot:actions>
 
     @forelse ($years as $year)
         <div class="card-sies mb-4">
@@ -44,7 +44,7 @@
             </div>
 
             @if ($year->terms->isEmpty())
-                <x-empty-state message="No terms in this year yet." />
+                <x-empty-state icon="calendar" message="No terms in this year yet." />
             @else
                 <div class="table-responsive">
                     <table class="table table-sies table-hover">
@@ -106,6 +106,10 @@
             @endif
         </div>
     @empty
-        <div class="card-sies"><x-empty-state message="No academic years yet. Add the first one." /></div>
+        <div class="card-sies">
+            <x-empty-state icon="calendar" message="No academic years yet.">
+                <a href="{{ route('academic-years.create') }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add academic year</a>
+            </x-empty-state>
+        </div>
     @endforelse
 </x-app-layout>

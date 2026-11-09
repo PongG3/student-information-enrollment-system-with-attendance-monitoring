@@ -1,6 +1,6 @@
 @php($editing = $term->exists)
 <x-app-layout :title="$editing ? 'Edit Term' : 'Add Term'" subtitle="Term dates must fall inside the academic year and may not overlap another term.">
-    <div class="card-sies p-4" style="max-width: 560px">
+    <div class="card-sies p-4 card-form">
         <form method="POST" action="{{ $editing ? route('terms.update', $term) : route('terms.store') }}" novalidate>
             @csrf
             @if ($editing) @method('PUT') @endif

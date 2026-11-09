@@ -1,4 +1,8 @@
 <x-app-layout title="User Management" subtitle="Create staff accounts, assign roles, and control who can sign in.">
+    <x-slot:actions>
+        <a href="{{ route('users.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add user</a>
+    </x-slot:actions>
+
     @if (session('temp_password'))
         <div class="alert alert-warning">
             <div class="fw-semibold mb-1">Temporary password for {{ session('temp_for') }}</div>
@@ -27,11 +31,10 @@
                     <a href="{{ route('users.index') }}" class="small">Clear</a>
                 @endif
             </form>
-            <a href="{{ route('users.create') }}" class="btn btn-navy btn-sm-sies px-3">Add user</a>
         </div>
 
         @if ($users->isEmpty())
-            <x-empty-state message="No users match your filters." />
+            <x-empty-state icon="user" message="No users match your filters." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">
@@ -71,7 +74,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $users->links() }}</div>
+            <x-table-footer :items="$users" noun="user" />
         @endif
     </div>
 </x-app-layout>

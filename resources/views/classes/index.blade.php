@@ -1,4 +1,8 @@
 <x-app-layout title="Class Management" subtitle="Subjects offered each term, with teacher, schedule and seats.">
+    <x-slot:actions>
+        <a href="{{ route('classes.create', ['term' => $termId]) }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add class</a>
+    </x-slot:actions>
+
     <div class="card-sies">
         <div class="card-header-sies">
             <form method="GET" class="filter-bar">
@@ -21,11 +25,12 @@
                     <a href="{{ route('classes.index', ['term' => $termId]) }}" class="small">Clear</a>
                 @endif
             </form>
-            <a href="{{ route('classes.create', ['term' => $termId]) }}" class="btn btn-navy btn-sm-sies px-3">Add class</a>
         </div>
 
         @if ($classes->isEmpty())
-            <x-empty-state message="No classes found for this term." />
+            <x-empty-state icon="classes" message="No classes found for this term.">
+                <a href="{{ route('classes.create', ['term' => $termId]) }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add class</a>
+            </x-empty-state>
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">
@@ -55,7 +60,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $classes->links() }}</div>
+            <x-table-footer :items="$classes" noun="class" />
         @endif
     </div>
 </x-app-layout>

@@ -1,4 +1,5 @@
-<x-app-layout title="New Enrollment Request" subtitle="Choose the student, then the classes they want. Each class is checked before it is saved.">
+<x-app-layout title="New Enrollment Request" subtitle="Choose the student, then the classes they want. Each class is checked before it is saved."
+    :back="route('enrollments.index')" back-label="Back to requests">
     @if (! $term)
         <div class="card-sies p-4">
             <div class="alert alert-warning mb-3">Enrollment is closed. No new requests can be recorded right now.</div>
@@ -6,18 +7,19 @@
             <a href="{{ route('enrollments.index') }}" class="btn btn-outline-secondary btn-sm-sies">Back to requests</a>
         </div>
     @elseif (! $student)
-        <div class="card-sies p-4" style="max-width: 760px">
-            <h2 class="h6 fw-bold">Step 1 · Find the student</h2>
+        @include('enrollments._steps', ['step' => 1])
+        <div class="card-sies p-4 card-narrow">
+            <h2 class="section-title mb-1">Find the student</h2>
             <p class="text-secondary small">Enrolling for {{ $term->name }} · {{ $term->academicYear->name }}. Only active students appear.</p>
 
             <form method="GET" class="filter-bar mb-3">
-                <input type="search" name="q" value="{{ request('q') }}" class="form-control" style="min-width: 280px" placeholder="Student ID or name" autofocus>
+                <input type="search" name="q" value="{{ request('q') }}" class="form-control flex-grow-1" placeholder="Student ID or name" aria-label="Student ID or name" autofocus>
                 <button class="btn btn-navy btn-sm-sies px-3">Search</button>
             </form>
 
             @if (request()->filled('q'))
                 @if ($results->isEmpty())
-                    <x-empty-state message="No active student matches that search." />
+                    <x-empty-state icon="students" message="No active student matches that search." />
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies align-middle">
@@ -50,6 +52,7 @@
             @error($field)<div class="alert alert-danger">{{ $message }}</div>@enderror
         @endforeach
 
+        @include('enrollments._steps', ['step' => 2])
         <div class="card-sies p-4 mb-4">
             <div class="d-flex flex-wrap justify-content-between gap-3">
                 <div>
@@ -72,16 +75,16 @@
 
             <div class="card-sies">
                 <div class="card-header-sies">
-                    <h2 class="h6 fw-bold mb-0">Step 2 · Choose classes</h2>
+                    <h2 class="h6 fw-bold mb-0">Choose classes</h2>
                     <span class="text-secondary small">Open classes this term</span>
                 </div>
 
                 @if ($rows->isEmpty())
-                    <x-empty-state message="No open classes found." />
+                    <x-empty-state icon="classes" message="No open classes found." />
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies align-middle">
-                            <thead><tr><th style="width: 40px"></th><th>Class</th><th>Teacher</th><th>Schedule</th><th>Units</th><th>Seats left</th></tr></thead>
+                            <thead><tr><th class="col-check"><span class="visually-hidden">Choose</span></th><th>Class</th><th>Teacher</th><th>Schedule</th><th>Units</th><th>Seats left</th></tr></thead>
                             <tbody>
                                 @foreach ($rows as $row)
                                     @php

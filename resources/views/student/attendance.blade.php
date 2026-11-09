@@ -32,7 +32,7 @@
         </div>
 
         @if ($attendance['rows']->isEmpty())
-            <x-empty-state message="You are not enrolled in any class this term." />
+            <x-empty-state icon="classes" message="You are not enrolled in any class this term." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover align-middle mb-0">

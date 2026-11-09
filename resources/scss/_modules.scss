@@ -72,11 +72,6 @@
 .temp-password { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.1rem; letter-spacing: 0.05em; }
 
 // ---- System Settings ----
-.settings-section-head { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.1rem; }
-.settings-section-icon {
-    flex: none; width: 34px; height: 34px; border-radius: $radius; display: inline-flex; align-items: center; justify-content: center;
-    background: #e8eef8; color: $navy-light;
-}
 .logo-box {
     height: 112px; border: 1px dashed $border-strong; border-radius: $radius; background: $surface-muted;
     display: flex; align-items: center; justify-content: center; padding: 0.5rem; overflow: hidden;
@@ -115,3 +110,31 @@
 
 // ---- "Session timed out" dialog ----
 .session-timeout-icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: #fdf2dc; color: #8a5a00; }
+
+// ---- Student records ----
+.guardian-row { border: 1px solid $border; border-radius: $radius; padding: 0.9rem 1rem 1rem; margin-bottom: 0.9rem; background: $surface-muted; }
+.guardian-row:last-of-type { margin-bottom: 0; }
+.guardian-legend { float: none; width: auto; font-size: 0.82rem; font-weight: 700; color: $navy; margin-bottom: 0.5rem; padding: 0; }
+.student-photo { width: 110px; height: 110px; object-fit: cover; border-radius: $radius; border: 1px solid $border; }
+.profile-photo { object-fit: cover; padding: 0; }
+
+// ---- Reports ----
+.report-card {
+    display: flex; gap: 0.85rem; align-items: flex-start; height: 100%; padding: 1rem 1.1rem; text-decoration: none;
+    background: $surface; border: 1px solid $border; border-radius: $radius-lg; box-shadow: $shadow-sm;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+.report-card:hover, .report-card:focus-visible { border-color: $teal-strong; box-shadow: $shadow; transform: translateY(-1px); text-decoration: none; }
+.report-card-title { display: block; font-weight: 700; color: $navy; }
+.report-card-text { display: block; font-size: 0.82rem; color: $text-muted; margin-top: 0.15rem; }
+.report-card-go { display: block; font-size: 0.75rem; font-weight: 600; color: $link-blue; margin-top: 0.5rem; }
+
+// ---- Attendance sheet ----
+.attendance-tally { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tally { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; border: 1px solid transparent; }
+.tally strong { font-variant-numeric: tabular-nums; }
+.tally-success { background: #e3f5ee; color: #11704f; }
+.tally-warning { background: #fdf2dc; color: #8a5a00; }
+.tally-danger  { background: #fce6ea; color: #a1223a; }
+.tally-info    { background: #e3eef8; color: $navy-light; }
+.card-sies.is-today { border-color: $teal-strong; box-shadow: 0 0 0 1px $teal-strong, $shadow-sm; }

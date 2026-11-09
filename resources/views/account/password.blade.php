@@ -1,5 +1,5 @@
 <x-app-layout title="Change Password" subtitle="Choose a strong password that only you know." centered>
-    <div class="card-sies p-4 mx-auto" style="max-width: 480px">
+    <div class="card-sies p-4 mx-auto card-form-sm">
         @if ($forced)
             <div class="alert alert-warning text-center">An administrator reset your password. Please choose a new one to continue.</div>
         @endif

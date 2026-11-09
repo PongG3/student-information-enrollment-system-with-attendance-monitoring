@@ -14,7 +14,7 @@
         </div>
 
         @if ($classes->isEmpty())
-            <x-empty-state message="You have no classes in this term." />
+            <x-empty-state icon="classes" message="You have no classes in this term." />
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover">

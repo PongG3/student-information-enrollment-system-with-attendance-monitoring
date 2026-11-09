@@ -6,7 +6,7 @@
             <div class="card-sies mb-4">
                 <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Students</h2><span class="small text-secondary">Archived students are not shown</span></div>
                 @if ($students->isEmpty())
-                    <x-empty-state message="No students match." />
+                    <x-empty-state icon="students" message="No students match." />
                 @else
                     <ul class="list-group list-group-flush">
                         @foreach ($students as $student)
@@ -25,7 +25,7 @@
         <div class="card-sies">
             <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">{{ $showStudents ? 'Classes' : 'My classes' }}</h2></div>
             @if ($classes->isEmpty())
-                <x-empty-state message="No classes match." />
+                <x-empty-state icon="classes" message="No classes match." />
             @else
                 <ul class="list-group list-group-flush">
                     @foreach ($classes as $class)
