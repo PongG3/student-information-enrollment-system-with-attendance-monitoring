@@ -162,6 +162,24 @@ document.addEventListener('DOMContentLoaded', () => {
         sync();
     });
 
+    // New enrollment request: live count of chosen classes and units; the total turns red past the unit limit.
+    const selection = document.querySelector('[data-selection-summary]');
+    if (selection) {
+        const form = selection.closest('form');
+        const fmt = (n) => String(Math.round(n * 10) / 10);
+        const update = () => {
+            const chosen = [...form.querySelectorAll('input[name="class_ids[]"]:checked')];
+            const units = chosen.reduce((sum, box) => sum + parseFloat(box.dataset.units || 0), 0);
+            const total = parseFloat(selection.dataset.held) + units;
+            selection.querySelector('[data-selected-count]').textContent = chosen.length;
+            selection.querySelector('[data-selected-units]').textContent = fmt(units);
+            selection.querySelector('[data-total-units]').textContent = fmt(total);
+            selection.classList.toggle('text-danger', total > parseFloat(selection.dataset.max));
+        };
+        form.addEventListener('change', update);
+        update();
+    }
+
     // "Copy" buttons (temporary passwords): copy the text and say so on the button.
     document.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-copy]');

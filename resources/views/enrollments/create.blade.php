@@ -95,12 +95,12 @@
                                         <td>
                                             @unless ($blocked)
                                                 <input class="form-check-input" type="checkbox" name="class_ids[]" value="{{ $class->id }}"
-                                                    id="class{{ $class->id }}" @checked(is_array(old('class_ids')) && in_array($class->id, old('class_ids')))
+                                                    id="class{{ $class->id }}" data-units="{{ (float) $class->subject->units }}" @checked(is_array(old('class_ids')) && in_array($class->id, old('class_ids')))
                                                     aria-label="Choose {{ $class->class_code }}">
                                             @endunless
                                         </td>
                                         <td>
-                                            <label for="class{{ $class->id }}" class="fw-semibold">{{ $class->class_code }}</label>
+                                            <label for="class{{ $class->id }}" class="fw-semibold">{{ $class->class_code }}</label> <span class="small text-secondary">{{ $class->block_label }}</span>
                                             <div class="small">{{ $class->subject->code }} · {{ $class->subject->title }}</div>
                                             @if ($row['existing'])
                                                 <div class="small mt-1">Already requested: <x-status-badge :value="$row['existing']->status" /></div>
@@ -121,10 +121,16 @@
                 @endif
             </div>
 
-            <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-navy px-4">Record as pending</button>
-                <a href="{{ route('enrollments.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
-            </div>
+            {{-- Always in view, however long the class list: what is chosen so far, and the action. --}}
+            <x-form-actions sticky class="mt-3" submit="Record as pending" :cancel="route('enrollments.index')">
+                <x-slot:lead>
+                    <span class="small" data-selection-summary data-held="{{ (float) $units }}" data-max="{{ (float) $maxUnits }}" aria-live="polite">
+                        <strong data-selected-count>0</strong> classes chosen ·
+                        <strong data-selected-units>0</strong> units
+                        <span class="text-secondary">(term total <span data-total-units>{{ rtrim(rtrim(number_format($units, 1), '0'), '.') }}</span> of {{ rtrim(rtrim(number_format($maxUnits, 1), '0'), '.') }})</span>
+                    </span>
+                </x-slot:lead>
+            </x-form-actions>
         </form>
     @endif
 </x-app-layout>

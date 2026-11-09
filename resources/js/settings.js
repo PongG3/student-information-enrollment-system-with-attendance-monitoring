@@ -106,8 +106,15 @@ if (form) {
     let submitting = false;
     const isDirty = () => snapshot() !== initial;
 
+    // The save bar is always shown; it says whether anything is unsaved and offers Discard only then.
     function refresh() {
-        if (savebar) savebar.hidden = !isDirty();
+        const dirty = isDirty();
+        if (savebar) {
+            savebar.classList.toggle('is-dirty', dirty);
+            savebar.querySelector('[data-saved]')?.toggleAttribute('hidden', dirty);
+            savebar.querySelector('[data-unsaved]')?.toggleAttribute('hidden', !dirty);
+            savebar.querySelector('[data-settings-discard]')?.toggleAttribute('hidden', !dirty);
+        }
         updatePreview();
         updateEffects();
     }

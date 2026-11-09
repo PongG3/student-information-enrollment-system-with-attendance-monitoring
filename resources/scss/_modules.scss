@@ -156,3 +156,20 @@
 .category-option:has(input:checked) { border-color: $teal-strong; background: rgba($teal, 0.08); }
 .category-option .form-check-input { margin-top: 0.2rem; flex: none; }
 .guardian-row { padding-bottom: 0.1rem; }
+// Class form: schedule code chip, compact block hint, meeting rows as a dense grid.
+.schedule-code-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: $text-muted; background: $surface-muted; border: 1px solid $border; border-radius: 999px; padding: 0.15rem 0.65rem; }
+.schedule-code-chip strong { color: $navy; font-variant-numeric: tabular-nums; letter-spacing: 0.03em; }
+.block-picker-hint { font-weight: 400; color: $text-muted; font-size: 0.75rem; margin-left: auto; }
+.block-picker .mb-3 { margin-bottom: 0.5rem !important; }
+.meeting-rows { display: grid; gap: 0.45rem; margin-bottom: 0.75rem; }
+.meeting-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0.45rem; }
+.meeting-row .form-control, .meeting-row .form-select { padding-top: 0.45rem; padding-bottom: 0.45rem; font-size: 0.85rem; }
+.meeting-row-head { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: $text-muted; }
+@media (max-width: 575px) { .meeting-row { grid-template-columns: 1fr 1fr; } .meeting-row-head { display: none; } }
+
+// Settings (tabbed): preview beside the rules, last-saved note in the header, save bar that shows unsaved state.
+.settings-preview { background: $surface-muted; border: 1px solid $border-soft; border-radius: $radius; padding: 0.85rem 1rem; }
+.settings-preview .preview-result { background: $surface; padding: 0.6rem 0.8rem; }
+.settings-preview .preview-percentage { font-size: 1.5rem; }
+.settings-last-saved { max-width: 380px; line-height: 1.4; }
+.settings-savebar-sies.is-dirty { border-color: $teal-strong; box-shadow: 0 0 0 1px $teal-strong, $shadow; }

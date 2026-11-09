@@ -6,105 +6,112 @@
         @csrf
         @if ($editing) @method('PUT') @endif
 
-        <x-form-section title="Class details" icon="classes" help="Which subject, in which term, taught by whom.">
+        {{-- Two columns on wide screens (details | weekly schedule) so the whole form fits one screen. --}}
+        <div class="row g-3 align-items-start">
+            <div class="col-xl-7">
+                <section class="card-sies form-pane" aria-labelledby="details-heading">
+                    <div class="form-pane-head">
+                        <h2 class="section-title" id="details-heading">Class details</h2>
+                        <span class="schedule-code-chip" title="Year + term + number. Students use it to find the class.">
+                            Schedule code
+                            <strong>{{ $editing ? $class->class_code : 'given when you save' }}</strong>
+                        </span>
+                    </div>
 
-            @if ($hasEnrollments)
-                <div class="alert alert-info small">Students have requested this class, so its term and subject cannot change.</div>
-            @endif
+                    @if ($hasEnrollments)
+                        <div class="alert alert-info small py-2">Students have requested this class, so its term and subject cannot change.</div>
+                    @endif
 
-            <div class="row">
-                <div class="col-md-6">
-                    <x-select name="term_id" label="Term"
-                        :options="$terms->mapWithKeys(fn ($t) => [$t->id => $t->name . ' · ' . $t->academicYear->name])->all()"
-                        :value="$class->term_id" placeholder="Choose a term" required :disabled="$hasEnrollments" />
-                    @if ($hasEnrollments)<input type="hidden" name="term_id" value="{{ $class->term_id }}">@endif
-                </div>
-                <div class="col-md-6">
-                    <x-select name="subject_id" label="Subject"
-                        :options="$subjects->mapWithKeys(fn ($s) => [$s->id => $s->code . ' · ' . $s->title . ' (' . $s->programsLabel() . ')'])->all()"
-                        :value="$class->subject_id" placeholder="Choose a subject" required :disabled="$hasEnrollments" />
-                    @if ($hasEnrollments)<input type="hidden" name="subject_id" value="{{ $class->subject_id }}">@endif
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="schedule_code">Schedule code</label>
-                    <input id="schedule_code" type="text" class="form-control schedule-code-field" readonly
-                        value="{{ $class->exists ? $class->class_code : '' }}" placeholder="Given automatically when you save"
-                        aria-describedby="schedule_code_help">
-                    <div class="form-text mb-3" id="schedule_code_help">Year + term + number, e.g. 202610007. Students use it to find the class.</div>
-                </div>
-                <div class="col-md-4">
-                    <x-field name="capacity" type="number" label="Capacity (seats)" :value="$class->capacity" required min="1" max="200" />
-                </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <x-select name="term_id" label="Term"
+                                :options="$terms->mapWithKeys(fn ($t) => [$t->id => $t->name . ' · ' . $t->academicYear->name])->all()"
+                                :value="$class->term_id" placeholder="Choose a term" required :disabled="$hasEnrollments" />
+                            @if ($hasEnrollments)<input type="hidden" name="term_id" value="{{ $class->term_id }}">@endif
+                        </div>
+                        <div class="col-md-7">
+                            <x-select name="subject_id" label="Subject"
+                                :options="$subjects->mapWithKeys(fn ($s) => [$s->id => $s->code . ' · ' . $s->title . ' (' . $s->programsLabel() . ')'])->all()"
+                                :value="$class->subject_id" placeholder="Choose a subject" required :disabled="$hasEnrollments" />
+                            @if ($hasEnrollments)<input type="hidden" name="subject_id" value="{{ $class->subject_id }}">@endif
+                        </div>
+                    </div>
+
+                    {{-- The block the class is for. Leave the program empty for a class open to any block (irregular students). --}}
+                    <div class="block-picker mb-3">
+                        <div class="block-picker-title">
+                            Block <span class="block-preview" data-block-preview>{{ $editing ? $class->block_label : '' }}</span>
+                            <span class="block-picker-hint">BSCS 1-C and BSIT 1-C are different blocks.</span>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <x-select name="program_id" label="Program" :options="$programs->mapWithKeys(fn ($p) => [$p->id => $p->code . ' · ' . $p->name])->all()"
+                                    :value="$class->program_id" placeholder="Any block (irregular students)" data-block-part="program" />
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <x-select name="year_level" label="Year level" :options="array_combine(range(1, 6), array_map(fn ($n) => 'Year ' . $n, range(1, 6)))"
+                                    :value="$class->year_level" placeholder="—" data-block-part="year" />
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <x-field name="section" label="Section" :value="$class->section" required maxlength="10" placeholder="e.g. C" data-block-part="section" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <x-select name="teacher_id" label="Teacher"
+                                :options="$teachers->pluck('name', 'id')->all()" :value="$class->teacher_id"
+                                placeholder="Choose a teacher" required />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <x-select name="status" label="Status"
+                                :options="['open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled']"
+                                :value="$class->status" required />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <x-field name="capacity" type="number" label="Seats" :value="$class->capacity" required min="1" max="200" />
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            {{-- The block the class is for. Leave the program empty for a class open to any block (irregular students). --}}
-            <div class="block-picker">
-                <div class="block-picker-title">Block <span class="block-preview" data-block-preview>{{ $class->exists ? $class->block_label : '' }}</span></div>
-                <div class="row">
-                    <div class="col-md-5">
-                        <x-select name="program_id" label="Program" :options="$programs->mapWithKeys(fn ($p) => [$p->id => $p->code . ' · ' . $p->name])->all()"
-                            :value="$class->program_id" placeholder="Any block (open to irregular students)" data-block-part="program" />
+            <div class="col-xl-5">
+                <section class="card-sies form-pane" aria-labelledby="schedule-heading">
+                    <div class="form-pane-head">
+                        <h2 class="section-title" id="schedule-heading">Weekly schedule</h2>
                     </div>
-                    <div class="col-md-3 col-6">
-                        <x-select name="year_level" label="Year level" :options="array_combine(range(1, 6), array_map(fn ($n) => 'Year ' . $n, range(1, 6)))"
-                            :value="$class->year_level" placeholder="—" data-block-part="year" />
-                    </div>
-                    <div class="col-md-4 col-6">
-                        <x-field name="section" label="Section" :value="$class->section" required maxlength="10" placeholder="e.g. C" data-block-part="section" />
-                    </div>
-                </div>
-                <div class="form-text mt-n2">BSCS 1-C and BSIT 1-C are different blocks, so both can have the same subject in a term.</div>
-            </div>
+                    <p class="form-pane-help">One row per meeting. Leave the day empty to skip a row.</p>
 
-            <div class="row mt-3">
-                <div class="col-md-8">
-                    <x-select name="teacher_id" label="Teacher"
-                        :options="$teachers->pluck('name', 'id')->all()" :value="$class->teacher_id"
-                        placeholder="Choose a teacher" required />
-                </div>
-                <div class="col-md-4">
-                    <x-select name="status" label="Status"
-                        :options="['open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled']"
-                        :value="$class->status" required />
-                </div>
-            </div>
-        </x-form-section>
-
-        <x-form-section title="Weekly schedule" icon="calendar" help="Fill one row for each meeting. Leave the day empty to skip a row.">
-
-            @foreach ($errors->get('meetings') as $message)
-                <div class="alert alert-danger py-2 small">{{ $message }}</div>
-            @endforeach
-            @foreach ($errors->get('meetings.*') as $messages)
-                @foreach ($messages as $message)
-                    <div class="alert alert-danger py-2 small">{{ $message }}</div>
-                @endforeach
-            @endforeach
-
-            <div class="table-responsive">
-                <table class="table table-sies align-middle">
-                    <thead><tr><th>Day</th><th>Start</th><th>End</th><th>Room</th></tr></thead>
-                    <tbody>
-                        @foreach ($meetingRows as $i => $row)
-                            <tr>
-                                <td>
-                                    <select name="meetings[{{ $i }}][day]" class="form-select" aria-label="Day {{ $i + 1 }}">
-                                        <option value="">—</option>
-                                        @foreach ($days as $number => $label)
-                                            <option value="{{ $number }}" @selected((string) old("meetings.$i.day", $row['day']) === (string) $number)>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td><input type="time" name="meetings[{{ $i }}][start]" value="{{ old("meetings.$i.start", $row['start']) }}" class="form-control" aria-label="Start time {{ $i + 1 }}"></td>
-                                <td><input type="time" name="meetings[{{ $i }}][end]" value="{{ old("meetings.$i.end", $row['end']) }}" class="form-control" aria-label="End time {{ $i + 1 }}"></td>
-                                <td><input type="text" name="meetings[{{ $i }}][room]" value="{{ old("meetings.$i.room", $row['room']) }}" class="form-control" maxlength="50" placeholder="e.g. Room 101" aria-label="Room {{ $i + 1 }}"></td>
-                            </tr>
+                    @foreach ($errors->get('meetings') as $message)
+                        <div class="alert alert-danger py-2 small">{{ $message }}</div>
+                    @endforeach
+                    @foreach ($errors->get('meetings.*') as $messages)
+                        @foreach ($messages as $message)
+                            <div class="alert alert-danger py-2 small">{{ $message }}</div>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </x-form-section>
+                    @endforeach
 
-        <x-form-actions sticky :submit="$editing ? 'Save changes' : 'Create class'" :cancel="$editing ? route('classes.show', $class) : route('classes.index')" />
+                    <div class="meeting-rows">
+                        <div class="meeting-row meeting-row-head" aria-hidden="true"><span>Day</span><span>Start</span><span>End</span><span>Room</span></div>
+                        @foreach ($meetingRows as $i => $row)
+                            <div class="meeting-row">
+                                <select name="meetings[{{ $i }}][day]" class="form-select" aria-label="Day {{ $i + 1 }}">
+                                    <option value="">—</option>
+                                    @foreach ($days as $number => $label)
+                                        <option value="{{ $number }}" @selected((string) old("meetings.$i.day", $row['day']) === (string) $number)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <input type="time" name="meetings[{{ $i }}][start]" value="{{ old("meetings.$i.start", $row['start']) }}" class="form-control" aria-label="Start time {{ $i + 1 }}">
+                                <input type="time" name="meetings[{{ $i }}][end]" value="{{ old("meetings.$i.end", $row['end']) }}" class="form-control" aria-label="End time {{ $i + 1 }}">
+                                <input type="text" name="meetings[{{ $i }}][room]" value="{{ old("meetings.$i.room", $row['room']) }}" class="form-control" maxlength="50" placeholder="Room" aria-label="Room {{ $i + 1 }}">
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <x-form-actions sticky class="mt-3" :submit="$editing ? 'Save changes' : 'Create class'" :cancel="$editing ? route('classes.show', $class) : route('classes.index')" />
     </form>
 </x-app-layout>
