@@ -1,0 +1,20 @@
+// =====================================================================
+// Sign-in page (guest layout).
+// =====================================================================
+.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; }
+.auth-hero {
+    background: $navy; color: #fff; border-radius: 1.5rem; padding: 2rem 2.5rem;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background-image: radial-gradient(circle at 85% 10%, rgba($teal, 0.18), transparent 45%);
+}
+.auth-hero h2 { font-size: 2.2rem; font-weight: 700; line-height: 1.15; color: #fff; letter-spacing: -0.02em; }
+.auth-preview { background: $surface; color: $navy; border-radius: $radius-xl; padding: 1.25rem; }
+.auth-panel { background: $surface; border-radius: 1.5rem; padding: 2rem; display: flex; flex-direction: column; box-shadow: $shadow-sm; }
+.auth-form { width: 100%; max-width: 400px; margin: auto; }
+.auth-title { font-size: 1.85rem; font-weight: 700; color: $navy; letter-spacing: -0.02em; }
+.auth-form .btn-navy { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+
+@media (max-width: 991px) {
+    .auth-shell { grid-template-columns: 1fr; padding: 0.75rem; }
+    .auth-panel { padding: 1.5rem 1.25rem; min-height: calc(100vh - 1.5rem); }
+}

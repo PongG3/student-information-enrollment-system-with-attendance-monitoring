@@ -1,5 +1,7 @@
 @props(['value', 'label' => null])
 @php
+    // One colour per meaning, used everywhere: green = done/good, amber = waiting, red = problem,
+    // blue = in progress/approved, navy = current, grey = closed/inactive.
     $map = [
         'active' => 'success', 'enrolled' => 'success', 'verified' => 'success', 'present' => 'success', 'open' => 'success',
         'current' => 'primary',
@@ -10,4 +12,4 @@
     ];
     $variant = $map[strtolower((string) $value)] ?? 'secondary';
 @endphp
-<span class="badge rounded-pill text-bg-{{ $variant }}">{{ $label ?? ucfirst((string) $value) }}</span>
+<span {{ $attributes->class(['badge', 'badge-soft', 'badge-soft-' . $variant]) }}>{{ $label ?? ucfirst((string) $value) }}</span>

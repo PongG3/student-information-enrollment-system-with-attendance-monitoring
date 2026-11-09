@@ -69,6 +69,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toast notifications appear automatically.
     document.querySelectorAll('.toast').forEach((el) => bootstrap.Toast.getOrCreateInstance(el).show());
 
+    // Every form that saves something (POST/PUT/DELETE) can only be sent once: a second press is
+    // ignored and the pressed button shows a spinner. Search/filter (GET) forms and forms that open
+    // in a new tab are left alone. Buttons are not "disabled", so their name/value is still sent.
+    document.addEventListener('submit', (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement) || event.defaultPrevented) return;
+        if ((form.getAttribute('method') || 'get').toLowerCase() === 'get' || form.target) return;
+        if (form.dataset.submitting === '1') { event.preventDefault(); return; }
+        form.dataset.submitting = '1';
+        const button = event.submitter || form.querySelector('[type="submit"]');
+        button?.classList.add('is-busy');
+        button?.setAttribute('aria-busy', 'true');
+        // A download keeps the page open: let the form be used again after a while.
+        setTimeout(() => releaseForm(form), 10000);
+    });
+    const releaseForm = (form) => {
+        delete form.dataset.submitting;
+        form.querySelectorAll('.is-busy').forEach((el) => { el.classList.remove('is-busy'); el.removeAttribute('aria-busy'); });
+    };
+    // Coming back with the browser's Back button: forms work again.
+    window.addEventListener('pageshow', () => document.querySelectorAll('form[data-submitting]').forEach(releaseForm));
+
     // One shared confirmation dialog for dangerous or important actions.
     const confirmModal = document.getElementById('confirmModal');
     if (confirmModal) {
@@ -85,7 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const submit = confirmModal.querySelector('[data-confirm-submit]');
             submit.textContent = button.dataset.confirmButton || 'Confirm';
-            submit.className = 'btn px-4 ' + (button.dataset.confirmVariant === 'danger' ? 'btn-danger' : 'btn-navy');
+            const danger = button.dataset.confirmVariant === 'danger';
+            submit.className = 'btn flex-fill ' + (danger ? 'btn-danger' : 'btn-navy');
+            confirmModal.querySelector('[data-confirm-icon]').className = 'dialog-icon ' + (danger ? 'is-danger' : 'is-warning');
         });
     }
 

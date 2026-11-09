@@ -1,0 +1,160 @@
+// =====================================================================
+// SIES design tokens: the ONE place to change colours, type and shape.
+// Every other style file uses these names, never raw colour values.
+// =====================================================================
+
+// ---- Brand palette ----
+$navy:          #102f55;   // primary: sidebar, headings, main buttons
+$navy-light:    #1b527d;   // secondary blue: banners, icons, info
+$teal:          #42d6c2;   // accent: active menu, highlights, focus
+$teal-strong:   #23b5a2;   // accent on light backgrounds (borders, focus)
+$page-bg:       #f5f7fb;   // page background
+$surface:       #ffffff;   // cards, tables, dialogs
+$surface-muted: #f8fafd;   // table headers, quiet panels
+$surface-hover: #f1f5fa;   // hovered rows and menu items
+
+// ---- Text ----
+$text:          #172b4d;   // body text
+// Secondary text: a little darker than the suggested #718096 so small grey text
+// still passes WCAG AA contrast (4.5:1) on white.
+$text-muted:    #5f6c80;
+$text-subtle:   #8a97ab;   // placeholders and hints only
+
+// ---- Lines ----
+$border:        #e5eaf2;
+$border-soft:   #eef2f8;   // separators inside cards
+$border-strong: #d3dbe8;   // form fields
+
+// ---- Status ----
+$success: #1e9e78;
+$warning: #e2a23b;
+$danger:  #d2465e;
+$info:    $navy-light;
+$link-blue: #1b5e9e;
+
+// ---- Shape and depth ----
+$radius-sm: 0.4rem;
+$radius:    0.6rem;
+$radius-lg: 0.85rem;
+$radius-xl: 1rem;
+$shadow-sm: 0 1px 2px rgba($navy, 0.05);
+$shadow:    0 4px 16px rgba($navy, 0.08);
+$shadow-lg: 0 16px 40px rgba($navy, 0.18);
+
+// ---- Bootstrap, mapped to the tokens ----
+$primary:   $navy;
+$secondary: $text-muted;
+$light:     #eef2f7;
+$dark:      $navy;
+
+$body-bg:        $page-bg;
+$body-color:     $text;
+$headings-color: $navy;
+$headings-font-weight: 700;
+$link-color:     $link-blue;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
+$font-family-sans-serif: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 0.9rem;
+$small-font-size: 0.82em;
+$font-weight-semibold: 600;
+
+$border-color:     $border;
+$border-radius:    $radius;
+$border-radius-sm: $radius-sm;
+$border-radius-lg: $radius-lg;
+$border-radius-xl: $radius-xl;
+$box-shadow-sm:    $shadow-sm;
+$box-shadow:       $shadow;
+$box-shadow-lg:    $shadow-lg;
+
+// Forms
+$input-bg:                 $surface;
+$input-color:              $text;
+$input-border-color:       $border-strong;
+$input-padding-y:          0.6rem;
+$input-padding-x:          0.85rem;
+$input-placeholder-color:  $text-subtle;
+$input-disabled-bg:        #f1f4f8;
+$input-focus-border-color: $teal-strong;
+$input-btn-focus-width:    0.2rem;
+$input-btn-focus-color:    rgba($teal, 0.3);
+$form-label-font-weight:   600;
+$form-label-font-size:     0.82rem;
+$form-label-color:         $navy;
+$form-text-color:          $text-muted;
+$form-text-font-size:      0.78rem;
+$form-check-input-checked-bg-color: $navy;
+$form-check-input-checked-border-color: $navy;
+
+// Buttons
+$btn-padding-y:     0.5rem;
+$btn-padding-x:     1rem;
+$btn-font-weight:   600;
+$btn-padding-y-sm:  0.3rem;
+$btn-padding-x-sm:  0.7rem;
+$btn-font-size-sm:  0.78rem;
+$btn-padding-y-lg:  0.7rem;
+$btn-padding-x-lg:  1.25rem;
+$btn-font-size-lg:  0.95rem;
+
+// Cards and tables
+$card-border-color:     $border;
+$card-border-radius:    $radius-lg;
+$table-cell-padding-y:  0.7rem;
+$table-cell-padding-x:  0.9rem;
+$table-border-color:    $border-soft;
+$table-hover-bg:        $surface-hover;
+$table-th-font-weight:  700;
+
+// Badges
+$badge-font-weight:   600;
+$badge-font-size:     0.72rem;
+$badge-padding-y:     0.35em;
+$badge-padding-x:     0.7em;
+$badge-border-radius: 999px;
+
+// Dialogs (standard sizes: sm = confirmations, md = forms)
+$modal-content-border-width:  0;
+$modal-content-border-radius: $radius-xl;
+$modal-content-box-shadow-sm-up: $shadow-lg;
+$modal-backdrop-bg:      $navy;
+$modal-backdrop-opacity: 0.45;
+$modal-inner-padding:    1.25rem;
+$modal-header-border-color: $border-soft;
+$modal-footer-border-color: $border-soft;
+$modal-sm: 380px;
+$modal-md: 520px;
+
+// Menus, pagination, alerts, progress, tooltips
+$dropdown-border-color:  $border;
+$dropdown-border-radius: $radius-lg;
+$dropdown-box-shadow:    $shadow;
+$dropdown-link-color:    $text;
+$dropdown-link-hover-bg: $surface-hover;
+$dropdown-item-padding-y: 0.45rem;
+$dropdown-item-padding-x: 0.9rem;
+$dropdown-font-size: 0.85rem;
+
+$pagination-color:              $navy;
+$pagination-border-color:       $border;
+$pagination-hover-bg:           $surface-hover;
+$pagination-hover-border-color: $border;
+$pagination-active-bg:          $navy;
+$pagination-active-border-color: $navy;
+$pagination-disabled-color:     $text-subtle;
+$pagination-padding-y:          0.35rem;
+$pagination-padding-x:          0.7rem;
+$pagination-font-size:          0.85rem;
+$pagination-border-radius:      $radius-sm;
+
+$alert-border-radius: $radius;
+$alert-padding-y:     0.7rem;
+$alert-padding-x:     0.9rem;
+
+$progress-bg:            #e9eef5;
+$progress-border-radius: 999px;
+
+$tooltip-bg:        $navy;
+$tooltip-font-size: 0.75rem;

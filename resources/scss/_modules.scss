@@ -1,0 +1,117 @@
+// =====================================================================
+// Styles that belong to one module or page.
+// =====================================================================
+
+// ---- Dashboards ----
+// Greeting, quick actions and term share one slim bar.
+.welcome-banner {
+    background: $navy-light; color: #fff; border-radius: $radius-lg; padding: 0.75rem 1.15rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem;
+    background-image: linear-gradient(110deg, $navy-light 0%, $navy 100%);
+}
+.welcome-banner .eyebrow { opacity: 0.8; }
+.welcome-title { font-size: 1.15rem; font-weight: 700; margin: 0; line-height: 1.25; color: #fff; }
+.welcome-term { margin-left: auto; text-align: right; font-size: 0.85rem; line-height: 1.3; }
+@media (max-width: 767px) { .welcome-term { margin-left: 0; text-align: left; } }
+.welcome-banner > .row { flex: 1 1 100%; } // the student dashboard lays its banner out as a grid row
+
+// Quick actions sit inside the dark dashboard bar: light buttons, the main one in teal.
+.quick-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.quick-action {
+    display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: $radius; padding: 0.35rem 0.7rem; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.8rem;
+    transition: border-color 0.12s ease, background 0.12s ease;
+}
+.quick-action:hover, .quick-action:focus-visible { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.45); color: #fff; text-decoration: none; }
+.quick-action.is-primary { background: $teal; border-color: $teal; color: $navy; }
+.quick-action.is-primary:hover, .quick-action.is-primary:focus-visible { background: lighten($teal, 6%); color: $navy; }
+
+// Summary cards.
+.stat-card { position: relative; background: $surface; border: 1px solid $border; border-radius: $radius-lg; padding: 0.75rem 1rem; height: 100%; box-shadow: $shadow-sm; }
+.stat-card .stat-label { font-size: 0.75rem; color: $text-muted; font-weight: 500; }
+.stat-card .stat-icon + .stat-label { padding-right: 2.25rem; } // room for the icon, only when there is one
+.stat-card .stat-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; color: $navy; font-variant-numeric: tabular-nums; }
+.stat-card .stat-value.is-small { font-size: 1.15rem; padding: 0.2rem 0; }
+.stat-card .stat-note { font-size: 0.72rem; color: $text-muted; }
+// Cards that lead somewhere say so on hover.
+.stat-card.has-link { color: $navy; transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease; }
+.stat-card.has-link:hover { border-color: $teal-strong; box-shadow: $shadow; transform: translateY(-1px); color: $navy; text-decoration: none; }
+.stat-card.has-link:focus-visible { outline: 2px solid $teal-strong; outline-offset: 2px; }
+.stat-icon { position: absolute; top: 0.65rem; right: 0.8rem; width: 28px; height: 28px; border-radius: $radius; background: #e8f0f9; color: $navy-light; display: grid; place-items: center; }
+.stat-go { position: absolute; right: 1rem; bottom: 0.8rem; font-size: 0.72rem; font-weight: 600; color: $link-blue; opacity: 0; transition: opacity 0.12s ease; }
+.stat-card.has-link:hover .stat-go, .stat-card.has-link:focus-visible .stat-go { opacity: 1; }
+.stat-change { display: inline-block; vertical-align: middle; margin-left: 0.4rem; font-size: 0.68rem; font-weight: 600; color: #11704f; background: #e3f5ee; border-radius: 1rem; padding: 0.1rem 0.5rem; }
+
+// "Needs attention": one row of clickable chips.
+.attention-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+    background: $surface; border: 1px solid $border; border-radius: $radius-lg; padding: 0.5rem 0.75rem; box-shadow: $shadow-sm;
+}
+.attention-title { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; margin: 0 0.25rem 0 0; color: $navy; }
+.attention-item {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.65rem 0.3rem 0.35rem; font-size: 0.82rem;
+    text-decoration: none; color: $navy; border: 1px solid $border; border-radius: 999px; background: $surface-muted;
+    transition: border-color 0.12s ease, background 0.12s ease;
+}
+.attention-item:hover, .attention-item:focus-visible { background: $surface-hover; border-color: $teal-strong; color: $navy; text-decoration: none; }
+.attention-count { min-width: 1.7rem; text-align: center; font-weight: 700; border-radius: 999px; padding: 0.05rem 0.45rem; font-size: 0.78rem; }
+.attention-count.is-warning { background: #fdf2dc; color: #8a5a00; }
+.attention-count.is-danger { background: #fce6ea; color: #a1223a; }
+.attention-count.is-info { background: #e3eef8; color: $navy-light; }
+.attention-go { color: $text-muted; opacity: 0.6; transition: transform 0.12s ease, opacity 0.12s ease; }
+.attention-item:hover .attention-go { opacity: 1; transform: translateX(3px); }
+
+// Admin dashboard: compact list of the latest activity.
+.activity-list { list-style: none; margin: 0; padding: 0.25rem 0; }
+.activity-list li { padding: 0.55rem 1.25rem; border-bottom: 1px solid $border-soft; }
+.activity-list li:last-child { border-bottom: 0; }
+.activity-text { font-size: 0.82rem; color: $text; line-height: 1.35; overflow-wrap: anywhere; }
+.activity-meta { font-size: 0.72rem; color: $text-muted; margin-top: 0.1rem; }
+
+// ---- User management ----
+.temp-password { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.1rem; letter-spacing: 0.05em; }
+
+// ---- System Settings ----
+.settings-section-head { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.1rem; }
+.settings-section-icon {
+    flex: none; width: 34px; height: 34px; border-radius: $radius; display: inline-flex; align-items: center; justify-content: center;
+    background: #e8eef8; color: $navy-light;
+}
+.logo-box {
+    height: 112px; border: 1px dashed $border-strong; border-radius: $radius; background: $surface-muted;
+    display: flex; align-items: center; justify-content: center; padding: 0.5rem; overflow: hidden;
+}
+.logo-box img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.logo-box.is-removing img { opacity: 0.3; filter: grayscale(1); }
+// Right column stays in view while the left column scrolls (below the sticky top bar).
+@media (min-width: 1200px) { .settings-aside { position: sticky; top: 5.5rem; } }
+.preview-counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.preview-count { display: flex; flex-direction: column; gap: 0.2rem; }
+.preview-count input { text-align: center; }
+.preview-result { background: $surface-muted; border: 1px solid $border-soft; border-radius: $radius; padding: 0.9rem 1rem; }
+.preview-percentage { font-size: 1.9rem; font-weight: 700; color: $navy; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.settings-effects { list-style: none; padding: 0; display: grid; gap: 0.65rem; }
+.settings-effects li { display: flex; gap: 0.55rem; align-items: flex-start; }
+.settings-effects .icon { flex: none; color: $navy-light; margin-top: 0.1rem; }
+// Floating bar shown while there are unsaved changes.
+.settings-savebar {
+    position: sticky; bottom: 1rem; z-index: 20; margin-top: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    background: $navy; color: #fff; border-radius: $radius-lg; padding: 0.7rem 0.8rem 0.7rem 1.2rem; box-shadow: $shadow-lg;
+}
+.settings-savebar[hidden] { display: none; }
+
+// ---- Student portal: My Profile ----
+.profile-head { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid $border-soft; }
+.profile-avatar {
+    flex: none; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+    background: #e8eef8; color: $navy-light; font-weight: 700; font-size: 1.3rem;
+}
+.profile-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1.25rem; margin: 0; font-size: 0.85rem; }
+.profile-details .is-wide { grid-column: 1 / -1; }
+.profile-details dt { font-weight: 600; color: $text-muted; font-size: 0.75rem; }
+.profile-details dd { margin: 0.1rem 0 0; color: $text; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .profile-details { grid-template-columns: 1fr; } }
+
+// ---- "Session timed out" dialog ----
+.session-timeout-icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: #fdf2dc; color: #8a5a00; }

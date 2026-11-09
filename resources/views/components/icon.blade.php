@@ -24,6 +24,7 @@
         'plus' => '<path d="M12 5v14"/><path d="M5 12h14"/>',
         'arrow' => '<path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>',
         'alert' => '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+        'bell' => '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
     ];
 @endphp
 <svg class="icon" viewBox="0 0 24 24" width="{{ (int) $size }}" height="{{ (int) $size }}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{!! $paths[$name] ?? '' !!}</svg>

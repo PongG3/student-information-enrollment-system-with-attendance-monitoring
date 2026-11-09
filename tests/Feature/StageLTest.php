@@ -455,4 +455,54 @@ class StageLTest extends TestCase
         $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
             ->assertSee('centerLabel', false)->assertSee('records', false);
     }
+
+    // ---------- Shell: breadcrumbs, notifications, account menu ----------
+
+    public function test_pages_show_breadcrumbs_from_the_role_menu(): void
+    {
+        $student = $this->makeStudent('2026-0120', 'Bea', 'Cruz');
+
+        // Section page: Dashboard / Student Records
+        $this->actingAs($this->registrar)->get(route('students.index'))->assertOk()
+            ->assertSee('aria-label="Breadcrumb"', false)
+            ->assertSeeInOrder(['Dashboard', 'Student Records'])
+            ->assertSee('<span aria-current="page">Student Records</span>', false);
+
+        // A page inside a section: Dashboard / Student Records / the student
+        $this->actingAs($this->registrar)->get(route('students.show', $student))->assertOk()
+            ->assertSeeInOrder(['Dashboard', 'Student Records', 'Cruz, Bea'])
+            ->assertSee('href="' . route('students.index') . '"', false);
+
+        // The dashboard needs none.
+        $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
+            ->assertDontSee('aria-label="Breadcrumb"', false);
+    }
+
+    public function test_the_notification_bell_lists_waiting_work_and_refreshes_at_once(): void
+    {
+        $this->sheet($this->mine, []);
+        $this->sheet($this->theirs, []);
+
+        // Nothing waiting.
+        $this->actingAs($this->registrar)->get(route('students.index'))->assertOk()
+            ->assertSee('Notifications: nothing waiting')->assertSee("You're all caught up.", false);
+
+        // A request arrives: the bell knows on the very next page, not a minute later.
+        $this->enroll($this->makeStudent('2026-0121', 'Cy', 'Dee'), $this->mine, 'pending');
+
+        $this->actingAs($this->registrar)->get(route('students.index'))->assertOk()
+            ->assertSee('Notifications: 1 waiting')
+            ->assertSee('class="topbar-dot"', false)
+            ->assertSee('<span class="notify-text">enrollment is waiting for review</span>', false);
+    }
+
+    public function test_the_account_menu_shows_initials_and_email(): void
+    {
+        $this->admin->forceFill(['name' => 'Ana Bautista'])->save();
+
+        $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
+            ->assertSee('<span class="avatar" aria-hidden="true">AB</span>', false)
+            ->assertSee($this->admin->email)
+            ->assertSee('Change Password')->assertSee('Sign out');
+    }
 }

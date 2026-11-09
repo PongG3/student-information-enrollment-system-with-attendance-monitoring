@@ -12,9 +12,9 @@
      aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false"
      data-session-timeout data-lifetime-minutes="{{ $minutes }}" data-login-url="{{ route('login') }}">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content text-center p-3">
+        <div class="modal-content text-center p-2">
             <div class="modal-body">
-                <div class="session-timeout-icon mx-auto mb-3" aria-hidden="true"><x-icon name="alert" :size="22" /></div>
+                <div class="dialog-icon is-warning" aria-hidden="true"><x-icon name="alert" :size="22" /></div>
                 <h2 class="h5 fw-bold" id="sessionTimeoutLabel">Session timed out</h2>
                 <p class="text-secondary small mb-4" id="sessionTimeoutText">
                     For your security, you were signed out after {{ $idle }} of inactivity. Please sign in again to continue.

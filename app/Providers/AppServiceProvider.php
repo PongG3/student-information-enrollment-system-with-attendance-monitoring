@@ -3,7 +3,13 @@
 namespace App\Providers;
 
 use App\Http\Middleware\SecurityHeaders;
+use App\Models\AttendanceRecord;
+use App\Models\AttendanceSession;
 use App\Models\AuditLog;
+use App\Models\Enrollment;
+use App\Models\Term;
+use App\Models\User;
+use App\Support\Navigation;
 use App\Support\RoleLabel;
 use App\Support\SessionNotice;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -25,6 +31,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // The top bar's notifications are cached briefly; any change they depend on refreshes them at once.
+        foreach ([Enrollment::class, AttendanceSession::class, AttendanceRecord::class, User::class, Term::class] as $model) {
+            $model::saved(fn () => Navigation::refreshNotifications());
+            $model::deleted(fn () => Navigation::refreshNotifications());
+        }
 
         // Browser protections on every response.
         $this->app->make(HttpKernel::class)->pushMiddleware(SecurityHeaders::class);
