@@ -269,12 +269,14 @@ class StageLTest extends TestCase
         $this->sheet($this->theirs, []);
         $this->makeUser('teacher', ['must_change_password' => true]);
 
+        // The administrator is told about the account they must follow up; absence alerts are in Reports.
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('over the absence limit')
-            ->assertSee('has not changed its temporary password');
+            ->assertSee('has not changed its temporary password')
+            ->assertDontSee('over the absence limit');
 
-        // The registrar does not see the account warning.
+        // The registrar monitors absences but does not see the account warning.
         $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
+            ->assertSee('over the absence limit')
             ->assertDontSee('temporary password');
     }
 
@@ -449,7 +451,8 @@ class StageLTest extends TestCase
         $this->enroll($student, $this->mine, 'enrolled');
         $this->sheet($this->mine, [$student->id => 'present']);
 
-        $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
+        // The registrar's dashboard keeps its charts (the administrator's has none).
+        $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
             ->assertSee('centerLabel', false)->assertSee('records', false);
     }
 }

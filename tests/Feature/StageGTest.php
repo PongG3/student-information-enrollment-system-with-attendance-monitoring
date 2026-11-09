@@ -239,17 +239,18 @@ class StageGTest extends TestCase
 
     // ---------- The pages ----------
 
-    public function test_the_admin_dashboard_shows_cards_charts_and_activity(): void
+    public function test_the_admin_dashboard_shows_cards_attendance_and_activity_without_charts(): void
     {
         $this->sheet($this->class, '2026-11-09', [$this->s1->id => 'present', $this->s2->id => 'absent']);
 
+        // Charts were moved off the administrator's dashboard; their data stays in Reports.
         $this->actingAs($this->admin)->get('/admin/dashboard')
             ->assertOk()
             ->assertSee('Registered students')->assertSee('Enrolled students')->assertSee('Classes this term')
-            ->assertSee("Today's attendance")->assertSee('Monthly enrollment trend')
-            ->assertSee('Weekly attendance trend')->assertSee('Students by program')
-            ->assertSee('Recent activity')
-            ->assertSee('data-chart', false);
+            ->assertSee("Today's attendance")->assertSee('Recent activity')
+            ->assertDontSee('Monthly enrollment trend')->assertDontSee('Weekly attendance trend')
+            ->assertDontSee('Students by program')
+            ->assertDontSee('data-chart', false);
     }
 
     public function test_the_registrar_sees_enrollment_activity_not_the_audit_log(): void

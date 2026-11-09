@@ -43,7 +43,9 @@ class DashboardAttention
             ];
         }
 
-        if ($term) {
+        // The administrator sees only work waiting on them (setup, requests, missing sheets, temporary passwords);
+        // absence alerts stay on the registrar's and teachers' dashboards and in the Absentees report.
+        if ($term && $user->role !== 'admin') {
             $flagged = AttendanceStats::flagged($term, $isTeacher ? $user->id : null, null, 500)->count();
             if ($flagged > 0) {
                 $items[] = [
@@ -55,6 +57,7 @@ class DashboardAttention
             }
         }
 
+        // Only the administrator can follow this up, and no other page shows it.
         if ($user->role === 'admin') {
             $mustChange = User::where('is_active', true)->where('must_change_password', true)->count();
             if ($mustChange > 0) {

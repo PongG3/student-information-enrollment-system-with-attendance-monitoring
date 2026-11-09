@@ -15,6 +15,9 @@ use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
+    /** Audit entries left out of the admin's "Recent activity": routine, not administrative work. */
+    private const ROUTINE_ACTIONS = ['login', 'logout', 'login.failed', 'password.changed', 'student.exported', 'report.exported'];
+
     public function __invoke(Request $request)
     {
         $user = $request->user();
@@ -33,17 +36,29 @@ class DashboardController extends Controller
         $isTeacher = $user->role === 'teacher';
         $teacherId = $isTeacher ? $user->id : null;
 
-        $termCounts = DashboardStats::termCounts($term, $teacherId);
-
         $data = [
             'greeting' => $greeting,
             'term' => $term,
             'isTeacher' => $isTeacher,
             'today' => DashboardStats::today($term, $teacherId),
-            'attendanceTrend' => DashboardStats::attendanceTrend($term, $teacherId),
-            'termCounts' => $termCounts,
-            'termPercentage' => AttendanceStats::percentage($termCounts),
         ];
+
+        // The administrator's dashboard has no charts (they are in Reports), so their data is not loaded.
+        if ($user->role === 'admin') {
+            $data['overview'] = DashboardStats::overview($term);
+            $data['week'] = DashboardWeek::changes($term);
+            $data['attention'] = DashboardAttention::items($user, $term, $data['today'], $data['overview']);
+            $data['recent'] = AuditLog::with('user')
+                ->whereNotIn('action', self::ROUTINE_ACTIONS)
+                ->latest('created_at')->latest('id')->limit(5)->get();
+
+            return view('dashboard.admin', $data);
+        }
+
+        $termCounts = DashboardStats::termCounts($term, $teacherId);
+        $data['attendanceTrend'] = DashboardStats::attendanceTrend($term, $teacherId);
+        $data['termCounts'] = $termCounts;
+        $data['termPercentage'] = AttendanceStats::percentage($termCounts);
 
         if ($isTeacher) {
             $classIds = $term
@@ -66,13 +81,8 @@ class DashboardController extends Controller
         $data['enrollmentTrend'] = DashboardStats::enrollmentTrend($term);
         $data['enrollmentStatus'] = DashboardStats::enrollmentStatus($term);
         $data['byProgram'] = DashboardStats::byProgram();
-
-        if ($user->role === 'admin') {
-            $data['recent'] = AuditLog::with('user')->latest('created_at')->latest('id')->limit(8)->get();
-        } else {
-            $data['recentRequests'] = Enrollment::with(['student', 'classOffering.subject'])
-                ->latest('updated_at')->latest('id')->limit(8)->get();
-        }
+        $data['recentRequests'] = Enrollment::with(['student', 'classOffering.subject'])
+            ->latest('updated_at')->latest('id')->limit(8)->get();
 
         return view('dashboard', $data);
     }
