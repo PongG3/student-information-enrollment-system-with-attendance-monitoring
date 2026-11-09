@@ -17,7 +17,8 @@
             <main class="app-content" id="main-content" tabindex="-1">
                 @if ($attributes->get('title'))
                     <x-page-header :title="$attributes->get('title')" :subtitle="$attributes->get('subtitle')"
-                        :back="$attributes->get('back')" :back-label="$attributes->get('back-label', 'Back')" />
+                        :back="$attributes->get('back')" :back-label="$attributes->get('back-label', 'Back')"
+                        :centered="(bool) $attributes->get('centered', false)" />
                 @endif
                 {{ $slot }}
             </main>

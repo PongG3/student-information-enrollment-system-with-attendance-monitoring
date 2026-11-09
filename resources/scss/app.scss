@@ -113,6 +113,7 @@ $full: 260px;
 
 .page-title { font-size: 1.35rem; font-weight: 700; margin: 0; }
 .page-subtitle { color: $secondary; margin: 0.15rem 0 0; }
+.page-header-centered { text-align: center; } // single-form pages such as Change Password
 // "Back to ..." link above a page title, where people look first.
 .back-link {
     display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.6rem;
