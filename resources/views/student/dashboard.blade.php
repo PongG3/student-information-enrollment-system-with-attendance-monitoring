@@ -1,10 +1,10 @@
 @use('App\Services\StudentPortalData', 'Portal')
 <x-app-layout>
-    <div class="welcome-banner mb-4">
+    <div class="welcome-banner mb-3">
         <div class="row align-items-center g-3">
             <div class="col-lg-8">
                 <div class="eyebrow">{{ now()->format('l, F j, Y') }}</div>
-                <h1 class="h3 fw-bold mb-1">{{ $greeting }}</h1>
+                <h1 class="welcome-title mb-1">{{ $greeting }}</h1>
                 <p class="mb-0 opacity-75">{{ $student->student_number }} · {{ $student->program->code }} · Year {{ $student->year_level }}</p>
             </div>
             <div class="col-lg-4">

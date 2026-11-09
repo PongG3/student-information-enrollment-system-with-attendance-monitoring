@@ -122,8 +122,16 @@ $full: 260px;
 }
 .back-link:hover, .back-link:focus-visible { background: #d9e3f3; color: $navy; }
 
-.welcome-banner { background: $navy-light; color: #fff; border-radius: 1rem; padding: 1rem 1.5rem; }
-.welcome-banner .eyebrow { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+// Dashboard header: greeting, quick actions and term share one slim bar.
+.welcome-banner {
+    background: $navy-light; color: #fff; border-radius: 0.9rem; padding: 0.7rem 1.1rem;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem;
+}
+.welcome-banner .eyebrow { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+.welcome-title { font-size: 1.15rem; font-weight: 700; margin: 0; line-height: 1.25; }
+.welcome-term { margin-left: auto; text-align: right; font-size: 0.85rem; line-height: 1.3; }
+@media (max-width: 767px) { .welcome-term { margin-left: 0; text-align: left; } }
+.welcome-banner > .row { flex: 1 1 100%; } // the student dashboard lays its banner out as a grid row
 .card-sies { background: #fff; border: 1px solid #e3eaf5; border-radius: 1rem; box-shadow: 0 1px 2px rgba(13, 42, 82, 0.04); }
 
 // ---- Login / guest pages ----
@@ -159,22 +167,31 @@ $full: 260px;
 .table-sies td { vertical-align: middle; }
 .card-sies .card-header-sies {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;
-    padding: 1rem 1.25rem; border-bottom: 1px solid #e3eaf5;
+    padding: 0.75rem 1.25rem; border-bottom: 1px solid #e3eaf5;
 }
 .filter-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .filter-bar .form-control, .filter-bar .form-select { padding-top: 0.5rem; padding-bottom: 0.5rem; width: auto; min-width: 150px; }
-.stat-card { background: #fff; border: 1px solid #e3eaf5; border-radius: 1rem; padding: 1rem 1.25rem; height: 100%; }
-.stat-card .stat-label { font-size: 0.75rem; color: $secondary; }
-.stat-card .stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; }
+.stat-card { background: #fff; border: 1px solid #e3eaf5; border-radius: 0.9rem; padding: 0.7rem 1rem; height: 100%; }
+.stat-card .stat-label { font-size: 0.75rem; color: $secondary; padding-right: 2.25rem; }
+.stat-card .stat-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; }
 .stat-card .stat-note { font-size: 0.7rem; color: $secondary; }
 .temp-password { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.1rem; letter-spacing: 0.05em; }
 .btn-sm-sies { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
 
 // ---- Attention list and search (Stage L) ----
-.attention-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; text-decoration: none; color: $navy; border-bottom: 1px solid #eef2f8; }
-.attention-item:last-child { border-bottom: 0; }
-.attention-item:hover { background: #f5f8fd; color: $navy; }
-.attention-count { min-width: 2.2rem; text-align: center; font-weight: 700; border-radius: 0.6rem; padding: 0.2rem 0.5rem; }
+// "Needs attention": one row of clickable chips instead of a tall list.
+.attention-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+    background: #fff; border: 1px solid #e3eaf5; border-radius: 0.9rem; padding: 0.5rem 0.75rem;
+}
+.attention-title { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 700; margin: 0 0.25rem 0 0; color: $navy; }
+.attention-item {
+    display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.65rem 0.3rem 0.35rem; font-size: 0.82rem;
+    text-decoration: none; color: $navy; border: 1px solid #e3eaf5; border-radius: 999px; background: #f8fafd;
+    transition: border-color 0.12s ease, background 0.12s ease;
+}
+.attention-item:hover, .attention-item:focus-visible { background: #f0f5fc; border-color: $teal; color: $navy; }
+.attention-count { min-width: 1.7rem; text-align: center; font-weight: 700; border-radius: 999px; padding: 0.05rem 0.45rem; font-size: 0.78rem; }
 .attention-count.is-warning { background: #fdf0d8; color: #8a5a00; }
 .attention-count.is-danger { background: #fbe1e6; color: #a1223a; }
 .attention-count.is-info { background: #dfe9f6; color: $navy-light; }
@@ -183,23 +200,25 @@ $full: 260px;
 .stat-card.has-link { color: $navy; transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease; }
 .stat-card.has-link:hover { border-color: $teal; box-shadow: 0 4px 12px rgba(13, 42, 82, 0.08); transform: translateY(-1px); color: $navy; }
 .stat-card.has-link:focus-visible { outline: 2px solid $teal; outline-offset: 2px; }
-.stat-icon { position: absolute; top: 0.9rem; right: 1rem; width: 34px; height: 34px; border-radius: 0.6rem; background: #eaf2fb; color: $navy-light; display: grid; place-items: center; }
+.stat-icon { position: absolute; top: 0.65rem; right: 0.8rem; width: 28px; height: 28px; border-radius: 0.6rem; background: #eaf2fb; color: $navy-light; display: grid; place-items: center; }
 .stat-go { position: absolute; right: 1rem; bottom: 0.8rem; font-size: 0.72rem; font-weight: 600; color: $link-blue; opacity: 0; transition: opacity 0.12s ease; }
 .stat-card.has-link:hover .stat-go, .stat-card.has-link:focus-visible .stat-go { opacity: 1; }
-.stat-card .stat-value.is-small { font-size: 1.25rem; padding: 0.35rem 0; }
+.stat-card .stat-value.is-small { font-size: 1.15rem; padding: 0.2rem 0; }
 .stat-change { display: inline-block; vertical-align: middle; margin-left: 0.4rem; font-size: 0.68rem; font-weight: 600; color: #11765a; background: #dff4ec; border-radius: 1rem; padding: 0.1rem 0.5rem; }
 .attention-go { color: $secondary; opacity: 0.6; transition: transform 0.12s ease, opacity 0.12s ease; }
 .attention-item:hover .attention-go { opacity: 1; transform: translateX(3px); }
 
 // Quick actions
-.quick-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+// Quick actions sit inside the dark dashboard bar: light buttons, the main one in teal.
+.quick-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .quick-action {
-    display: inline-flex; align-items: center; gap: 0.5rem; background: #fff; border: 1px solid #e3eaf5; border-radius: 0.65rem;
-    padding: 0.5rem 0.9rem; color: $navy; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: border-color 0.12s ease, background 0.12s ease;
+    display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 0.6rem; padding: 0.35rem 0.7rem; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.8rem;
+    transition: border-color 0.12s ease, background 0.12s ease;
 }
-.quick-action:hover { border-color: $teal; color: $navy; background: #f5fbfb; }
-.quick-action.is-primary { background: $navy; border-color: $navy; color: #fff; }
-.quick-action.is-primary:hover { background: darken($navy, 5%); color: #fff; }
+.quick-action:hover, .quick-action:focus-visible { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.45); color: #fff; }
+.quick-action.is-primary { background: $teal; border-color: $teal; color: $navy; }
+.quick-action.is-primary:hover, .quick-action.is-primary:focus-visible { background: lighten($teal, 6%); color: $navy; }
 
 // ---- Phones and tablets: the menu slides in from the left ----
 @media (max-width: 991px) {

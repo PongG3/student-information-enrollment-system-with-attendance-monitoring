@@ -3,50 +3,44 @@
     $role = auth()->user()->role;
 @endphp
 <x-app-layout>
-    <div class="welcome-banner mb-3">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div>
-                <div class="eyebrow">{{ now()->format('l, F j, Y') }}</div>
-                <h1 class="h4 fw-bold mb-0">{{ $greeting }}</h1>
-            </div>
-            <div class="text-lg-end">
-                @if ($term)
-                    <div class="fw-semibold">{{ $term->name }} · {{ $term->academicYear->name }}</div>
-                    <div class="small opacity-75">Enrollment is {{ $term->enrollment_open ? 'open' : 'closed' }}</div>
-                @else
-                    <div class="fw-semibold">No current term</div>
-                    @if ($role === 'admin')
-                        <a href="{{ route('academic-years.index') }}" class="small text-white">Choose the current term</a>
-                    @endif
-                @endif
-            </div>
-        </div>
-    </div>
-
-    {{-- ===== Quick actions ===== --}}
+    {{-- ===== Greeting, quick actions and term in one slim bar ===== --}}
     @php
         $actions = $isTeacher
             ? [['Open attendance', route('attendance.index'), 'check', true], ['My classes', route('teacher.classes'), 'classes', false], ['Reports', route('reports.index'), 'chart', false]]
             : [['Add student', route('students.create'), 'plus', true], ['New enrollment request', route('enrollments.create'), 'clipboard', false], ['Attendance', route('attendance.index'), 'check', false], ['Reports', route('reports.index'), 'chart', false]];
     @endphp
-    <nav class="quick-actions mb-4" aria-label="Quick actions">
-        @foreach ($actions as [$label, $url, $icon, $primary])
-            <a href="{{ $url }}" class="quick-action {{ $primary ? 'is-primary' : '' }}"><x-icon :name="$icon" :size="18" /> {{ $label }}</a>
-        @endforeach
-    </nav>
+    <div class="welcome-banner mb-3">
+        <div>
+            <div class="eyebrow">{{ now()->format('l, F j, Y') }}</div>
+            <h1 class="welcome-title">{{ $greeting }}</h1>
+        </div>
+        <nav class="quick-actions" aria-label="Quick actions">
+            @foreach ($actions as [$label, $url, $icon, $primary])
+                <a href="{{ $url }}" class="quick-action {{ $primary ? 'is-primary' : '' }}"><x-icon :name="$icon" :size="16" /> {{ $label }}</a>
+            @endforeach
+        </nav>
+        <div class="welcome-term">
+            @if ($term)
+                <div class="fw-semibold">{{ $term->name }} · {{ $term->academicYear->name }}</div>
+                <div class="small opacity-75">Enrollment is {{ $term->enrollment_open ? 'open' : 'closed' }}</div>
+            @else
+                <div class="fw-semibold">No current term</div>
+                @if ($role === 'admin')
+                    <a href="{{ route('academic-years.index') }}" class="small text-white">Choose the current term</a>
+                @endif
+            @endif
+        </div>
+    </div>
 
-    {{-- ===== Needs attention ===== --}}
+    {{-- ===== Needs attention: one row of chips ===== --}}
     @if (count($attention) > 0)
-        <div class="card-sies mb-4">
-            <div class="card-header-sies">
-                <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2"><x-icon name="alert" :size="18" /> Needs attention</h2>
-                <span class="small text-secondary">Select an item to take care of it</span>
-            </div>
+        <div class="attention-bar mb-3" role="region" aria-label="Needs attention">
+            <h2 class="attention-title"><x-icon name="alert" :size="16" /> Needs attention</h2>
             @foreach ($attention as $item)
                 <a href="{{ $item['url'] }}" class="attention-item">
                     <span class="attention-count is-{{ $item['tone'] }}">{{ $item['count'] }}</span>
                     <span>{{ $item['label'] }}</span>
-                    <span class="attention-go ms-auto" aria-hidden="true"><x-icon name="arrow" :size="16" /></span>
+                    <span class="attention-go" aria-hidden="true"><x-icon name="arrow" :size="14" /></span>
                 </a>
             @endforeach
         </div>
@@ -90,7 +84,7 @@
         }
     @endphp
 
-    <div class="row g-3 mb-4">
+    <div class="row g-3 mb-3">
         @foreach ($cards as [$label, $value, $note, $url, $icon, $change, $small])
             <div class="col-6 col-xl-3">
                 @if ($url)
@@ -98,7 +92,7 @@
                 @else
                     <div class="stat-card">
                 @endif
-                        <span class="stat-icon"><x-icon :name="$icon" :size="18" /></span>
+                        <span class="stat-icon"><x-icon :name="$icon" :size="16" /></span>
                         <div class="stat-label">{{ $label }}</div>
                         <div class="stat-value {{ $small ? 'is-small' : '' }}">{{ $value }}@if ($change) <span class="stat-change" title="In the last 7 days">+{{ $change }} this week</span>@endif</div>
                         <div class="stat-note">{{ $note }}</div>
@@ -113,7 +107,7 @@
     </div>
 
     {{-- ===== Today's attendance ===== --}}
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-3">
         <div class="{{ $isTeacher ? 'col-lg-7' : 'col-lg-6' }}">
             <div class="card-sies h-100">
                 <div class="card-header-sies">
@@ -121,11 +115,11 @@
                     <span class="small text-secondary">{{ today()->format('D, M j') }}</span>
                 </div>
                 <div class="p-3">
-                    <div class="row g-2 text-center mb-3">
+                    <div class="row g-2 text-center mb-2">
                         @foreach ([['Present', $today['counts']['present'], 'success'], ['Late', $today['counts']['late'], 'warning'], ['Absent', $today['counts']['absent'], 'danger'], ['Excused', $today['counts']['excused'], 'info']] as [$label, $value, $variant])
                             <div class="col-3">
-                                <div class="rounded-3 py-2 bg-{{ $variant }}-subtle">
-                                    <div class="fs-4 fw-bold">{{ $value }}</div>
+                                <div class="rounded-3 py-1 bg-{{ $variant }}-subtle">
+                                    <div class="fs-5 fw-bold lh-sm">{{ $value }}</div>
                                     <div class="small text-secondary">{{ $label }}</div>
                                 </div>
                             </div>
@@ -188,12 +182,12 @@
                 ];
             @endphp
             <x-chart title="Attendance by status" :config="$statusChart" :empty="array_sum($termCounts) === 0"
-                empty-message="No attendance has been recorded this term yet." note="This term, to date" :height="230" />
+                empty-message="No attendance has been recorded this term yet." note="This term, to date" :height="190" />
         </div>
     </div>
 
     {{-- ===== Trends ===== --}}
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-3">
         @unless ($isTeacher)
             @php
                 $trend = [
@@ -207,7 +201,7 @@
             @endphp
             <div class="col-lg-6">
                 <x-chart title="Monthly enrollment trend" :config="$trend" :empty="! $enrollmentTrend['hasData']"
-                    empty-message="No enrollment requests have been recorded this academic year." note="Requests and enrolled students per month" />
+                    empty-message="No enrollment requests have been recorded this academic year." note="Requests and enrolled students per month" :height="200" />
             </div>
         @endunless
 
@@ -221,7 +215,7 @@
         @endphp
         <div class="{{ $isTeacher ? 'col-12' : 'col-lg-6' }}">
             <x-chart title="Weekly attendance trend" :config="$attendanceChart" :empty="! $attendanceTrend['hasData']"
-                empty-message="Attendance trends appear after the first sheets are recorded." note="Percent, week starting" />
+                empty-message="Attendance trends appear after the first sheets are recorded." note="Percent, week starting" :height="200" />
         </div>
     </div>
 
@@ -240,14 +234,14 @@
                 'datasets' => [['label' => 'Active students', 'data' => $byProgram['values'], 'color' => 'navy']],
             ];
         @endphp
-        <div class="row g-4 mb-4">
+        <div class="row g-3 mb-3">
             <div class="col-lg-4">
                 <x-chart title="Requests by status" :config="$statusConfig" :empty="! $enrollmentStatus['hasData']"
-                    empty-message="No requests in this term yet." note="Current term" :height="240" />
+                    empty-message="No requests in this term yet." note="Current term" :height="200" />
             </div>
             <div class="col-lg-4">
                 <x-chart title="Students by program" :config="$programChart" :empty="! $byProgram['hasData']"
-                    empty-message="No students are registered yet." note="Active students" :height="240" />
+                    empty-message="No students are registered yet." note="Active students" :height="200" />
             </div>
             <div class="col-lg-4">
                 <div class="card-sies h-100">
