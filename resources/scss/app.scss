@@ -37,34 +37,92 @@ $input-placeholder-color: #8a97ab;
 
 // ---- App shell ----
 .app-shell { display: flex; min-height: 100vh; }
-.sidebar {
-    width: 260px; flex: 0 0 260px; background: $navy; color: #fff; padding: 1.25rem 1rem;
-    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+// Sidebar: a slim icon strip that opens over the page on hover or keyboard focus, or stays open when pinned.
+$rail: 72px;
+$full: 260px;
+.sidebar { width: $rail; flex: 0 0 $rail; position: relative; z-index: 1040; transition: width 0.2s ease, flex-basis 0.2s ease; }
+.sidebar-panel {
+    position: fixed; top: 0; bottom: 0; left: 0; width: $rail; background: $navy; color: #fff;
+    padding: 1rem 0.75rem 0.75rem; overflow: hidden; display: flex; flex-direction: column;
+    transition: width 0.2s ease 0.08s, box-shadow 0.2s ease, transform 0.2s ease;
 }
-.sidebar-label {
-    font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9fb4d1;
-    margin: 1.5rem 0.5rem 0.6rem;
+.sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem; flex: 0 0 auto; }
+.sidebar .brand { flex: 0 0 auto; }
+.sidebar .brand-mark { margin-left: 2px; width: 44px; height: 44px; flex: 0 0 44px; }
+.sidebar-pin {
+    background: none; border: 0; color: #9fb4d1; padding: 0.35rem; border-radius: 0.5rem; line-height: 0;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s ease;
 }
+.sidebar-pin:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.sidebar-pinned .sidebar-pin { color: $teal; }
+// The list still scrolls (wheel, touch, keyboard) on a short screen, but the scrollbar is hidden.
+.sidebar-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; margin: 0 -0.25rem; padding: 0 0.25rem; }
+.sidebar-nav::-webkit-scrollbar { display: none; }
+.sidebar-group {
+    position: relative; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; white-space: nowrap;
+    color: transparent; margin: 0.8rem 0.5rem 0.25rem; height: 0.9rem; line-height: 0.9rem; transition: color 0.15s ease;
+}
+.sidebar-group::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+.sidebar-foot { flex: 0 0 auto; border-top: 1px solid rgba(255, 255, 255, 0.12); margin-top: 0.5rem; padding-top: 0.5rem; }
 .sidebar .nav-link, .sidebar button.nav-link {
-    display: block; width: 100%; color: #dbe6f5; text-align: center; padding: 0.65rem 1rem;
-    border-radius: 0.6rem; font-size: 0.85rem; background: none; border: 2px solid transparent; margin-bottom: 0.25rem;
+    position: relative; display: flex; align-items: center; gap: 0.85rem; width: 100%; color: #c9d7ec; text-align: left;
+    padding: 0.5rem calc(0.75rem - 2px); border-radius: 0.6rem; font-size: 0.85rem; background: none;
+    border: 2px solid transparent; margin-bottom: 0.1rem; white-space: nowrap; transition: background 0.12s ease, color 0.12s ease;
 }
-.sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
-.sidebar .nav-link.active { background: $navy-light; border-color: $teal; color: #fff; font-weight: 600; }
+.sidebar .nav-link .icon { flex: 0 0 auto; opacity: 0.85; }
+.sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.sidebar .nav-link:hover .icon { opacity: 1; }
+// The page you are on: a soft fill, a bright icon and a thin teal bar on the left edge.
+.sidebar .nav-link.active { background: rgba(83, 218, 204, 0.14); color: #fff; font-weight: 600; }
+.sidebar .nav-link.active .icon { color: $teal; opacity: 1; }
+.sidebar .nav-link.active::before { content: ''; position: absolute; left: -0.25rem; top: 20%; bottom: 20%; width: 3px; border-radius: 0 3px 3px 0; background: $teal; }
+.sidebar .nav-link:focus-visible { outline: 2px solid $teal; outline-offset: 1px; }
+.nav-text, .brand-text { opacity: 0; transition: opacity 0.15s ease; }
+// Count on a menu item: a small dot on the icon when collapsed, a pill on the right when open.
+.nav-badge {
+    position: absolute; top: 2px; left: 26px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px;
+    background: $warning; color: $navy; font-size: 0.62rem; font-weight: 700; line-height: 16px; text-align: center;
+}
+
+.sidebar-panel:hover, .sidebar-panel:focus-within, .sidebar-pinned .sidebar-panel {
+    width: $full; box-shadow: 8px 0 24px rgba(13, 42, 82, 0.25);
+    .nav-text, .brand-text { opacity: 1; }
+    .sidebar-group { color: #8ea6c6; }
+    .sidebar-group::before { display: none; }
+    .sidebar-pin { opacity: 1; pointer-events: auto; }
+    .nav-badge { position: static; margin-left: auto; height: auto; line-height: 1.3; padding: 0.1rem 0.5rem; font-size: 0.7rem; }
+}
+.sidebar-pinned .sidebar { width: $full; flex-basis: $full; }
+.sidebar-pinned .sidebar-panel { box-shadow: none; }
+.sidebar-backdrop { display: none; }
+.topbar-menu { display: none; }
 
 .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
     background: #fff; border-bottom: 1px solid #e3eaf5; padding: 0.9rem 2rem;
     display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
-.topbar-search { max-width: 420px; width: 100%; background: #eef2f8; border: 0; padding: 0.6rem 1rem; }
+.topbar-search-form { position: relative; flex: 1; max-width: 420px; }
+.topbar-search-form .icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: #8a97ab; pointer-events: none; }
+.topbar-search { width: 100%; background: #eef2f8; border: 2px solid transparent; border-radius: 0.65rem; padding: 0.6rem 1rem 0.6rem 2.4rem; color: $navy; }
+.topbar-search:focus { outline: 0; background: #fff; border-color: $teal; }
+.account-button { display: flex; align-items: center; gap: 0.5rem; background: none; border: 0; color: $navy; padding: 0.25rem 0.5rem; border-radius: 0.6rem; text-align: right; }
+.account-button:hover { background: #eef2f8; }
 .app-content { flex: 1; padding: 1.5rem 2rem; }
 .app-footer { padding: 1rem 2rem; font-size: 0.75rem; color: $secondary; border-top: 1px solid #e3eaf5; margin: 0 2rem; }
 
 .page-title { font-size: 1.35rem; font-weight: 700; margin: 0; }
 .page-subtitle { color: $secondary; margin: 0.15rem 0 0; }
+// "Back to ..." link above a page title, where people look first.
+.back-link {
+    display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.6rem;
+    padding: 0.3rem 0.75rem 0.3rem 0.55rem; border-radius: 999px;
+    background: #e8eef8; color: $navy-light; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+    transition: background 0.12s ease;
+}
+.back-link:hover, .back-link:focus-visible { background: #d9e3f3; color: $navy; }
 
-.welcome-banner { background: $navy-light; color: #fff; border-radius: 1rem; padding: 1.5rem 2rem; }
+.welcome-banner { background: $navy-light; color: #fff; border-radius: 1rem; padding: 1rem 1.5rem; }
 .welcome-banner .eyebrow { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
 .card-sies { background: #fff; border: 1px solid #e3eaf5; border-radius: 1rem; box-shadow: 0 1px 2px rgba(13, 42, 82, 0.04); }
 
@@ -79,12 +137,91 @@ $input-placeholder-color: #8a97ab;
 .auth-panel { background: #fff; border-radius: 1.5rem; padding: 2rem; display: flex; flex-direction: column; }
 .auth-form { width: 100%; max-width: 420px; margin: auto; }
 .auth-title { font-size: 1.9rem; font-weight: 700; }
+// Buttons centre their label (and any icon) both ways, so a button stretched to match a
+// taller neighbour in a flex row keeps its text in the middle instead of at the top.
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+.btn.d-none { display: none; }
+
 .btn-navy { background: $navy; color: #fff; padding: 0.8rem; font-weight: 600; }
 .btn-navy:hover { background: darken($navy, 5%); color: #fff; }
 
 @media (max-width: 991px) {
     .auth-shell { grid-template-columns: 1fr; }
-    .app-shell { flex-direction: column; }
-    .sidebar { position: static; width: 100%; height: auto; flex: none; }
     .topbar, .app-content { padding-left: 1rem; padding-right: 1rem; }
 }
+
+// ---- Tables, filters, stat cards (Stage C) ----
+.table-sies { margin-bottom: 0; }
+.table-sies thead th {
+    font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: $secondary;
+    font-weight: 700; border-bottom: 1px solid #e3eaf5; white-space: nowrap;
+}
+.table-sies td { vertical-align: middle; }
+.card-sies .card-header-sies {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 1rem 1.25rem; border-bottom: 1px solid #e3eaf5;
+}
+.filter-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.filter-bar .form-control, .filter-bar .form-select { padding-top: 0.5rem; padding-bottom: 0.5rem; width: auto; min-width: 150px; }
+.stat-card { background: #fff; border: 1px solid #e3eaf5; border-radius: 1rem; padding: 1rem 1.25rem; height: 100%; }
+.stat-card .stat-label { font-size: 0.75rem; color: $secondary; }
+.stat-card .stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; }
+.stat-card .stat-note { font-size: 0.7rem; color: $secondary; }
+.temp-password { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.1rem; letter-spacing: 0.05em; }
+.btn-sm-sies { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
+// ---- Attention list and search (Stage L) ----
+.attention-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; text-decoration: none; color: $navy; border-bottom: 1px solid #eef2f8; }
+.attention-item:last-child { border-bottom: 0; }
+.attention-item:hover { background: #f5f8fd; color: $navy; }
+.attention-count { min-width: 2.2rem; text-align: center; font-weight: 700; border-radius: 0.6rem; padding: 0.2rem 0.5rem; }
+.attention-count.is-warning { background: #fdf0d8; color: #8a5a00; }
+.attention-count.is-danger { background: #fbe1e6; color: #a1223a; }
+.attention-count.is-info { background: #dfe9f6; color: $navy-light; }
+// Cards that lead somewhere say so on hover.
+.stat-card { position: relative; }
+.stat-card.has-link { color: $navy; transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease; }
+.stat-card.has-link:hover { border-color: $teal; box-shadow: 0 4px 12px rgba(13, 42, 82, 0.08); transform: translateY(-1px); color: $navy; }
+.stat-card.has-link:focus-visible { outline: 2px solid $teal; outline-offset: 2px; }
+.stat-icon { position: absolute; top: 0.9rem; right: 1rem; width: 34px; height: 34px; border-radius: 0.6rem; background: #eaf2fb; color: $navy-light; display: grid; place-items: center; }
+.stat-go { position: absolute; right: 1rem; bottom: 0.8rem; font-size: 0.72rem; font-weight: 600; color: $link-blue; opacity: 0; transition: opacity 0.12s ease; }
+.stat-card.has-link:hover .stat-go, .stat-card.has-link:focus-visible .stat-go { opacity: 1; }
+.stat-card .stat-value.is-small { font-size: 1.25rem; padding: 0.35rem 0; }
+.stat-change { display: inline-block; vertical-align: middle; margin-left: 0.4rem; font-size: 0.68rem; font-weight: 600; color: #11765a; background: #dff4ec; border-radius: 1rem; padding: 0.1rem 0.5rem; }
+.attention-go { color: $secondary; opacity: 0.6; transition: transform 0.12s ease, opacity 0.12s ease; }
+.attention-item:hover .attention-go { opacity: 1; transform: translateX(3px); }
+
+// Quick actions
+.quick-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.quick-action {
+    display: inline-flex; align-items: center; gap: 0.5rem; background: #fff; border: 1px solid #e3eaf5; border-radius: 0.65rem;
+    padding: 0.5rem 0.9rem; color: $navy; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: border-color 0.12s ease, background 0.12s ease;
+}
+.quick-action:hover { border-color: $teal; color: $navy; background: #f5fbfb; }
+.quick-action.is-primary { background: $navy; border-color: $navy; color: #fff; }
+.quick-action.is-primary:hover { background: darken($navy, 5%); color: #fff; }
+
+// ---- Phones and tablets: the menu slides in from the left ----
+@media (max-width: 991px) {
+    .sidebar, .sidebar-pinned .sidebar { width: 0; flex: 0 0 0; }
+    .sidebar-panel, .sidebar-pinned .sidebar-panel { width: $full; transform: translateX(-100%); box-shadow: none; transition: transform 0.2s ease; }
+    .sidebar-panel:hover, .sidebar-panel:focus-within { box-shadow: none; }
+    .sidebar-open .sidebar-panel { transform: none; box-shadow: 8px 0 24px rgba(13, 42, 82, 0.25); }
+    .nav-text, .brand-text { opacity: 1; }
+    .sidebar-group { color: #8ea6c6; }
+    .nav-badge { position: static; margin-left: auto; height: auto; line-height: 1.3; padding: 0.1rem 0.5rem; font-size: 0.7rem; }
+    .sidebar-group::before { display: none; }
+    .sidebar-pin { display: none; }
+    .sidebar-open .sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 1030; background: rgba(13, 42, 82, 0.45); }
+    .topbar-menu { display: inline-flex; align-items: center; background: none; border: 0; color: $navy; padding: 0.3rem; border-radius: 0.5rem; }
+    .topbar { gap: 0.5rem; }
+    .account-button .lh-sm { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sidebar, .sidebar-panel, .nav-text, .brand-text { transition: none; }
+}
+
+// Keyboard users can jump past the menu.
+.skip-link { position: absolute; left: 0.75rem; top: -3rem; z-index: 2000; background: #fff; color: $navy; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; box-shadow: 0 2px 8px rgba(13, 42, 82, 0.25); }
+.skip-link:focus { top: 0.75rem; }
+.app-content:focus { outline: 0; }

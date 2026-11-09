@@ -1,0 +1,126 @@
+@php
+    $editable = $access['mode'] === 'edit';
+    $labels = ['present' => 'Present', 'late' => 'Late', 'absent' => 'Absent', 'excused' => 'Excused'];
+    $colors = ['present' => 'success', 'late' => 'warning', 'absent' => 'danger', 'excused' => 'info'];
+@endphp
+<x-app-layout :title="$class->class_code . ' · ' . $class->subject->title"
+    :subtitle="$date->format('l, F j, Y') . ' · ' . $class->term->name . ' · ' . $class->term->academicYear->name"
+    :back="route('attendance.index')" back-label="Back to attendance">
+    @foreach (array_merge($errors->get('sheet'), $errors->get('rows.*') ? array_merge(...array_values($errors->get('rows.*'))) : [], $errors->get('rows'), $errors->get('reason')) as $message)
+        <div class="alert alert-danger py-2">{{ $message }}</div>
+    @endforeach
+
+    <div class="row g-4">
+        <div class="col-lg-3 order-lg-2">
+            <div class="card-sies p-3 mb-3">
+                <h2 class="h6 fw-bold">Choose a date</h2>
+                <form method="GET" action="{{ route('attendance.sheet') }}" class="d-flex gap-2 mb-3">
+                    <input type="hidden" name="class_offering" value="{{ $class->id }}">
+                    <input type="date" name="date" value="{{ $date->toDateString() }}" max="{{ today()->toDateString() }}" class="form-control" aria-label="Date">
+                    <button class="btn btn-outline-secondary btn-sm-sies">Go</button>
+                </form>
+                <div class="small text-secondary mb-2">Recent class days</div>
+                @forelse ($classDays as $day)
+                    <a href="{{ route('attendance.sheet', ['class_offering' => $class->id, 'date' => $day['date']->toDateString()]) }}"
+                       class="d-flex justify-content-between align-items-center text-decoration-none small py-1 {{ $day['date']->isSameDay($date) ? 'fw-bold' : '' }}">
+                        <span>{{ $day['date']->format('D, M j') }}</span>
+                        @if ($day['recorded']) <x-status-badge value="verified" label="Recorded" /> @else <x-status-badge value="pending" label="Not yet" /> @endif
+                    </a>
+                @empty
+                    <div class="small text-secondary">No class days yet.</div>
+                @endforelse
+            </div>
+            <div class="card-sies p-3 small">
+                <div class="fw-semibold">{{ $class->subject->code }} · {{ $class->section }}</div>
+                <div class="text-secondary">{{ $class->teacher->name }}</div>
+                <div class="text-secondary">{{ $class->scheduleSummary() }}</div>
+                <a href="{{ route('attendance.summary', $class) }}" class="d-inline-block mt-2 fw-semibold text-decoration-none">Attendance summary →</a>
+            </div>
+        </div>
+
+        <div class="col-lg-9 order-lg-1">
+            @if (! $editable && $access['messages'])
+                <div class="alert alert-secondary">
+                    @foreach ($access['messages'] as $message)<div>{{ $message }}</div>@endforeach
+                </div>
+            @elseif (! $editable)
+                <div class="alert alert-secondary">This sheet is read-only for your role.</div>
+            @endif
+
+            @if ($session)
+                <div class="small text-secondary mb-2">Recorded by {{ $session->takenBy->name }} on {{ $session->created_at->format('M j, Y g:i A') }}.</div>
+            @elseif ($editable)
+                <div class="small text-secondary mb-2">No sheet yet for this date. Everyone starts as Present. Change the exceptions, then save.</div>
+            @endif
+
+            <form method="POST" action="{{ route('attendance.save') }}" novalidate>
+                @csrf
+                <input type="hidden" name="class_offering" value="{{ $class->id }}">
+                <input type="hidden" name="date" value="{{ $date->toDateString() }}">
+
+                <div class="card-sies">
+                    <div class="card-header-sies">
+                        <h2 class="h6 fw-bold mb-0">{{ $students->count() }} {{ \Illuminate\Support\Str::plural('student', $students->count()) }}</h2>
+                        @if ($editable && $session) <span class="small text-secondary">Editing a saved sheet. Changes are logged.</span> @endif
+                    </div>
+
+                    @if ($students->isEmpty())
+                        <x-empty-state message="No enrolled students for this date." />
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sies align-middle">
+                                <thead><tr><th>Student</th><th>Status</th><th>Remarks</th></tr></thead>
+                                <tbody>
+                                    @foreach ($students as $student)
+                                        @php
+                                            $record = $records->get($student->id);
+                                            $current = old("rows.{$student->id}.status", $record?->status ?? ($session ? null : 'present'));
+                                        @endphp
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">{{ $student->full_name }}</div>
+                                                <div class="text-secondary small">{{ $student->student_number }}</div>
+                                            </td>
+                                            @if ($editable)
+                                                <td>
+                                                    <div class="btn-group" role="group" aria-label="Status of {{ $student->full_name }}">
+                                                        @foreach ($labels as $value => $label)
+                                                            <input type="radio" class="btn-check" name="rows[{{ $student->id }}][status]" value="{{ $value }}"
+                                                                id="s{{ $student->id }}{{ $value }}" @checked($current === $value)>
+                                                            <label class="btn btn-outline-{{ $colors[$value] }} btn-sm-sies" for="s{{ $student->id }}{{ $value }}">{{ $label }}</label>
+                                                        @endforeach
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <input type="text" name="rows[{{ $student->id }}][remarks]" maxlength="255" class="form-control"
+                                                        value="{{ old("rows.{$student->id}.remarks", $record?->remarks) }}" placeholder="Required for Excused" aria-label="Remarks for {{ $student->full_name }}">
+                                                </td>
+                                            @else
+                                                <td>@if ($record) <x-status-badge :value="$record->status" /> @else <span class="text-secondary small">Not recorded</span> @endif</td>
+                                                <td class="small text-secondary">{{ $record?->remarks }}</td>
+                                            @endif
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                @if ($editable && $students->isNotEmpty())
+                    @if ($access['needsReason'])
+                        <div class="card-sies p-3 mt-3">
+                            <label for="reason" class="form-label fw-semibold small">Reason for changing an older sheet <span class="text-danger">*</span></label>
+                            <input id="reason" type="text" name="reason" maxlength="255" class="form-control" value="{{ old('reason') }}" placeholder="Why is this sheet being recorded or corrected now?">
+                            <div class="form-text">This date is outside the teacher edit window. The reason is saved in the audit log.</div>
+                        </div>
+                    @endif
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-navy px-4">{{ $session ? 'Save changes' : 'Save attendance' }}</button>
+                        <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary px-4">Back</a>
+                    </div>
+                @endif
+            </form>
+        </div>
+    </div>
+</x-app-layout>

@@ -23,6 +23,12 @@ class RoleMiddleware
                 ->withErrors(['email' => 'Your account is inactive. Please contact the registrar.']);
         }
 
+        // After an administrator resets a password, the user must choose a new one first.
+        if ($user->must_change_password && ! $request->routeIs('account.password', 'account.password.update')) {
+            return redirect()->route('account.password')
+                ->with('warning', 'Please set a new password to continue.');
+        }
+
         // Wrong role: the server refuses, whatever the menu shows.
         abort_unless(in_array($user->role, $roles, true), 403);
 
