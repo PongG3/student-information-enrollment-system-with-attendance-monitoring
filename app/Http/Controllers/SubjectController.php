@@ -6,6 +6,7 @@ use App\Models\Subject;
 use App\Support\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Support\Like;
 
 class SubjectController extends Controller
 {
@@ -13,7 +14,7 @@ class SubjectController extends Controller
     {
         $subjects = Subject::withCount('classOfferings')
             ->when($request->filled('search'), function ($query) use ($request) {
-                $like = '%' . trim((string) $request->input('search')) . '%';
+                $like = Like::contains($request->input('search'));
                 $query->where(fn ($w) => $w->where('code', 'like', $like)->orWhere('title', 'like', $like));
             })
             ->orderBy('code')

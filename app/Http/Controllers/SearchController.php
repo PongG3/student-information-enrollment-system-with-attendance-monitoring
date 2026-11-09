@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ClassOffering;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use App\Support\Like;
 
 /** The search box in the top bar: students (staff only) and classes. */
 class SearchController extends Controller
@@ -23,7 +24,7 @@ class SearchController extends Controller
 
         if ($searched) {
             $words = array_filter(explode(' ', $query), fn ($word) => $word !== '');
-            $like = fn (string $word) => '%' . addcslashes($word, '%_\\') . '%';
+            $like = fn (string $word) => Like::contains($word);
 
             // Teachers do not browse student records, so only staff with that access see students.
             if (in_array($user->role, ['admin', 'registrar'], true)) {

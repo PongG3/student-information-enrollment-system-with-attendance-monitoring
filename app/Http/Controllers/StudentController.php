@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Support\Like;
 
 class StudentController extends Controller
 {
@@ -202,7 +203,7 @@ class StudentController extends Controller
             ->when($request->filled('search'), function ($query) use ($request) {
                 // Every word must match the number, a name, or the email.
                 foreach (preg_split('/\s+/', trim((string) $request->input('search'))) as $word) {
-                    $like = '%' . $word . '%';
+                    $like = Like::contains($word);
                     $query->where(fn ($w) => $w->where('student_number', 'like', $like)
                         ->orWhere('first_name', 'like', $like)
                         ->orWhere('middle_name', 'like', $like)

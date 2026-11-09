@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\RoleLabel;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Support\Like;
 
 class AuditLogController extends Controller
 {
@@ -31,7 +32,7 @@ class AuditLogController extends Controller
             ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->input('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->input('to')))
             ->when($request->filled('search'), function ($q) use ($request) {
-                $q->where('description', 'like', '%' . trim((string) $request->input('search')) . '%');
+                $q->where('description', 'like', Like::contains($request->input('search')));
             })
             ->latest('created_at')
             ->latest('id')

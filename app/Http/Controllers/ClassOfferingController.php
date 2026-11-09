@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Support\Like;
 
 class ClassOfferingController extends Controller
 {
@@ -30,7 +31,7 @@ class ClassOfferingController extends Controller
             ->when($termId, fn ($q) => $q->where('term_id', $termId))
             ->when($request->filled('status'), fn ($q) => $q->where('status', (string) $request->input('status')))
             ->when($request->filled('search'), function ($query) use ($request) {
-                $like = '%' . trim((string) $request->input('search')) . '%';
+                $like = Like::contains($request->input('search'));
                 $query->where(function ($w) use ($like) {
                     $w->where('class_code', 'like', $like)
                         ->orWhereHas('subject', fn ($s) => $s->where('code', 'like', $like)->orWhere('title', 'like', $like))

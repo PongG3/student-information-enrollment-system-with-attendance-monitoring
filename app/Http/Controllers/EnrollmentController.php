@@ -13,6 +13,7 @@ use App\Services\EnrollmentWorkflow;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Support\Like;
 
 class EnrollmentController extends Controller
 {
@@ -36,7 +37,7 @@ class EnrollmentController extends Controller
             ->when($request->filled('status'), fn ($q) => $q->where('status', (string) $request->input('status')))
             ->when($request->filled('search'), function ($query) use ($request) {
                 foreach (preg_split('/\s+/', trim((string) $request->input('search'))) as $word) {
-                    $like = '%' . $word . '%';
+                    $like = Like::contains($word);
                     $query->where(function ($w) use ($like) {
                         $w->whereHas('student', fn ($s) => $s->where('student_number', 'like', $like)
                             ->orWhere('first_name', 'like', $like)->orWhere('last_name', 'like', $like))
@@ -91,7 +92,7 @@ class EnrollmentController extends Controller
                     ->where('term_id', $term->id)
                     ->where('status', ClassOffering::STATUS_OPEN)
                     ->when($request->filled('q'), function ($query) use ($request) {
-                        $like = '%' . trim((string) $request->input('q')) . '%';
+                        $like = Like::contains($request->input('q'));
                         $query->where(fn ($w) => $w->where('class_code', 'like', $like)
                             ->orWhereHas('subject', fn ($s) => $s->where('code', 'like', $like)->orWhere('title', 'like', $like)));
                     })
@@ -113,7 +114,7 @@ class EnrollmentController extends Controller
             $query = Student::query()->with('program')->where('status', Student::STATUS_ACTIVE);
 
             foreach (preg_split('/\s+/', trim((string) $request->input('q'))) as $word) {
-                $like = '%' . $word . '%';
+                $like = Like::contains($word);
                 $query->where(fn ($w) => $w->where('student_number', 'like', $like)
                     ->orWhere('first_name', 'like', $like)->orWhere('last_name', 'like', $like));
             }

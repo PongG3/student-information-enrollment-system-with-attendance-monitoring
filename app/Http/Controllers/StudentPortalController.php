@@ -13,6 +13,7 @@ use App\Models\Term;
 use App\Services\AttendanceStats;
 use App\Services\StudentPortalData;
 use Illuminate\Http\Request;
+use App\Support\Like;
 
 /**
  * The student portal. Every page is read-only (GET only) and shows only the
@@ -85,7 +86,7 @@ class StudentPortalController extends Controller
                 ->where('term_id', $term->id)
                 ->where('status', '!=', ClassOffering::STATUS_CANCELLED)
                 ->when($search !== '', function ($query) use ($search) {
-                    $like = '%' . $search . '%';
+                    $like = Like::contains($search);
                     $query->where(fn ($w) => $w->where('class_code', 'like', $like)
                         ->orWhereHas('subject', fn ($s) => $s->where('code', 'like', $like)->orWhere('title', 'like', $like)));
                 })

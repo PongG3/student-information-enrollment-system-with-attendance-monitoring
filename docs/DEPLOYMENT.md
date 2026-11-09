@@ -35,18 +35,31 @@ On the server, inside `C:\sies`:
 composer install --no-dev --optimize-autoloader
 ```
 
-## 3. Create the production database and its own user
+## 3. Create the production database and its two users
 
-Open the MySQL console as root (`mysql -u root -p`) and run, with your own long random password:
+The app gets an account that can only **read and write rows**. A second account, used only for
+migrations and backups, may change tables. So even if an attacker ever got SQL through the app,
+it could not drop or alter a table, or read other databases.
+
+Open the MySQL console as root (`mysql -u root -p`) and run, with your own two different long random passwords:
 
 ```sql
 CREATE DATABASE sies_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- The app: rows only.
 CREATE USER 'sies_app'@'localhost' IDENTIFIED BY 'PUT-A-LONG-RANDOM-PASSWORD-HERE';
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP, REFERENCES, LOCK TABLES ON sies_prod.* TO 'sies_app'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON sies_prod.* TO 'sies_app'@'localhost';
+
+-- Migrations and backups only. Never put this one in DB_USERNAME.
+CREATE USER 'sies_admin'@'localhost' IDENTIFIED BY 'PUT-A-DIFFERENT-LONG-RANDOM-PASSWORD-HERE';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP, REFERENCES,
+      LOCK TABLES, SHOW VIEW, TRIGGER ON sies_prod.* TO 'sies_admin'@'localhost';
+
 FLUSH PRIVILEGES;
 ```
 
-Use letters and digits only (16 or more) so the backup script reads it correctly. The `root` account is never used by the app. Set a password on `root` too, and do not let MySQL listen on the network (`bind-address=127.0.0.1`).
+Put `sies_app` in `DB_USERNAME`/`DB_PASSWORD` and `sies_admin` in `DB_ADMIN_USERNAME`/`DB_ADMIN_PASSWORD`.
+Use letters and digits only (16 or more) so the backup script reads them correctly. The `root` account is never used by the app. Set a password on `root` too, and do not let MySQL listen on the network (`bind-address=127.0.0.1`).
 
 ## 4. Settings file
 
@@ -54,7 +67,7 @@ Copy `.env.production.example` to `.env` and fill it in. Then:
 
 ```powershell
 php artisan key:generate
-php artisan migrate --force
+php artisan migrate --database=mysql_admin --force         # tables are created with the admin account
 php artisan db:seed --class=ReferenceDataSeeder --force   # programs, requirements, settings only. No test accounts.
 php artisan sies:create-admin                             # your first REAL administrator
 ```
@@ -136,7 +149,7 @@ Photos are in `C:\restore-test\private`. Copy that folder's contents back to `st
 2. Run `scripts\backup.ps1`
 3. Copy the new files over the old ones (never over `.env` or `storage`)
 4. `composer install --no-dev --optimize-autoloader` (only if new libraries came with the update)
-5. `php artisan migrate --force`
+5. `php artisan migrate --database=mysql_admin --force`
 6. `php artisan optimize:clear` then `php artisan optimize`
 7. `php artisan sies:check` and a quick look around
 8. `php artisan up`
@@ -158,6 +171,7 @@ This is a checklist for the people responsible, not legal advice. Ask the school
 
 - [ ] `php artisan test` passes on the laptop
 - [ ] `.env` has `APP_ENV=production`, `APP_DEBUG=false`, an `https://` URL, a strong database password and a non-root database user
+- [ ] The app's database user (`DB_USERNAME`) has only SELECT, INSERT, UPDATE, DELETE; migrations use `DB_ADMIN_USERNAME`
 - [ ] `php artisan sies:check` shows no FAIL
 - [ ] No `@sies.test` account exists and the real school name is set
 - [ ] HTTPS works with no warning on a teacher's computer

@@ -51,10 +51,13 @@ try {
     $options = Join-Path $work 'client.cnf'
     $port = if ($cfg['DB_PORT']) { $cfg['DB_PORT'] } else { '3306' }
     $hostName = if ($cfg['DB_HOST']) { $cfg['DB_HOST'] } else { '127.0.0.1' }
+    # The admin account can read views and triggers; the app account may only touch rows.
+    $dumpUser = if ($cfg['DB_ADMIN_USERNAME']) { $cfg['DB_ADMIN_USERNAME'] } else { $cfg['DB_USERNAME'] }
+    $dumpPass = if ($cfg['DB_ADMIN_USERNAME']) { $cfg['DB_ADMIN_PASSWORD'] } else { $cfg['DB_PASSWORD'] }
     Set-Content -Path $options -Encoding ASCII -Value @(
         '[client]',
-        "user=$($cfg['DB_USERNAME'])",
-        "password=""$($cfg['DB_PASSWORD'])""",
+        "user=$dumpUser",
+        "password=""$dumpPass""",
         "host=$hostName",
         "port=$port"
     )

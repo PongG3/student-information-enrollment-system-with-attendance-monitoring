@@ -128,6 +128,12 @@ class ReadinessCheck
             $add('db_password', 'ok', 'Database password', 'Strong enough.');
         }
 
+        // The app should not be able to change tables; migrations and backups use a second account.
+        $admin = (string) config('database.connections.mysql_admin.username', '');
+        $admin === '' || $admin === $username
+            ? $add('db_accounts', 'warn', 'Database accounts', 'The app and migrations share one account, so the app can drop or alter tables. Add a separate DB_ADMIN_USERNAME (DEPLOYMENT.md, section 3).')
+            : $add('db_accounts', 'ok', 'Database accounts', "The app uses '{$username}'; migrations and backups use '{$admin}'.");
+
         return $checks;
     }
 

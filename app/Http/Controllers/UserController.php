@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Support\Like;
 
 class UserController extends Controller
 {
@@ -19,7 +20,7 @@ class UserController extends Controller
     {
         $users = User::query()
             ->when($request->filled('search'), function ($query) use ($request) {
-                $like = '%' . trim((string) $request->input('search')) . '%';
+                $like = Like::contains($request->input('search'));
                 $query->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('email', 'like', $like));
             })
             ->when($request->filled('role'), fn ($query) => $query->where('role', (string) $request->input('role')))
