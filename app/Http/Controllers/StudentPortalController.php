@@ -85,6 +85,8 @@ class StudentPortalController extends Controller
                 ->withCount(['enrollments as seats_taken' => fn ($q) => $q->holdingSeat()])
                 ->where('term_id', $term->id)
                 ->where('status', '!=', ClassOffering::STATUS_CANCELLED)
+                // Only subjects of the student's own curriculum, plus general subjects.
+                ->whereHas('subject', fn ($q) => $q->openToProgram($student->program_id))
                 ->when($search !== '', function ($query) use ($search) {
                     $like = Like::contains($search);
                     $query->where(fn ($w) => $w->where('class_code', 'like', $like)

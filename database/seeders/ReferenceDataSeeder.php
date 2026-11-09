@@ -52,6 +52,17 @@ class ReferenceDataSeeder extends Seeder
             Subject::firstOrCreate(['code' => $code], ['title' => $title, 'units' => $units]);
         }
 
+        // Curriculum: computing subjects are majors of BSCS and BSIT; the others are minors (general education, PE) open to all.
+        // Only set when a subject has no programs yet, so changes made in the app are kept.
+        $computing = Program::whereIn('code', ['BSCS', 'BSIT'])->pluck('id');
+        foreach (['CS101', 'CS102'] as $code) {
+            $subject = Subject::where('code', $code)->first();
+            if ($subject && $subject->programs()->doesntExist()) {
+                $subject->update(['category' => Subject::MAJOR]);
+                $subject->programs()->sync($computing);
+            }
+        }
+
         foreach ([
             ['Transcript of Records / Form 138', 'Previous school record'],
             ['PSA Birth Certificate', 'Photocopy of the original'],

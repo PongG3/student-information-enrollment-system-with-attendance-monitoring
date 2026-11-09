@@ -1,4 +1,4 @@
-<x-app-layout title="Available Courses" subtitle="Classes offered this term. To add or drop a class, please see the registrar's office.">
+<x-app-layout title="Available Courses" subtitle="Classes of your program and general subjects offered this term. To add or drop a class, please see the registrar's office.">
     <div class="card-sies">
         <div class="card-header-sies">
             <form method="GET" class="filter-bar">

@@ -131,6 +131,18 @@ document.addEventListener('DOMContentLoaded', () => {
         update();
     }
 
+    // Subject form: the program list only applies to major subjects.
+    document.querySelectorAll('[data-category-choice]').forEach((choice) => {
+        const form = choice.closest('form');
+        const programs = form?.querySelector('[data-major-only]');
+        if (!programs) return;
+        const sync = () => { programs.hidden = form.querySelector('input[name="category"]:checked')?.value !== 'major'; };
+        choice.addEventListener('change', sync);
+        // The edit dialog fills the form when it opens; sync after that.
+        choice.closest('.modal')?.addEventListener('shown.bs.modal', sync);
+        sync();
+    });
+
     // "Copy" buttons (temporary passwords): copy the text and say so on the button.
     document.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-copy]');
@@ -210,6 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const values = JSON.parse(button.dataset.values || '{}');
                 Object.entries(values).forEach(([name, value]) => {
+                    // A list (e.g. program_ids) ticks the matching boxes of a "name[]" checkbox group.
+                    if (Array.isArray(value)) {
+                        const wanted = value.map(String);
+                        form.querySelectorAll(`input[name="${name}[]"]`).forEach((box) => { box.checked = wanted.includes(box.value); });
+                        return;
+                    }
                     const input = form.elements[name];
                     if (!input) return;
                     if (input.type === 'checkbox') {

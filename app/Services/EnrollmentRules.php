@@ -60,12 +60,17 @@ class EnrollmentRules
      */
     public static function problems(Student $student, ClassOffering $class, array $context, bool $forApproval = false, ?Collection $extra = null): array
     {
-        $class->loadMissing(['term', 'subject', 'meetings']);
+        $class->loadMissing(['term', 'subject.programs', 'meetings']);
         $extra = ($extra ?? collect())->reject(fn ($other) => $other->id === $class->id)->values();
         $problems = [];
 
         if ($student->trashed() || $student->status !== Student::STATUS_ACTIVE) {
             $problems[] = 'The student is not active.';
+        }
+
+        // Curriculum: the subject must belong to the student's program (general subjects are open to all).
+        if (! $class->subject->isOpenTo($student->program_id)) {
+            $problems[] = "{$class->subject->code} is a major subject for {$class->subject->programsLabel()} students only.";
         }
 
         if ($class->term->isClosed()) {

@@ -183,7 +183,7 @@ class ClassOfferingController extends Controller
             'meetingRows' => $rows,
             'terms' => Term::with('academicYear')->whereNull('closed_at')->orderByDesc('start_date')->get(),
             'programs' => Program::where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->program_id))->orderBy('code')->get(),
-            'subjects' => Subject::where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->subject_id))->orderBy('code')->get(),
+            'subjects' => Subject::with('programs')->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->subject_id))->orderBy('code')->get(),
             'teachers' => User::where('role', 'teacher')
                 ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->teacher_id))
                 ->orderBy('name')->get(),
@@ -237,6 +237,14 @@ class ClassOfferingController extends Controller
             ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class?->subject_id))->exists();
         if (! $subjectOk) {
             $this->fail('subject_id', 'Choose an active subject.');
+        }
+
+        // A block's class must be a subject of that program's curriculum (or a general subject).
+        if ($data['program_id']) {
+            $subject = Subject::with('programs')->find($data['subject_id']);
+            if (! $subject->isOpenTo((int) $data['program_id'])) {
+                $this->fail('program_id', "{$subject->code} is a major subject of {$subject->programsLabel()}, not of this program.");
+            }
         }
 
         // One class per subject per block in a term. BSCS 1-C and BSIT 1-C are different blocks.

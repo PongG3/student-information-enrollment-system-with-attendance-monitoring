@@ -21,7 +21,7 @@
                 </div>
                 <div class="col-md-6">
                     <x-select name="subject_id" label="Subject"
-                        :options="$subjects->mapWithKeys(fn ($s) => [$s->id => $s->code . ' · ' . $s->title])->all()"
+                        :options="$subjects->mapWithKeys(fn ($s) => [$s->id => $s->code . ' · ' . $s->title . ' (' . $s->programsLabel() . ')'])->all()"
                         :value="$class->subject_id" placeholder="Choose a subject" required :disabled="$hasEnrollments" />
                     @if ($hasEnrollments)<input type="hidden" name="subject_id" value="{{ $class->subject_id }}">@endif
                 </div>
