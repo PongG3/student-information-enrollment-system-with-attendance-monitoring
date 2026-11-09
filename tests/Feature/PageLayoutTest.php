@@ -82,6 +82,25 @@ class PageLayoutTest extends TestCase
             ->assertSeeInOrder(['Find the student', 'Choose classes']);
     }
 
+    public function test_the_student_form_is_tabbed_and_opens_where_the_error_is(): void
+    {
+        // A clean form opens on the first tab.
+        $this->actingAs($this->registrar)->get(route('students.create'))->assertOk()
+            ->assertSeeInOrder(['Personal &amp; contact', 'Academic', 'Guardians', 'Photo'], false)
+            ->assertSee('class="tab-pane fade show active" id="pane-personal"', false);
+
+        // Everything filled in except the guardians: the form comes back on the Guardians tab, marked.
+        $this->actingAs($this->registrar)->from(route('students.create'))->followingRedirects()->post(route('students.store'), [
+            'first_name' => 'Alex', 'last_name' => 'Rivera', 'gender' => 'Male', 'birth_date' => '2007-03-14',
+            'program_id' => $this->program->id, 'year_level' => 1, 'student_type' => 'new',
+        ])->assertOk()
+            ->assertSee('class="tab-pane fade show active" id="pane-guardians"', false)
+            ->assertSee('class="form-tab-error"', false)
+            ->assertSee('Add at least one parent or guardian.');
+
+        $this->assertSame(0, Student::count());
+    }
+
     public function test_reports_are_cards_that_open(): void
     {
         $this->actingAs($this->registrar)->get(route('reports.index'))->assertOk()

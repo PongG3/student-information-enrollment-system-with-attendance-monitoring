@@ -155,3 +155,4 @@
 .category-option { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.6rem 0.75rem; border: 1px solid $border; border-radius: $radius; cursor: pointer; }
 .category-option:has(input:checked) { border-color: $teal-strong; background: rgba($teal, 0.08); }
 .category-option .form-check-input { margin-top: 0.2rem; flex: none; }
+.guardian-row { padding-bottom: 0.1rem; }

@@ -143,6 +143,25 @@ document.addEventListener('DOMContentLoaded', () => {
         sync();
     });
 
+    // Tabbed forms: "← Previous" / "Next →" in the save bar move between tabs; each hides at its end.
+    document.querySelectorAll('[data-tab-steps]').forEach((steps) => {
+        const tabs = [...document.querySelectorAll(`${steps.dataset.tabSteps} [data-bs-toggle="tab"]`)];
+        const current = () => tabs.findIndex((t) => t.classList.contains('active'));
+        const sync = () => steps.querySelectorAll('[data-tab-step]').forEach((b) => {
+            const target = current() + Number(b.dataset.tabStep);
+            b.hidden = target < 0 || target >= tabs.length;
+        });
+        steps.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-tab-step]');
+            const tab = button && tabs[current() + Number(button.dataset.tabStep)];
+            if (!tab) return;
+            window.bootstrap.Tab.getOrCreateInstance(tab).show();
+            tab.closest('.form-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+        tabs.forEach((t) => t.addEventListener('shown.bs.tab', sync));
+        sync();
+    });
+
     // "Copy" buttons (temporary passwords): copy the text and say so on the button.
     document.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-copy]');

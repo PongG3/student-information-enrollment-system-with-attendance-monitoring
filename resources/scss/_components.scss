@@ -212,3 +212,31 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 // Single-card forms (academic year, term, user) share one width.
 .card-form { max-width: 560px; }
 .card-form-sm { max-width: 480px; }
+
+// Form dialogs: the <form> sits between .modal-content and .modal-body, so it must pass the
+// height limit on for "modal-dialog-scrollable" to keep the header and Save/Cancel in view.
+.modal-dialog-scrollable .modal-content > form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.modal-dialog-scrollable .modal-content > form > .modal-body { overflow-y: auto; }
+
+// ---- Tabbed forms (long forms split into parts that each fit one screen) ----
+.form-tabs {
+    display: flex; flex-wrap: wrap; gap: 0.25rem; list-style: none; padding: 0.25rem; margin: 0 0 1rem;
+    background: $surface; border: 1px solid $border; border-radius: $radius-lg; box-shadow: $shadow-sm;
+}
+.form-tab {
+    position: relative; display: inline-flex; align-items: center; gap: 0.45rem; border: 0; background: none;
+    padding: 0.5rem 0.9rem; border-radius: $radius; font-size: 0.86rem; font-weight: 600; color: $text-muted;
+}
+.form-tab:hover { background: $surface-hover; color: $navy; }
+.form-tab.active { background: $navy; color: #fff; }
+.form-tab.active .text-danger { color: #ffb3c0 !important; }
+.form-tab-error { width: 8px; height: 8px; border-radius: 50%; background: $danger; box-shadow: 0 0 0 2px $surface; }
+.form-subhead {
+    display: flex; align-items: center; gap: 0.4rem; margin: 0.25rem 0 0.75rem; padding-top: 0.9rem;
+    border-top: 1px solid $border-soft; font-size: 0.85rem; font-weight: 700; color: $navy;
+}
+.form-tab-nav { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid $border-soft; }
+@media (max-width: 575px) { .form-tab { flex: 1 1 calc(50% - 0.25rem); justify-content: center; } }
+.form-pane { padding: 1rem 1.25rem 0.5rem; }
+.form-pane-help { font-size: 0.8rem; color: $text-muted; margin: 0 0 0.85rem; }
+.form-pane .form-subhead { margin-top: 0; padding-top: 0.6rem; margin-bottom: 0.6rem; }

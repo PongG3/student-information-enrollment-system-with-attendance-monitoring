@@ -1,9 +1,10 @@
-@props(['id', 'addTitle', 'editTitle', 'storeUrl', 'updateUrl'])
+@props(['id', 'addTitle', 'editTitle', 'storeUrl', 'updateUrl', 'size' => ''])
 @php
     $editId = old('_edit_id');
     $action = $editId ? str_replace('__ID__', $editId, $updateUrl) : $storeUrl;
 @endphp
-<x-modal :id="$id" :title="$editId ? $editTitle : $addTitle"
+{{-- Never taller than the window: the title and Save/Cancel stay in view, the fields scroll. --}}
+<x-modal :id="$id" :title="$editId ? $editTitle : $addTitle" :size="trim($size . ' modal-dialog-scrollable')"
     data-form-modal data-store-action="{{ $storeUrl }}" data-add-title="{{ $addTitle }}" data-edit-title="{{ $editTitle }}">
     <form method="POST" action="{{ $action }}" novalidate>
         @csrf

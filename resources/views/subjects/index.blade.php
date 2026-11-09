@@ -63,11 +63,19 @@
     </div>
 
     <x-form-modal id="subjectModal" add-title="Add subject" edit-title="Edit subject"
-        :store-url="route('subjects.store')" :update-url="route('subjects.update', '__ID__')">
-        <x-field name="code" label="Subject code" required maxlength="20" placeholder="e.g. CS101" />
+        :store-url="route('subjects.store')" :update-url="route('subjects.update', '__ID__')" size="modal-lg">
+        {{-- Two columns: what the subject is (left), who may take it (right). --}}
+        <div class="row g-4">
+        <div class="col-md-6">
+        <div class="row">
+            <div class="col-7"><x-field name="code" label="Subject code" required maxlength="20" placeholder="e.g. CS101" /></div>
+            <div class="col-5"><x-field name="units" type="number" label="Units" required step="0.5" min="0.5" max="12" /></div>
+        </div>
         <x-field name="title" label="Subject title" required maxlength="150" />
-        <x-field name="units" type="number" label="Units" required step="0.5" min="0.5" max="12" />
-        <x-field name="description" type="textarea" label="Description" maxlength="1000" />
+        <x-field name="description" type="textarea" label="Description (optional)" maxlength="1000" />
+        <x-check name="is_active" label="Active" :checked="true" help="Inactive subjects cannot be used for new classes." />
+        </div>
+        <div class="col-md-6">
         <fieldset class="mb-3" data-category-choice>
             <legend class="form-label mb-1">Category <span class="text-danger">*</span></legend>
             <div class="category-choice">
@@ -95,6 +103,7 @@
             </div>
             @error('program_ids')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
         </fieldset>
-        <x-check name="is_active" label="Active" :checked="true" help="Inactive subjects cannot be used for new classes." />
+        </div>
+        </div>
     </x-form-modal>
 </x-app-layout>
