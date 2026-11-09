@@ -239,8 +239,9 @@ class StageDTest extends TestCase
 
         $this->actingAs($registrar)->post('/classes', $this->classPayload())->assertSessionHasNoErrors();
 
+        // The schedule code is generated (2026, 1st semester, number 1); a typed-in code is ignored.
         $class = ClassOffering::firstOrFail();
-        $this->assertSame('CL-1001', $class->class_code);
+        $this->assertSame('202610001', $class->class_code);
         $this->assertCount(1, $class->meetings);
         $this->assertDatabaseHas('audit_logs', ['action' => 'class.created']);
     }

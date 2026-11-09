@@ -42,7 +42,7 @@
                             <tr>
                                 <td class="fw-semibold">
                                     <a href="{{ route('classes.show', $class) }}" class="text-decoration-none">{{ $class->class_code }}</a>
-                                    <div class="text-secondary small">Section {{ $class->section }}</div>
+                                    <div class="text-secondary small">{{ $class->block_label }}</div>
                                 </td>
                                 <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div></td>
                                 <td>{{ $class->teacher->name }}</td>

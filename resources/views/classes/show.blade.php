@@ -12,8 +12,10 @@
                 <dl class="mb-0 small">
                     <dt class="text-secondary">Subject</dt>
                     <dd>{{ $class->subject->code }} · {{ $class->subject->title }} ({{ rtrim(rtrim(number_format((float) $class->subject->units, 1), '0'), '.') }} units)</dd>
-                    <dt class="text-secondary">Section</dt>
-                    <dd>{{ $class->section }}</dd>
+                    <dt class="text-secondary">Schedule code</dt>
+                    <dd class="fw-semibold">{{ $class->class_code }}</dd>
+                    <dt class="text-secondary">Block</dt>
+                    <dd>{{ $class->block_label }}@unless ($class->program_id) <span class="text-secondary">· open to any block</span>@endunless</dd>
                     <dt class="text-secondary">Teacher</dt>
                     <dd>{{ $class->teacher->name }}</dd>
                     <dt class="text-secondary">Schedule</dt>

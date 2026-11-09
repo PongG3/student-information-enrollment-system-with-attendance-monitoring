@@ -138,3 +138,9 @@
 .tally-danger  { background: #fce6ea; color: #a1223a; }
 .tally-info    { background: #e3eef8; color: $navy-light; }
 .card-sies.is-today { border-color: $teal-strong; box-shadow: 0 0 0 1px $teal-strong, $shadow-sm; }
+
+// ---- Class form: block (program + year + section) ----
+.block-picker { border: 1px solid $border; border-radius: $radius; background: $surface-muted; padding: 0.9rem 1rem 0.75rem; }
+.block-picker-title { font-size: 0.82rem; font-weight: 700; color: $navy; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.5rem; }
+.block-preview:not(:empty) { background: $navy; color: #fff; border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.75rem; }
+.schedule-code-field { font-variant-numeric: tabular-nums; letter-spacing: 0.04em; background: $surface-muted; }

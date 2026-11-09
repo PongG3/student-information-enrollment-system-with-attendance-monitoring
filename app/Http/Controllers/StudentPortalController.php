@@ -81,7 +81,7 @@ class StudentPortalController extends Controller
         $search = trim((string) $request->input('q', ''));
 
         $classes = $term
-            ? ClassOffering::with(['subject', 'teacher', 'meetings'])
+            ? ClassOffering::with(['subject', 'teacher', 'meetings', 'program'])
                 ->withCount(['enrollments as seats_taken' => fn ($q) => $q->holdingSeat()])
                 ->where('term_id', $term->id)
                 ->where('status', '!=', ClassOffering::STATUS_CANCELLED)
@@ -109,7 +109,7 @@ class StudentPortalController extends Controller
         $all = $request->input('term') === 'all';
         $term = $all ? null : StudentPortalData::pickTerm($terms, $request->input('term'));
 
-        $enrollments = Enrollment::with(['classOffering.subject', 'classOffering.teacher', 'classOffering.meetings', 'classOffering.term.academicYear'])
+        $enrollments = Enrollment::with(['classOffering.subject', 'classOffering.program', 'classOffering.teacher', 'classOffering.meetings', 'classOffering.term.academicYear'])
             ->where('student_id', $student->id)
             ->when($term, fn ($q) => $q->whereHas('classOffering', fn ($c) => $c->where('term_id', $term->id)))
             ->latest('requested_at')->latest('id')

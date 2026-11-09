@@ -31,7 +31,7 @@
                 @endforelse
             </div>
             <div class="card-sies p-3 small">
-                <div class="fw-semibold">{{ $class->subject->code }} · {{ $class->section }}</div>
+                <div class="fw-semibold">{{ $class->subject->code }} · {{ $class->block_label }}</div>
                 <div class="text-secondary">{{ $class->teacher->name }}</div>
                 <div class="text-secondary">{{ $class->scheduleSummary() }}</div>
                 <a href="{{ route('attendance.summary', $class) }}" class="d-inline-block mt-2 fw-semibold text-decoration-none">Attendance summary →</a>

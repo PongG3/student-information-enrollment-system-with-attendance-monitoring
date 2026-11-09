@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\ScheduleChecker;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,10 +16,24 @@ class ClassOffering extends Model
 
     private const DAY_ABBREVIATIONS = [1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat', 7 => 'Sun'];
 
+    // class_code holds the schedule code (e.g. 202610007, see App\Support\ScheduleCode).
     protected $fillable = [
-        'term_id', 'subject_id', 'section', 'class_code',
+        'term_id', 'subject_id', 'program_id', 'year_level', 'section', 'class_code',
         'teacher_id', 'capacity', 'status',
     ];
+
+    /** The block the class is for, e.g. "BSCS 1-C"; "Section C" when it is open to any block. */
+    protected function blockLabel(): Attribute
+    {
+        return Attribute::get(fn () => $this->program_id && $this->year_level
+            ? ($this->program?->code ?? '') . ' ' . $this->year_level . '-' . $this->section
+            : 'Section ' . $this->section);
+    }
+
+    public function program(): BelongsTo
+    {
+        return $this->belongsTo(Program::class);
+    }
 
     public function term(): BelongsTo
     {
@@ -63,19 +78,6 @@ class ClassOffering extends Model
         return max(0, $this->capacity - $this->seatsTaken());
     }
 
-    /** Suggested next class code for a term, such as CL-1007. */
-    public static function nextCode(int $termId): string
-    {
-        $highest = 1000;
-
-        foreach (static::where('term_id', $termId)->pluck('class_code') as $code) {
-            if (preg_match('/^CL-(\d+)$/', $code, $match)) {
-                $highest = max($highest, (int) $match[1]);
-            }
-        }
-
-        return 'CL-' . ($highest + 1);
-    }
 
     /** "Mon, Wed 8:00 AM to 9:30 AM · Room 101" (needs the meetings relation loaded). */
     public function scheduleSummary(): string

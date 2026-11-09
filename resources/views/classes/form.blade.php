@@ -26,14 +26,37 @@
                     @if ($hasEnrollments)<input type="hidden" name="subject_id" value="{{ $class->subject_id }}">@endif
                 </div>
                 <div class="col-md-4">
-                    <x-field name="class_code" label="Class code" :value="$class->class_code" required maxlength="20" />
-                </div>
-                <div class="col-md-4">
-                    <x-field name="section" label="Section" :value="$class->section" required maxlength="20" />
+                    <label class="form-label" for="schedule_code">Schedule code</label>
+                    <input id="schedule_code" type="text" class="form-control schedule-code-field" readonly
+                        value="{{ $class->exists ? $class->class_code : '' }}" placeholder="Given automatically when you save"
+                        aria-describedby="schedule_code_help">
+                    <div class="form-text mb-3" id="schedule_code_help">Year + term + number, e.g. 202610007. Students use it to find the class.</div>
                 </div>
                 <div class="col-md-4">
                     <x-field name="capacity" type="number" label="Capacity (seats)" :value="$class->capacity" required min="1" max="200" />
                 </div>
+            </div>
+
+            {{-- The block the class is for. Leave the program empty for a class open to any block (irregular students). --}}
+            <div class="block-picker">
+                <div class="block-picker-title">Block <span class="block-preview" data-block-preview>{{ $class->exists ? $class->block_label : '' }}</span></div>
+                <div class="row">
+                    <div class="col-md-5">
+                        <x-select name="program_id" label="Program" :options="$programs->mapWithKeys(fn ($p) => [$p->id => $p->code . ' · ' . $p->name])->all()"
+                            :value="$class->program_id" placeholder="Any block (open to irregular students)" data-block-part="program" />
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <x-select name="year_level" label="Year level" :options="array_combine(range(1, 6), array_map(fn ($n) => 'Year ' . $n, range(1, 6)))"
+                            :value="$class->year_level" placeholder="—" data-block-part="year" />
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <x-field name="section" label="Section" :value="$class->section" required maxlength="10" placeholder="e.g. C" data-block-part="section" />
+                    </div>
+                </div>
+                <div class="form-text mt-n2">BSCS 1-C and BSIT 1-C are different blocks, so both can have the same subject in a term.</div>
+            </div>
+
+            <div class="row mt-3">
                 <div class="col-md-8">
                     <x-select name="teacher_id" label="Teacher"
                         :options="$teachers->pluck('name', 'id')->all()" :value="$class->teacher_id"

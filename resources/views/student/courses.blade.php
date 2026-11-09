@@ -9,7 +9,7 @@
                         </option>
                     @endforeach
                 </select>
-                <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Search subject or class code" maxlength="60">
+                <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Search subject or schedule code" maxlength="60">
                 <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
                 @if ($search !== '')<a href="{{ route('student.courses', array_filter(['term' => $term?->id])) }}" class="small">Clear</a>@endif
             </form>
@@ -30,7 +30,7 @@
                         @foreach ($classes as $class)
                             @php $left = max(0, $class->capacity - $class->seats_taken); @endphp
                             <tr>
-                                <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small fw-normal">Section {{ $class->section }}</div></td>
+                                <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small fw-normal">{{ $class->block_label }}</div></td>
                                 <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div></td>
                                 <td>{{ rtrim(rtrim((string) $class->subject->units, '0'), '.') }}</td>
                                 <td class="small">{{ $class->scheduleSummary() ?: '—' }}</td>

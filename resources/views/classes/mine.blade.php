@@ -22,7 +22,7 @@
                     <tbody>
                         @foreach ($classes as $class)
                             <tr>
-                                <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small">Section {{ $class->section }}</div></td>
+                                <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small">{{ $class->block_label }}</div></td>
                                 <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div></td>
                                 <td class="small">{{ $class->scheduleSummary() }}</td>
                                 <td>{{ $class->enrolled_count }} / {{ $class->capacity }}</td>

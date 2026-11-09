@@ -12,6 +12,7 @@ use App\Models\StudentRequirement;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
+use App\Support\ScheduleCode;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -68,9 +69,11 @@ class DemoDataSeeder extends Seeder
         foreach ($offerings as [$classCode, $subjectCode, $teacher, $meetings]) {
             $subject = Subject::where('code', $subjectCode)->first();
 
+            // Found by term + subject + section, so running the seeder again changes nothing.
+            // $classCode is only this seeder's label; the real schedule code is generated.
             $class = ClassOffering::firstOrCreate(
-                ['term_id' => $term->id, 'class_code' => $classCode],
-                ['subject_id' => $subject->id, 'section' => 'A', 'teacher_id' => $teacher->id, 'capacity' => 40],
+                ['term_id' => $term->id, 'subject_id' => $subject->id, 'section' => 'A'],
+                ['class_code' => ScheduleCode::next($term), 'teacher_id' => $teacher->id, 'capacity' => 40],
             );
 
             if ($class->wasRecentlyCreated) {

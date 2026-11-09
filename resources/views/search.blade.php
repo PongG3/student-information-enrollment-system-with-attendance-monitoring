@@ -1,6 +1,6 @@
 <x-app-layout title="Search" :subtitle="$searched ? 'Results for “' . $query . '”' : 'Type at least two letters in the search box above.'">
     @if (! $searched)
-        <div class="card-sies"><x-empty-state message="Search by student name or number, class code, or subject." /></div>
+        <div class="card-sies"><x-empty-state message="Search by student name or number, schedule code, or subject." /></div>
     @else
         @if ($showStudents)
             <div class="card-sies mb-4">

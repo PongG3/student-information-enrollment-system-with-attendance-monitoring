@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\ClassMeeting;
 use App\Models\ClassOffering;
 use App\Models\Enrollment;
+use App\Models\Program;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
 use App\Services\ScheduleChecker;
 use App\Support\AuditLogger;
+use App\Support\ScheduleCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -26,7 +28,7 @@ class ClassOfferingController extends Controller
         $currentTerm = Term::current();
         $termId = $request->input('term', $currentTerm?->id);
 
-        $classes = ClassOffering::with(['subject', 'teacher', 'term', 'meetings'])
+        $classes = ClassOffering::with(['subject', 'teacher', 'term', 'meetings', 'program'])
             ->withCount(['enrollments as seats_taken' => fn ($q) => $q->whereIn('status', [Enrollment::STATUS_APPROVED, Enrollment::STATUS_ENROLLED])])
             ->when($termId, fn ($q) => $q->where('term_id', $termId))
             ->when($request->filled('status'), fn ($q) => $q->where('status', (string) $request->input('status')))
@@ -57,7 +59,6 @@ class ClassOfferingController extends Controller
             'section' => 'A',
             'capacity' => 40,
             'status' => ClassOffering::STATUS_OPEN,
-            'class_code' => $termId ? ClassOffering::nextCode((int) $termId) : 'CL-1001',
         ]);
 
         return view('classes.form', $this->formData($class, []));
@@ -68,6 +69,10 @@ class ClassOfferingController extends Controller
         [$data, $meetings] = $this->validated($request);
 
         $class = DB::transaction(function () use ($data, $meetings) {
+            // Locking the term keeps two people from getting the same schedule code.
+            $term = Term::whereKey($data['term_id'])->lockForUpdate()->firstOrFail();
+            $data['class_code'] = ScheduleCode::next($term);
+
             $class = ClassOffering::create($data);
             $class->meetings()->createMany($meetings);
 
@@ -128,9 +133,14 @@ class ClassOfferingController extends Controller
 
         [$data, $meetings] = $this->validated($request, $classOffering);
 
-        $old = $classOffering->only(['term_id', 'subject_id', 'section', 'class_code', 'teacher_id', 'capacity', 'status']);
+        $old = $classOffering->only(['term_id', 'subject_id', 'program_id', 'year_level', 'section', 'class_code', 'teacher_id', 'capacity', 'status']);
 
-        DB::transaction(function () use ($classOffering, $data, $meetings) {
+        DB::transaction(function () use ($classOffering, &$data, $meetings) {
+            // Moved to another term: it gets a schedule code of that term.
+            if ((int) $data['term_id'] !== (int) $classOffering->term_id) {
+                $term = Term::whereKey($data['term_id'])->lockForUpdate()->firstOrFail();
+                $data['class_code'] = ScheduleCode::next($term);
+            }
             $classOffering->update($data);
             $classOffering->meetings()->delete();
             $classOffering->meetings()->createMany($meetings);
@@ -147,7 +157,7 @@ class ClassOfferingController extends Controller
         $currentTerm = Term::current();
         $termId = $request->input('term', $currentTerm?->id);
 
-        $classes = ClassOffering::with(['subject', 'term', 'meetings'])
+        $classes = ClassOffering::with(['subject', 'term', 'meetings', 'program'])
             ->withCount(['enrollments as enrolled_count' => fn ($q) => $q->where('status', Enrollment::STATUS_ENROLLED)])
             ->where('teacher_id', $request->user()->id)
             ->when($termId, fn ($q) => $q->where('term_id', $termId))
@@ -172,6 +182,7 @@ class ClassOfferingController extends Controller
             'class' => $class,
             'meetingRows' => $rows,
             'terms' => Term::with('academicYear')->whereNull('closed_at')->orderByDesc('start_date')->get(),
+            'programs' => Program::where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->program_id))->orderBy('code')->get(),
             'subjects' => Subject::where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->subject_id))->orderBy('code')->get(),
             'teachers' => User::where('role', 'teacher')
                 ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $class->teacher_id))
@@ -184,13 +195,14 @@ class ClassOfferingController extends Controller
     /** @return array{0: array, 1: array} the class fields and the cleaned meeting rows */
     private function validated(Request $request, ?ClassOffering $class = null): array
     {
-        $request->merge(['class_code' => strtoupper(trim((string) $request->input('class_code')))]);
+        $request->merge(['section' => strtoupper(trim((string) $request->input('section')))]);
 
         $data = $request->validate([
             'term_id' => ['required', 'exists:terms,id'],
             'subject_id' => ['required', 'exists:subjects,id'],
-            'section' => ['required', 'string', 'max:20'],
-            'class_code' => ['required', 'max:20', 'regex:/^[A-Z0-9\-]+$/'],
+            'program_id' => ['nullable', 'integer', 'exists:programs,id'],
+            'year_level' => ['nullable', 'required_with:program_id', 'integer', 'between:1,6'],
+            'section' => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9]+(-[A-Z0-9]+)?$/'],
             'teacher_id' => ['required', 'exists:users,id'],
             'capacity' => ['required', 'integer', 'min:1', 'max:200'],
             'status' => ['required', Rule::in([ClassOffering::STATUS_OPEN, ClassOffering::STATUS_CLOSED, ClassOffering::STATUS_CANCELLED])],
@@ -199,7 +211,15 @@ class ClassOfferingController extends Controller
             'meetings.*.start' => ['nullable', 'date_format:H:i'],
             'meetings.*.end' => ['nullable', 'date_format:H:i'],
             'meetings.*.room' => ['nullable', 'string', 'max:50'],
-        ], ['class_code.regex' => 'Use letters, numbers and dashes only.']);
+        ], [
+            'section.regex' => 'Use letters and numbers only, e.g. C.',
+            'year_level.required_with' => 'Choose the year level of the block.',
+        ]);
+        // A year level without a program is not a block: treat it as open to any block.
+        if (empty($data['program_id'])) {
+            $data['program_id'] = null;
+            $data['year_level'] = null;
+        }
 
         $term = Term::findOrFail($data['term_id']);
         if ($term->isClosed()) {
@@ -219,13 +239,16 @@ class ClassOfferingController extends Controller
             $this->fail('subject_id', 'Choose an active subject.');
         }
 
-        // Unique code, and one subject/section per term.
-        $others = ClassOffering::where('term_id', $term->id)->when($class, fn ($q) => $q->where('id', '!=', $class->id));
-        if ((clone $others)->where('class_code', $data['class_code'])->exists()) {
-            $this->fail('class_code', 'This class code is already used in the term.');
-        }
-        if ((clone $others)->where('subject_id', $data['subject_id'])->where('section', $data['section'])->exists()) {
-            $this->fail('section', 'This subject already has a class with that section in the term.');
+        // One class per subject per block in a term. BSCS 1-C and BSIT 1-C are different blocks.
+        $duplicate = ClassOffering::where('term_id', $term->id)
+            ->when($class, fn ($q) => $q->where('id', '!=', $class->id))
+            ->where('subject_id', $data['subject_id'])
+            ->where('section', $data['section'])
+            ->where(fn ($q) => $data['program_id'] ? $q->where('program_id', $data['program_id']) : $q->whereNull('program_id'))
+            ->where(fn ($q) => $data['year_level'] ? $q->where('year_level', $data['year_level']) : $q->whereNull('year_level'))
+            ->first();
+        if ($duplicate) {
+            $this->fail('section', "This subject already has a class for this block in the term (schedule code {$duplicate->class_code}).");
         }
 
         // Meeting rows: a row counts when a day is chosen.

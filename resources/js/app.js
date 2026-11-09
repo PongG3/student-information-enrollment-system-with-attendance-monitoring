@@ -115,6 +115,22 @@ document.addEventListener('DOMContentLoaded', () => {
         tally();
     });
 
+    // Class form: show the block being built, e.g. "BSCS 1-C" or "Section C (any block)".
+    const blockPreview = document.querySelector('[data-block-preview]');
+    if (blockPreview) {
+        const part = (name) => document.querySelector(`[data-block-part="${name}"]`);
+        const update = () => {
+            const program = part('program');
+            const code = program?.value ? program.options[program.selectedIndex].text.split(' · ')[0] : '';
+            const year = part('year')?.value || '';
+            const section = (part('section')?.value || '').trim().toUpperCase();
+            blockPreview.textContent = !section ? '' : (code && year ? `${code} ${year}-${section}` : `Section ${section} (any block)`);
+        };
+        ['program', 'year', 'section'].forEach((name) => part(name)?.addEventListener('input', update));
+        ['program', 'year'].forEach((name) => part(name)?.addEventListener('change', update));
+        update();
+    }
+
     // "Copy" buttons (temporary passwords): copy the text and say so on the button.
     document.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-copy]');

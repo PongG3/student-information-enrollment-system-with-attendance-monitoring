@@ -24,7 +24,7 @@
                         @foreach ($enrollments as $enrollment)
                             @php $class = $enrollment->classOffering; @endphp
                             <tr>
-                                <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small fw-normal">Section {{ $class->section }}</div></td>
+                                <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small fw-normal">{{ $class->block_label }}</div></td>
                                 <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div></td>
                                 <td>{{ rtrim(rtrim((string) $class->subject->units, '0'), '.') }}</td>
                                 <td class="small">{{ $class->scheduleSummary() ?: '—' }}</td>
