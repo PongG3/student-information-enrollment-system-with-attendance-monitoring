@@ -17,6 +17,9 @@
         .summary { margin-top: 14px; }
         .summary span { display: inline-block; margin-right: 18px; }
         .bar { margin-bottom: 14px; }
+        .letterhead { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+        .letterhead img { height: 52px; }
+        .address { color: #444; font-size: 12px; margin-top: 2px; }
         @page { size: A4 {{ $report->orientation }}; margin: 12mm; }
         @media print { .bar { display: none; } body { margin: 0; } }
     </style>
@@ -27,7 +30,15 @@
         <button onclick="window.close()">Close</button>
     </div>
 
-    <h1>{{ $school }}</h1>
+    @php($logo = \App\Support\SchoolBranding::logoUrl())
+    @php($address = \App\Support\SchoolBranding::address())
+    <div class="letterhead">
+        @if ($logo)<img src="{{ $logo }}" alt="">@endif
+        <div>
+            <h1>{{ $school }}</h1>
+            @if ($address)<div class="address">{{ $address }}</div>@endif
+        </div>
+    </div>
     <h2>{{ $report->title }}</h2>
     <div class="meta">
         @foreach ($report->filters as $label => $value)<div>{{ $label }}: {{ $value }}</div>@endforeach

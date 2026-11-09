@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
 
+// The school logo from System Settings (public: shown on the sign-in page).
+Route::get('/school-logo', [SettingController::class, 'logo'])->name('school.logo');
+
 // /dashboard sends each logged-in user to their own role's dashboard.
 Route::get('/dashboard', function () {
     $route = auth()->user()->role . '.dashboard';

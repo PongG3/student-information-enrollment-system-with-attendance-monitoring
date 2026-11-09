@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->alias([
         'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+    // Before the session starts: the admin's session timeout from System Settings.
+    $middleware->web(prepend: [
+        \App\Http\Middleware\ApplySessionTimeout::class,
+    ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

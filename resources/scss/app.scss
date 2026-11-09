@@ -225,3 +225,39 @@ $full: 260px;
 .skip-link { position: absolute; left: 0.75rem; top: -3rem; z-index: 2000; background: #fff; color: $navy; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; box-shadow: 0 2px 8px rgba(13, 42, 82, 0.25); }
 .skip-link:focus { top: 0.75rem; }
 .app-content:focus { outline: 0; }
+
+// ---- System Settings ----
+.settings-section-head { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1.1rem; }
+.settings-section-icon {
+    flex: none; width: 34px; height: 34px; border-radius: 0.6rem; display: inline-flex; align-items: center; justify-content: center;
+    background: #e8eef8; color: $navy-light;
+}
+.logo-box {
+    height: 112px; border: 1px dashed #b9c6da; border-radius: 0.75rem; background: #f7f9fc;
+    display: flex; align-items: center; justify-content: center; padding: 0.5rem; overflow: hidden;
+}
+.logo-box img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.logo-box.is-removing img { opacity: 0.3; filter: grayscale(1); }
+.input-group-text { font-size: 0.8rem; color: $secondary; background: #f3f6fb; }
+
+// Right column stays in view while the left column scrolls.
+@media (min-width: 1200px) { .settings-aside { position: sticky; top: 1.5rem; } }
+.preview-counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+.preview-count { display: flex; flex-direction: column; gap: 0.2rem; }
+.preview-count input { text-align: center; }
+.preview-result { background: #f5f8fd; border-radius: 0.75rem; padding: 0.9rem 1rem; }
+.preview-percentage { font-size: 1.9rem; font-weight: 700; color: $navy; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.settings-effects { list-style: none; padding: 0; display: grid; gap: 0.65rem; }
+.settings-effects li { display: flex; gap: 0.55rem; align-items: flex-start; }
+.settings-effects .icon { flex: none; color: $navy-light; margin-top: 0.1rem; }
+
+// Floating bar shown while there are unsaved changes.
+.settings-savebar {
+    position: sticky; bottom: 1rem; z-index: 20; margin-top: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    background: $navy; color: #fff; border-radius: 0.9rem; padding: 0.7rem 0.8rem 0.7rem 1.2rem;
+    box-shadow: 0 8px 24px rgba(13, 42, 82, 0.25);
+}
+.settings-savebar[hidden] { display: none; }
+.btn-teal { background: $teal; color: $navy; font-weight: 600; border: 0; }
+.btn-teal:hover, .btn-teal:focus-visible { background: darken($teal, 8%); color: $navy; }

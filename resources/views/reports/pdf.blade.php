@@ -16,10 +16,23 @@
         tr { page-break-inside: avoid; }
         .summary { margin-top: 10px; }
         .summary span { margin-right: 14px; }
+        table.letterhead { width: auto; margin-bottom: 4px; }
+        table.letterhead td { border: 0; padding: 0; vertical-align: middle; }
+        table.letterhead td.logo { padding-right: 8px; }
+        table.letterhead img { height: 40px; }
+        .address { color: #444; font-size: 9px; margin-top: 1px; }
     </style>
 </head>
 <body>
-    <h1>{{ $school }}</h1>
+    @php($logo = \App\Support\SchoolBranding::logoDataUri())
+    @php($address = \App\Support\SchoolBranding::address())
+    <table class="letterhead"><tr>
+        @if ($logo)<td class="logo"><img src="{{ $logo }}" alt=""></td>@endif
+        <td>
+            <h1>{{ $school }}</h1>
+            @if ($address)<div class="address">{{ $address }}</div>@endif
+        </td>
+    </tr></table>
     <h2>{{ $report->title }}</h2>
     <div class="meta">
         @foreach ($report->filters as $label => $value)<div>{{ $label }}: {{ $value }}</div>@endforeach

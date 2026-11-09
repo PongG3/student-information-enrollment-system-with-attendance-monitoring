@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\SessionTimeout;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -59,9 +60,11 @@ class ReadinessCheck
             $add('session_secure', 'ok', 'Session cookie', $https ? 'Secure cookie is on.' : 'Not applicable without HTTPS.');
         }
 
-        (int) config('session.lifetime') > 120
-            ? $add('session_lifetime', 'warn', 'Session length', 'Sessions last ' . config('session.lifetime') . ' minutes. 60 to 120 is better on shared computers.')
-            : $add('session_lifetime', 'ok', 'Session length', config('session.lifetime') . ' minutes of inactivity.');
+        // System Settings wins over SESSION_LIFETIME in .env.
+        $lifetime = SessionTimeout::minutes();
+        $lifetime > 120
+            ? $add('session_lifetime', 'warn', 'Session length', "Sessions last {$lifetime} minutes. 60 to 120 is better on shared computers (System Settings).")
+            : $add('session_lifetime', 'ok', 'Session length', "{$lifetime} minutes of inactivity.");
 
         // ---- Database
         $checks = array_merge($checks, self::database((string) config('database.default')));

@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('canvas[data-chart]')) {
         import('./charts.js');
     }
+    // System Settings: live preview and unsaved-changes bar.
+    if (document.querySelector('[data-settings-form]')) {
+        import('./settings.js');
+    }
 
     // Sidebar: keep it open (pin) and, on small screens, slide it in and out.
     const root = document.documentElement;
