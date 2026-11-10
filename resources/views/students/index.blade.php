@@ -65,7 +65,7 @@
                 </x-empty-state>
             @endif
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead><tr><th>Student</th><th>Program</th><th>Year</th><th>Section</th><th>Type</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
                     <tbody>

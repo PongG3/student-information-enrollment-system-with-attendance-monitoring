@@ -17,7 +17,7 @@
         @if ($enrollments->isEmpty())
             <x-empty-state icon="clipboard" message="No class requests for this selection." />
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies align-middle mb-0">
                     <thead><tr><th>Class</th><th>Subject</th><th>Units</th><th>Schedule</th><th>Term</th><th>Status</th></tr></thead>
                     <tbody>

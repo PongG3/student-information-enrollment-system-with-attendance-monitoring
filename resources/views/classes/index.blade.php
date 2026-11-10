@@ -32,7 +32,7 @@
                 <a href="{{ route('classes.create', ['term' => $termId]) }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add class</a>
             </x-empty-state>
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead>
                         <tr><th>Class</th><th>Subject</th><th>Teacher</th><th>Schedule</th><th>Seats</th><th>Status</th><th class="text-end">Actions</th></tr>

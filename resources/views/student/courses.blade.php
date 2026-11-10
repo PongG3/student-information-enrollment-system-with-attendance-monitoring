@@ -23,7 +23,7 @@
         @elseif ($classes->isEmpty())
             <x-empty-state icon="book" message="No classes match." />
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover align-middle mb-0">
                     <thead><tr><th>Class</th><th>Subject</th><th>Units</th><th>Schedule</th><th>Teacher</th><th>Seats left</th><th>My status</th></tr></thead>
                     <tbody>

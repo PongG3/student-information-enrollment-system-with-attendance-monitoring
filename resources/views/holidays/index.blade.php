@@ -18,7 +18,7 @@
         @if ($holidays->isEmpty())
             <x-empty-state icon="calendar" :message="'No non-class days recorded for ' . $year . '.'" />
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead><tr><th>Date</th><th>Day</th><th>Description</th><th class="text-end">Actions</th></tr></thead>
                     <tbody>

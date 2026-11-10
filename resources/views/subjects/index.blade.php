@@ -27,7 +27,7 @@
                 </x-empty-state>
             @endif
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead><tr><th>Code</th><th>Title</th><th>Units</th><th>Category</th><th>Programs</th><th>Classes</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
                     <tbody>

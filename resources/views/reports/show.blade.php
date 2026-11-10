@@ -2,9 +2,11 @@
     @php
         $query = array_filter($filters, fn ($value) => $value !== null && $value !== '');
         $submitted = ! empty(request()->query());
+        // Once a report is on screen the filters fold away (the report header lists them) to leave room for the rows.
+        $foldFilters = $report && ! $errors->any();
     @endphp
 
-    <div class="card-sies p-3 mb-4">
+    <div @class(['card-sies', 'p-3', 'mb-3', 'collapse', 'show' => ! $foldFilters]) id="reportFilters">
         <form method="GET" action="{{ route('reports.show', $slug) }}" class="row g-3 align-items-end">
             @foreach ($fields as $field)
                 <div class="col-sm-6 col-lg-3">
@@ -57,6 +59,8 @@
                     </div>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="collapse" data-bs-target="#reportFilters"
+                        aria-controls="reportFilters" aria-expanded="{{ $foldFilters ? 'false' : 'true' }}"><x-icon name="sliders" :size="14" /> Change filters</button>
                     <a class="btn btn-outline-secondary btn-sm-sies" target="_blank" href="{{ route('reports.print', [$slug] + $query) }}">Print</a>
                     <a class="btn btn-outline-secondary btn-sm-sies" href="{{ route('reports.pdf', [$slug] + $query) }}">Download PDF</a>
                     <a class="btn btn-navy btn-sm-sies" href="{{ route('reports.excel', [$slug] + $query) }}">Download Excel</a>
@@ -73,8 +77,8 @@
 
             @if ($report->note)<div class="px-3 pb-2 small text-secondary">{{ $report->note }}</div>@endif
 
-            <div class="table-responsive">
-                @include('reports._table', ['report' => $report, 'rows' => $shown])
+            <div class="table-responsive" data-fit-viewport>
+                @include('reports._table', ['report' => $report, 'rows' => $shown, 'class' => 'table table-sies table-hover align-middle report-table'])
             </div>
 
             @if (count($report->rows) > $previewLimit)

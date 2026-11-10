@@ -16,7 +16,7 @@
         @if ($classes->isEmpty())
             <x-empty-state icon="classes" message="You have no classes in this term." />
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead><tr><th>Class</th><th>Subject</th><th>Schedule</th><th>Enrolled</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
                     <tbody>

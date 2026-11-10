@@ -62,7 +62,7 @@
                 @if ($sessions->isEmpty())
                     <x-empty-state icon="check" message="No attendance sheets were recorded in this period." />
                 @else
-                    <div class="table-responsive">
+                    <div class="table-responsive" data-fit-viewport>
                         <table class="table table-sies table-hover align-middle">
                             <thead><tr><th>Date</th><th>Class</th><th>Teacher</th><th class="text-center">P</th><th class="text-center">L</th><th class="text-center">A</th><th class="text-center">E</th><th class="text-end"></th></tr></thead>
                             <tbody>

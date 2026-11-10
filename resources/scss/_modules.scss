@@ -173,3 +173,15 @@
 .settings-preview .preview-percentage { font-size: 1.5rem; }
 .settings-last-saved { max-width: 380px; line-height: 1.4; }
 .settings-savebar-sies.is-dirty { border-color: $teal-strong; box-shadow: 0 0 0 1px $teal-strong, $shadow; }
+.dashboard-tabs { margin-bottom: 0.75rem; width: fit-content; }
+.class-days { max-height: 180px; overflow-y: auto; margin-right: -0.25rem; padding-right: 0.25rem; } // recent class days scroll inside the card
+// New enrollment, step 2: the student being enrolled, in one slim strip.
+.student-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.6rem 1rem; }
+.student-strip-term { margin-left: auto; text-align: right; line-height: 1.35; }
+@media (max-width: 575px) { .student-strip-term { margin-left: 0; text-align: left; } }
+.stepper { margin-bottom: 0.6rem !important; }
+.dashboard-tabs { margin-bottom: 0.5rem; }
+.dashboard-tabs .form-tab { padding: 0.4rem 0.8rem; }
+// Chart columns may shrink below a chart's last drawn width (flex items default to min-width: auto).
+#pane-trends .row > * { min-width: 0; }
+#pane-trends canvas { max-width: 100%; }

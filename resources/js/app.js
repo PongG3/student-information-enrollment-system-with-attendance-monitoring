@@ -180,6 +180,35 @@ document.addEventListener('DOMContentLoaded', () => {
         update();
     }
 
+    // List tables fill the screen and scroll inside, so the page itself does not scroll.
+    // Height = window height − where the table starts − everything below it (row count, page links, footer).
+    // Skipped on narrow screens, and whenever that would leave less than ~240px for the rows.
+    const fitTables = () => {
+        const wide = window.matchMedia('(min-width: 992px) and (min-height: 600px)').matches;
+        document.querySelectorAll('[data-fit-viewport]').forEach((box) => {
+            box.classList.remove('table-fit');
+            box.style.maxHeight = '';
+            if (!wide || !box.offsetParent) return;
+            const doc = document.documentElement;
+            const top = box.getBoundingClientRect().top + window.scrollY;
+            const below = doc.scrollHeight - (top + box.offsetHeight);
+            const room = Math.floor(window.innerHeight - top - below) - 2; // 2px for rounding
+            if (room >= 240 && box.scrollHeight > room) {
+                box.style.maxHeight = room + 'px';
+                box.classList.add('table-fit');
+            }
+        });
+    };
+    fitTables();
+    let fitTimer;
+    const refit = () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitTables, 60); };
+    window.addEventListener('resize', refit);
+    window.addEventListener('load', refit);                 // images done
+    document.fonts?.ready.then(refit);                      // web font changes line heights
+    document.addEventListener('shown.bs.tab', refit);
+    document.addEventListener('shown.bs.collapse', refit);  // e.g. report filters opened
+    document.addEventListener('hidden.bs.collapse', refit);
+
     // "Copy" buttons (temporary passwords): copy the text and say so on the button.
     document.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-copy]');

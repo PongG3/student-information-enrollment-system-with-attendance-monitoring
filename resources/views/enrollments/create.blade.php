@@ -53,20 +53,18 @@
         @endforeach
 
         @include('enrollments._steps', ['step' => 2])
-        <div class="card-sies p-4 mb-4">
-            <div class="d-flex flex-wrap justify-content-between gap-3">
-                <div>
-                    <div class="fw-bold">{{ $student->full_name }}</div>
-                    <div class="text-secondary small">{{ $student->student_number }} · {{ $student->program->code }} · Year {{ $student->year_level }}</div>
-                </div>
-                <div class="small text-md-end">
-                    <div>{{ $term->name }} · {{ $term->academicYear->name }}</div>
-                    <div class="text-secondary">
-                        Units held: {{ rtrim(rtrim(number_format($units, 1), '0'), '.') }} of {{ rtrim(rtrim(number_format($maxUnits, 1), '0'), '.') }}
-                    </div>
-                </div>
+        {{-- One slim strip: who is being enrolled, for which term, and how many units they already hold. --}}
+        <div class="card-sies student-strip mb-3">
+            <span class="avatar" aria-hidden="true">{{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}</span>
+            <div class="min-w-0">
+                <div class="fw-bold text-navy">{{ $student->full_name }}</div>
+                <div class="text-secondary small">{{ $student->student_number }} · {{ $student->block_section ?? ($student->program->code . ' · Year ' . $student->year_level) }}</div>
             </div>
-            <a href="{{ route('enrollments.create') }}" class="small fw-semibold text-decoration-none mt-2 d-inline-block">← Choose a different student</a>
+            <div class="small student-strip-term">
+                <div>{{ $term->name }} · {{ $term->academicYear->name }}</div>
+                <div class="text-secondary">Units held: {{ rtrim(rtrim(number_format($units, 1), '0'), '.') }} of {{ rtrim(rtrim(number_format($maxUnits, 1), '0'), '.') }}</div>
+            </div>
+            <a href="{{ route('enrollments.create') }}" class="btn btn-outline-secondary btn-sm-sies">Change student</a>
         </div>
 
         <form method="POST" action="{{ route('enrollments.store') }}">
@@ -82,7 +80,7 @@
                 @if ($rows->isEmpty())
                     <x-empty-state icon="classes" message="No open classes found." />
                 @else
-                    <div class="table-responsive">
+                    <div class="table-responsive" data-fit-viewport>
                         <table class="table table-sies align-middle">
                             <thead><tr><th class="col-check"><span class="visually-hidden">Choose</span></th><th>Class</th><th>Teacher</th><th>Schedule</th><th>Units</th><th>Seats left</th></tr></thead>
                             <tbody>

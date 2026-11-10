@@ -20,6 +20,7 @@
                     <button class="btn btn-outline-secondary btn-sm-sies">Go</button>
                 </form>
                 <div class="small text-secondary mb-2">Recent class days</div>
+                <div class="class-days">
                 @forelse ($classDays as $day)
                     <a href="{{ route('attendance.sheet', ['class_offering' => $class->id, 'date' => $day['date']->toDateString()]) }}"
                        class="d-flex justify-content-between align-items-center text-decoration-none small py-1 {{ $day['date']->isSameDay($date) ? 'fw-bold' : '' }}">
@@ -29,6 +30,7 @@
                 @empty
                     <div class="small text-secondary">No class days yet.</div>
                 @endforelse
+                </div>
             </div>
             <div class="card-sies p-3 small">
                 <div class="fw-semibold">{{ $class->subject->code }} · {{ $class->block_label }}</div>
@@ -72,7 +74,7 @@
                     @if ($students->isEmpty())
                         <x-empty-state icon="students" message="No enrolled students for this date." />
                     @else
-                        <div class="table-responsive">
+                        <div class="table-responsive" data-fit-viewport>
                             <table class="table table-sies align-middle">
                                 <thead><tr><th>Student</th><th>Status</th><th>Remarks</th></tr></thead>
                                 <tbody>

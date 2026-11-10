@@ -36,7 +36,7 @@
         @if ($users->isEmpty())
             <x-empty-state icon="user" message="No users match your filters." />
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead>
                         <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th class="text-end">Actions</th></tr>

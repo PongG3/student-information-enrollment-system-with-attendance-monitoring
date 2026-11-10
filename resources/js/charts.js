@@ -16,7 +16,11 @@ Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 Chart.defaults.color = '#5b6b82';
 Chart.defaults.borderColor = '#e3eaf5';
 
-document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
+// Draws one chart. Charts inside a hidden tab are drawn the first time their tab is shown,
+// because a chart drawn while hidden gets no size.
+const build = (canvas) => {
+    if (canvas.dataset.built) return;
+    canvas.dataset.built = '1';
     const config = JSON.parse(canvas.dataset.chart);
     const isDoughnut = config.type === 'doughnut';
     const isLine = config.type === 'line';
@@ -133,4 +137,13 @@ document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
         options,
         plugins: [centerTotal],
     });
+};
+
+const drawVisible = (root = document) => root.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
+    if (canvas.offsetParent !== null) build(canvas);
+});
+drawVisible();
+document.addEventListener('shown.bs.tab', (event) => {
+    const pane = document.querySelector(event.target.dataset.bsTarget || event.target.getAttribute('href'));
+    if (pane) drawVisible(pane);
 });

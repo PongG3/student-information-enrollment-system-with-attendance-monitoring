@@ -79,149 +79,177 @@
                 </dl>
             </div>
 
-            @unless ($student->trashed())
-                <section class="card-sies p-4 mb-4" aria-labelledby="account-heading">
-                    <div class="section-head mb-3">
-                        <span class="section-icon" aria-hidden="true"><x-icon name="key" :size="18" /></span>
-                        <div>
-                            <h2 class="section-title" id="account-heading">Portal account</h2>
-                            <p class="section-help">Lets the student see their own classes, schedule and attendance.</p>
-                        </div>
-                    </div>
-                    @if ($student->user)
-                        <dl class="profile-details mb-3">
-                            <div class="is-wide"><dt>Sign-in email</dt><dd>{{ $student->user->email }}</dd></div>
-                            <div class="is-wide"><dt>Status</dt>
-                                <dd>
-                                    <x-status-badge :value="$student->user->is_active ? 'active' : 'inactive'" />
-                                    @if ($student->user->must_change_password)<div class="text-secondary small mt-1">Has not chosen their own password yet.</div>@endif
-                                </dd>
-                            </div>
-                        </dl>
-                        <div class="d-flex flex-wrap gap-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm-sies"
-                                data-bs-toggle="modal" data-bs-target="#confirmModal"
-                                data-confirm-title="Reset password?"
-                                data-confirm-message="A new temporary password is created. The student is signed out everywhere and must choose a new password."
-                                data-confirm-action="{{ route('students.account.reset', $student) }}"
-                                data-confirm-button="Reset password">Reset password</button>
-                            <button type="button" class="btn btn-outline-{{ $student->user->is_active ? 'danger' : 'success' }} btn-sm-sies"
-                                data-bs-toggle="modal" data-bs-target="#confirmModal"
-                                data-confirm-title="{{ $student->user->is_active ? 'Deactivate account?' : 'Activate account?' }}"
-                                data-confirm-message="{{ $student->user->is_active ? 'The student can no longer sign in.' : 'The student can sign in again.' }}"
-                                data-confirm-action="{{ route('students.account.status', $student) }}"
-                                data-confirm-button="{{ $student->user->is_active ? 'Deactivate' : 'Activate' }}"
-                                @if ($student->user->is_active) data-confirm-variant="danger" @endif>{{ $student->user->is_active ? 'Deactivate' : 'Activate' }}</button>
-                        </div>
-                    @else
-                        <p class="small text-secondary">No sign-in account yet.</p>
-                        <form method="POST" action="{{ route('students.account.store', $student) }}" novalidate>
-                            @csrf
-                            <x-field name="email" type="email" label="Sign-in email" :value="old('email', $student->email)" required />
-                            <button type="submit" class="btn btn-navy btn-sm-sies">Create account</button>
-                        </form>
-                    @endif
-                </section>
-            @endunless
         </div>
 
         <div class="col-xl-8 col-lg-7">
-            <div class="card-sies mb-4">
-                <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Parents / guardians</h2></div>
-                @if ($student->guardians->isEmpty())
-                    <x-empty-state icon="students" message="No guardian recorded." />
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-sies">
-                            <thead><tr><th>Name</th><th>Relationship</th><th>Contact</th><th>Emergency</th></tr></thead>
-                            <tbody>
-                                @foreach ($student->guardians->sortByDesc('is_emergency_contact') as $guardian)
-                                    <tr>
-                                        <td class="fw-semibold">{{ $guardian->full_name }}</td>
-                                        <td>{{ $guardian->relationship }}</td>
-                                        <td>{{ $guardian->contact_number }}</td>
-                                        <td>@if ($guardian->is_emergency_contact)<x-status-badge value="current" label="Emergency" />@else — @endif</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+            @php
+                $tabs = [
+                    'requirements' => ['Requirements', 'file', $verified . '/' . $requirements->count()],
+                    'enrollments' => ['Enrollment history', 'clipboard', $enrollments->count()],
+                    'guardians' => ['Guardians', 'students', $student->guardians->count()],
+                ];
+                if (! $student->trashed()) {
+                    $tabs['account'] = ['Portal account', 'key', $student->user ? ($student->user->is_active ? 'active' : 'off') : 'none'];
+                }
+            @endphp
+            <ul class="form-tabs" role="tablist" aria-label="Student record">
+                @foreach ($tabs as $key => [$label, $icon, $count])
+                    <li role="presentation">
+                        <button type="button" role="tab" id="tab-{{ $key }}" data-bs-toggle="tab" data-bs-target="#pane-{{ $key }}"
+                            aria-controls="pane-{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" @class(['form-tab', 'active' => $loop->first])>
+                            <x-icon :name="$icon" :size="16" /> {{ $label }} <span class="status-tab-count">{{ $count }}</span>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+            <div class="tab-content">
+            <div class="tab-pane fade show active" id="pane-requirements" role="tabpanel" aria-labelledby="tab-requirements" tabindex="0">
+                <div class="card-sies">
+                    <div class="card-header-sies">
+                        <h2 class="h6 fw-bold mb-0">Requirements</h2>
+                        @if ($requirements->isNotEmpty())
+                            <span class="small fw-semibold">{{ $verified }} of {{ $requirements->count() }} verified</span>
+                        @endif
                     </div>
-                @endif
-            </div>
-
-            <div class="card-sies mb-4">
-                <div class="card-header-sies">
-                    <h2 class="h6 fw-bold mb-0">Requirements</h2>
-                    @if ($requirements->isNotEmpty())
-                        <span class="small fw-semibold">{{ $verified }} of {{ $requirements->count() }} verified</span>
+                    @if ($requirements->isEmpty())
+                        <x-empty-state icon="file" message="No requirements are set up." />
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sies align-middle">
+                                <thead><tr><th>Requirement</th><th>Status</th><th>Verified by</th>@unless ($student->trashed())<th class="text-end">Actions</th>@endunless</tr></thead>
+                                <tbody>
+                                    @foreach ($requirements as $row)
+                                        <tr>
+                                            <td class="fw-semibold">{{ $row->requirement->name }}
+                                                @unless ($row->requirement->is_required)<span class="text-secondary small fw-normal">(optional)</span>@endunless
+                                            </td>
+                                            <td><x-status-badge :value="$row->status" /></td>
+                                            <td class="small text-secondary">
+                                                @if ($row->verified_at) {{ $row->verifier?->name ?? 'Staff' }} · {{ $row->verified_at->format('M j, Y') }} @else — @endif
+                                            </td>
+                                            @unless ($student->trashed())
+                                                <td class="text-end text-nowrap">
+                                                    @foreach (['submitted' => ['Mark submitted', 'secondary'], 'verified' => ['Verify', 'success'], 'pending' => ['Reset', 'secondary']] as $status => [$label, $variant])
+                                                        @if ($row->status !== $status)
+                                                            <form method="POST" class="d-inline"
+                                                                  action="{{ route('students.requirements.update', [$student, $row->requirement]) }}">
+                                                                @csrf
+                                                                <input type="hidden" name="status" value="{{ $status }}">
+                                                                <button class="btn btn-outline-{{ $variant }} btn-sm-sies">{{ $label }}</button>
+                                                            </form>
+                                                        @endif
+                                                    @endforeach
+                                                </td>
+                                            @endunless
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     @endif
                 </div>
-                @if ($requirements->isEmpty())
-                    <x-empty-state icon="file" message="No requirements are set up." />
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-sies align-middle">
-                            <thead><tr><th>Requirement</th><th>Status</th><th>Verified by</th>@unless ($student->trashed())<th class="text-end">Actions</th>@endunless</tr></thead>
-                            <tbody>
-                                @foreach ($requirements as $row)
-                                    <tr>
-                                        <td class="fw-semibold">{{ $row->requirement->name }}
-                                            @unless ($row->requirement->is_required)<span class="text-secondary small fw-normal">(optional)</span>@endunless
-                                        </td>
-                                        <td><x-status-badge :value="$row->status" /></td>
-                                        <td class="small text-secondary">
-                                            @if ($row->verified_at) {{ $row->verifier?->name ?? 'Staff' }} · {{ $row->verified_at->format('M j, Y') }} @else — @endif
-                                        </td>
-                                        @unless ($student->trashed())
-                                            <td class="text-end text-nowrap">
-                                                @foreach (['submitted' => ['Mark submitted', 'secondary'], 'verified' => ['Verify', 'success'], 'pending' => ['Reset', 'secondary']] as $status => [$label, $variant])
-                                                    @if ($row->status !== $status)
-                                                        <form method="POST" class="d-inline"
-                                                              action="{{ route('students.requirements.update', [$student, $row->requirement]) }}">
-                                                            @csrf
-                                                            <input type="hidden" name="status" value="{{ $status }}">
-                                                            <button class="btn btn-outline-{{ $variant }} btn-sm-sies">{{ $label }}</button>
-                                                        </form>
-                                                    @endif
-                                                @endforeach
-                                            </td>
-                                        @endunless
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
             </div>
-
-            <div class="card-sies">
-                <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Enrollment history</h2></div>
-                @if ($enrollments->isEmpty())
-                    <x-empty-state icon="clipboard" message="This student has not requested any class yet.">
-                        @if (! $student->trashed() && $student->status === 'active')
-                            <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" class="btn btn-navy btn-sm-sies">Add enrollment</a>
+            <div class="tab-pane fade" id="pane-enrollments" role="tabpanel" aria-labelledby="tab-enrollments" tabindex="0">
+                <div class="card-sies">
+                    <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Enrollment history</h2></div>
+                    @if ($enrollments->isEmpty())
+                        <x-empty-state icon="clipboard" message="This student has not requested any class yet.">
+                            @if (! $student->trashed() && $student->status === 'active')
+                                <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" class="btn btn-navy btn-sm-sies">Add enrollment</a>
+                            @endif
+                        </x-empty-state>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sies table-hover">
+                                <thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    @foreach ($enrollments as $enrollment)
+                                        <tr>
+                                            <td class="fw-semibold"><a href="{{ route('classes.show', $enrollment->classOffering) }}">{{ $enrollment->classOffering->class_code }}</a></td>
+                                            <td>{{ $enrollment->classOffering->subject->code }} · {{ $enrollment->classOffering->subject->title }}</td>
+                                            <td>{{ $enrollment->classOffering->term->name }} · {{ $enrollment->classOffering->term->academicYear->name }}</td>
+                                            <td>
+                                                <x-status-badge :value="$enrollment->status" />
+                                                @if ($enrollment->status_reason)<div class="text-secondary small">{{ $enrollment->status_reason }}</div>@endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="tab-pane fade" id="pane-guardians" role="tabpanel" aria-labelledby="tab-guardians" tabindex="0">
+                <div class="card-sies">
+                    <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Parents / guardians</h2></div>
+                    @if ($student->guardians->isEmpty())
+                        <x-empty-state icon="students" message="No guardian recorded." />
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sies">
+                                <thead><tr><th>Name</th><th>Relationship</th><th>Contact</th><th>Emergency</th></tr></thead>
+                                <tbody>
+                                    @foreach ($student->guardians->sortByDesc('is_emergency_contact') as $guardian)
+                                        <tr>
+                                            <td class="fw-semibold">{{ $guardian->full_name }}</td>
+                                            <td>{{ $guardian->relationship }}</td>
+                                            <td>{{ $guardian->contact_number }}</td>
+                                            <td>@if ($guardian->is_emergency_contact)<x-status-badge value="current" label="Emergency" />@else — @endif</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            @unless ($student->trashed())
+            <div class="tab-pane fade" id="pane-account" role="tabpanel" aria-labelledby="tab-account" tabindex="0">
+                    <section class="card-sies p-4" aria-labelledby="account-heading">
+                        <div class="section-head mb-3">
+                            <span class="section-icon" aria-hidden="true"><x-icon name="key" :size="18" /></span>
+                            <div>
+                                <h2 class="section-title" id="account-heading">Portal account</h2>
+                                <p class="section-help">Lets the student see their own classes, schedule and attendance.</p>
+                            </div>
+                        </div>
+                        @if ($student->user)
+                            <dl class="profile-details mb-3">
+                                <div class="is-wide"><dt>Sign-in email</dt><dd>{{ $student->user->email }}</dd></div>
+                                <div class="is-wide"><dt>Status</dt>
+                                    <dd>
+                                        <x-status-badge :value="$student->user->is_active ? 'active' : 'inactive'" />
+                                        @if ($student->user->must_change_password)<div class="text-secondary small mt-1">Has not chosen their own password yet.</div>@endif
+                                    </dd>
+                                </div>
+                            </dl>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm-sies"
+                                    data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                    data-confirm-title="Reset password?"
+                                    data-confirm-message="A new temporary password is created. The student is signed out everywhere and must choose a new password."
+                                    data-confirm-action="{{ route('students.account.reset', $student) }}"
+                                    data-confirm-button="Reset password">Reset password</button>
+                                <button type="button" class="btn btn-outline-{{ $student->user->is_active ? 'danger' : 'success' }} btn-sm-sies"
+                                    data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                    data-confirm-title="{{ $student->user->is_active ? 'Deactivate account?' : 'Activate account?' }}"
+                                    data-confirm-message="{{ $student->user->is_active ? 'The student can no longer sign in.' : 'The student can sign in again.' }}"
+                                    data-confirm-action="{{ route('students.account.status', $student) }}"
+                                    data-confirm-button="{{ $student->user->is_active ? 'Deactivate' : 'Activate' }}"
+                                    @if ($student->user->is_active) data-confirm-variant="danger" @endif>{{ $student->user->is_active ? 'Deactivate' : 'Activate' }}</button>
+                            </div>
+                        @else
+                            <p class="small text-secondary">No sign-in account yet.</p>
+                            <form method="POST" action="{{ route('students.account.store', $student) }}" novalidate>
+                                @csrf
+                                <x-field name="email" type="email" label="Sign-in email" :value="old('email', $student->email)" required />
+                                <button type="submit" class="btn btn-navy btn-sm-sies">Create account</button>
+                            </form>
                         @endif
-                    </x-empty-state>
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-sies table-hover">
-                            <thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Status</th></tr></thead>
-                            <tbody>
-                                @foreach ($enrollments as $enrollment)
-                                    <tr>
-                                        <td class="fw-semibold"><a href="{{ route('classes.show', $enrollment->classOffering) }}">{{ $enrollment->classOffering->class_code }}</a></td>
-                                        <td>{{ $enrollment->classOffering->subject->code }} · {{ $enrollment->classOffering->subject->title }}</td>
-                                        <td>{{ $enrollment->classOffering->term->name }} · {{ $enrollment->classOffering->term->academicYear->name }}</td>
-                                        <td>
-                                            <x-status-badge :value="$enrollment->status" />
-                                            @if ($enrollment->status_reason)<div class="text-secondary small">{{ $enrollment->status_reason }}</div>@endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+                    </section>
+            </div>
+            @endunless
             </div>
         </div>
     </div>

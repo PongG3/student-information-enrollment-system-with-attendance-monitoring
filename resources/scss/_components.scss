@@ -242,3 +242,14 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 .form-pane .form-subhead { margin-top: 0; padding-top: 0.6rem; margin-bottom: 0.6rem; }
 // Card head inside compact forms: title on the left, a small fact (e.g. schedule code) on the right.
 .form-pane-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
+
+// ---- Tables that fit the screen ----
+// On desktop, a list table fills the space left on screen and scrolls inside it; its header row stays in place.
+// resources/js/app.js sets the height; on phones (or when there is too little room) the page scrolls as usual.
+.table-fit { overflow-y: auto; overscroll-behavior: contain; }
+.table-fit > .table > thead > tr > th { position: sticky; top: 0; z-index: 2; box-shadow: inset 0 -1px 0 $border; }
+
+// Report tables: many columns, so headers may wrap and cells are a little denser (no sideways scrolling).
+.report-table { font-size: 0.8rem; }
+.report-table > thead > tr > th { white-space: normal; vertical-align: bottom; line-height: 1.25; }
+.report-table > :not(caption) > * > * { padding: 0.45rem 0.55rem; }

@@ -33,7 +33,7 @@
         @if ($logs->isEmpty())
             <x-empty-state icon="file" message="No log entries match your filters." />
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead><tr><th>When</th><th>User</th><th>Role</th><th>Action</th><th>Description</th><th>IP address</th></tr></thead>
                     <tbody>

@@ -55,7 +55,7 @@
                 <a href="{{ route('enrollments.create') }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> New request</a>
             </x-empty-state>
         @else
-            <div class="table-responsive">
+            <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover align-middle">
                     <thead>
                         <tr><th>Student</th><th>Class</th><th>Seats</th><th>Documents</th><th>Status</th><th>Requested</th><th class="text-end">Actions</th></tr>
