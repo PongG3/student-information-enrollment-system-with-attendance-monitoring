@@ -206,7 +206,26 @@
                     @endif
                     <form method="POST" action="{{ route('student.profile.photo') }}" enctype="multipart/form-data" id="photoForm" novalidate>
                         @csrf
-                        <x-file-drop name="photo" id="photoFile" accept=".jpg,.jpeg,.png" hint="JPG or PNG, up to 2 MB, at least 200 × 200 pixels" :max-mb="2" />
+                        {{-- Pick a photo, then frame it: drag to move, zoom, rotate. The round mask shows how it will look. --}}
+                        <div data-photo-crop>
+                            <x-file-drop name="photo" id="photoFile" accept=".jpg,.jpeg,.png" hint="JPG or PNG, at least 200 × 200 pixels. You can frame it next." :max-mb="15" />
+                            <div class="crop-stage" data-crop-stage hidden>
+                                <div class="crop-canvas"><img alt="Your photo, to frame" data-crop-image></div>
+                                <div class="crop-tools">
+                                    <button type="button" class="crop-btn" data-crop-zoom-out aria-label="Zoom out">−</button>
+                                    <input type="range" class="form-range" min="1" max="3" step="0.01" value="1" data-crop-zoom aria-label="Zoom">
+                                    <button type="button" class="crop-btn" data-crop-zoom-in aria-label="Zoom in">+</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm-sies ms-2" data-crop-rotate>↻ Rotate</button>
+                                </div>
+                                <div class="crop-file">
+                                    <x-icon name="file" :size="16" />
+                                    <span class="text-truncate" data-crop-name></span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 ms-auto text-nowrap" data-crop-change>Change photo</button>
+                                    <button type="button" class="file-chip-remove" data-crop-remove aria-label="Remove this photo">×</button>
+                                </div>
+                                <div class="small text-secondary mt-1">Drag the photo to move it. Your face should fill most of the circle.</div>
+                            </div>
+                        </div>
                     </form>
                     <ul class="small text-secondary mt-3 mb-0 ps-3">
                         <li>A recent, formal photo: face clearly visible, plain light background.</li>

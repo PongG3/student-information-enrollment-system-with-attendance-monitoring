@@ -321,3 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// The photo cropper (and its library) loads only on pages that have one.
+if (document.querySelector('[data-photo-crop]')) {
+    import('./photo-crop.js');
+}

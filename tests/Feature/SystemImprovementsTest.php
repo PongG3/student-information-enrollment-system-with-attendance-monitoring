@@ -458,6 +458,14 @@ class SystemImprovementsTest extends TestCase
         $this->actingAs($this->teacher)->post(route('students.photo.approve', $ana))->assertForbidden();
     }
 
+    public function test_the_photo_window_has_a_cropper_with_zoom_and_rotate(): void
+    {
+        $this->actingAs($this->anaUser)->get(route('student.profile'))->assertOk()
+            ->assertSee('data-photo-crop', false)->assertSee('data-crop-zoom', false)
+            ->assertSee('Rotate')->assertSee('Change photo')
+            ->assertSee('A recent, formal photo');   // the guidelines stay under the cropper
+    }
+
     public function test_a_rejected_photo_is_removed_and_tiny_photos_are_refused(): void
     {
         Storage::fake('local');

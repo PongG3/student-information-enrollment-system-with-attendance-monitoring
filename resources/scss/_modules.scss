@@ -277,3 +277,17 @@
 .profile-group-title { margin-bottom: 0.4rem; }
 .profile-group .profile-details { gap: 0.45rem 1.25rem; }
 .card-sies:has(.profile-group) .profile-head { padding-bottom: 0.7rem; margin-bottom: 0.7rem; }
+
+// Profile photo cropper: square stage, round mask (the avatar is a circle), zoom and rotate below.
+.crop-stage { margin: 0; }
+.crop-canvas { height: 300px; border-radius: $radius; overflow: hidden; background: #1d2433; }
+.crop-canvas img { display: block; max-width: 100%; }
+.crop-canvas .cropper-view-box, .crop-canvas .cropper-face { border-radius: 50%; }
+.crop-canvas .cropper-view-box { outline: 2px solid rgba(255, 255, 255, 0.9); outline-offset: -1px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25); }
+.crop-canvas .cropper-face { background: transparent; }
+.crop-canvas .cropper-modal { background: #0b1220; opacity: 0.6; }
+.crop-tools { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+.crop-tools .form-range { flex: 1 1 auto; }
+.crop-btn { width: 2rem; height: 2rem; border-radius: 50%; border: 1px solid $border; background: $surface; color: $navy; font-weight: 700; line-height: 1; }
+.crop-btn:hover { background: $surface-hover; }
+.crop-file { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; padding: 0.45rem 0.65rem; border: 1px solid $border; border-radius: $radius; font-size: 0.85rem; color: $navy; }
