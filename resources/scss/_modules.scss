@@ -217,3 +217,31 @@
     [data-attendance-sheet] .btn-group { display: flex; width: 100%; }
     [data-attendance-sheet] .btn-group > .btn { flex: 1 1 0; padding-left: 0.25rem; padding-right: 0.25rem; font-size: 0.8rem; }
 }
+
+// Enrollment requests grouped by student: a student line, then one short line per class.
+.request-groups > thead > tr > th:first-child { padding-left: 2.6rem; }
+.request-group { border-top: 2px solid $border; }
+.request-group:first-of-type { border-top: 0; }
+.request-student > td { background: $surface-muted; padding-top: 0.55rem; padding-bottom: 0.55rem; }
+.request-line > td { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+.request-line > td:first-child { padding-left: 2.6rem; }
+.request-meta { padding-left: 0.5rem; border-left: 1px solid $border; }
+
+// Enrollment requests: one toolbar (status tabs, then filters).
+.request-toolbar { display: flex; flex-direction: column; align-items: stretch; gap: 0.6rem; }
+.request-toolbar > * { align-self: flex-start; margin-left: 0; }
+.request-toolbar .status-tabs { border: 0; padding: 0; }
+// Student header: tinted band, collapse arrow, document badge, units meter.
+.request-groups .request-student > td { background: #eef4fb; border-top: 1px solid #d6e3f3; }
+.request-toggle { border: 0; background: none; color: $text-muted; padding: 0.1rem; border-radius: 6px; line-height: 0; transition: transform 0.15s ease; }
+.request-toggle:hover { background: rgba($navy, 0.08); color: $navy; }
+.request-toggle[aria-expanded='false'] { transform: rotate(-90deg); }
+.request-group.is-collapsed .request-line { display: none; }
+.request-count { padding: 0.05rem 0.45rem; border-radius: 999px; background: $surface; border: 1px solid $border; }
+.unit-meter { display: inline-flex; align-items: center; gap: 0.4rem; }
+.unit-meter-bar { display: inline-block; width: 72px; height: 6px; border-radius: 999px; background: #d9e3ef; overflow: hidden; }
+.unit-meter-fill { display: block; height: 100%; background: $success; border-radius: 999px; }
+.unit-meter-fill.is-over { background: $danger; }
+// Undo actions (Drop, Cancel): quiet until hovered, so they never look like the main action.
+.btn-quiet-danger { color: $text-muted; border: 1px solid transparent; background: none; }
+.btn-quiet-danger:hover, .btn-quiet-danger:focus-visible { color: $danger; border-color: rgba($danger, 0.35); background: rgba($danger, 0.05); }

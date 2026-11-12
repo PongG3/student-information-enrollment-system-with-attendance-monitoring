@@ -26,15 +26,23 @@ class EnrollmentController extends Controller
 
         $counts = (clone $base)->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all();
 
-        $enrollments = (clone $base)
-            ->with([
-                'student.program',
-                'requester',
-                'reviewer',
-                'classOffering' => fn ($q) => $q->with(['subject', 'meetings', 'term'])
-                    ->withCount(['enrollments as seats_taken' => fn ($e) => $e->whereIn('status', [Enrollment::STATUS_APPROVED, Enrollment::STATUS_ENROLLED])]),
-            ])
-            ->when($request->filled('status'), fn ($q) => $q->where('status', (string) $request->input('status')))
+        // The page opens on the work to do: Pending while anything waits, otherwise everything.
+        $status = (string) $request->input('status', ($counts[Enrollment::STATUS_PENDING] ?? 0) > 0 ? Enrollment::STATUS_PENDING : 'all');
+        if ($status !== 'all' && ! in_array($status, Enrollment::STATUSES, true)) {
+            $status = 'all';
+        }
+
+        $requiredCount = \App\Models\Requirement::where('is_active', true)->where('is_required', true)->count();
+
+        $filtered = (clone $base)
+            ->when($status !== 'all', fn ($q) => $q->where('status', $status))
+            ->when($request->filled('program'), fn ($q) => $q->whereHas('student', fn ($s) => $s->where('program_id', (int) $request->input('program'))))
+            // Quick filter: students whose required documents are not all verified yet.
+            ->when($request->input('docs') === 'incomplete' && $requiredCount > 0, fn ($q) => $q->whereNotIn('student_id',
+                StudentRequirement::query()->select('student_id')
+                    ->where('status', StudentRequirement::STATUS_VERIFIED)
+                    ->whereHas('requirement', fn ($r) => $r->where('is_active', true)->where('is_required', true))
+                    ->groupBy('student_id')->havingRaw('count(*) >= ?', [$requiredCount])))
             ->when($request->filled('search'), function ($query) use ($request) {
                 foreach (preg_split('/\s+/', trim((string) $request->input('search'))) as $word) {
                     $like = Like::contains($word);
@@ -45,26 +53,65 @@ class EnrollmentController extends Controller
                                 ->orWhereHas('subject', fn ($s) => $s->where('code', 'like', $like)->orWhere('title', 'like', $like)));
                     });
                 }
-            })
-            ->latest('requested_at')
-            ->latest('id')
-            ->paginate(15)
+            });
+
+        // One block per student (a student's requests are never split across pages), newest activity first.
+        $students = (clone $filtered)
+            ->select('student_id')
+            ->selectRaw('max(requested_at) as last_requested, max(id) as last_id')
+            ->groupBy('student_id')
+            ->orderByDesc('last_requested')->orderByDesc('last_id')
+            ->paginate(10)
             ->withQueryString();
+        $studentIds = $students->pluck('student_id')->all();
+
+        $requests = (clone $filtered)
+            ->whereIn('student_id', $studentIds)
+            ->with([
+                'student.program',
+                'requester',
+                'reviewer',
+                'classOffering' => fn ($q) => $q->with(['subject', 'meetings', 'term'])
+                    ->withCount(['enrollments as seats_taken' => fn ($e) => $e->whereIn('status', [Enrollment::STATUS_APPROVED, Enrollment::STATUS_ENROLLED])]),
+            ])
+            ->get()
+            ->groupBy('student_id');
+
+        // Units each student holds or asks for this term (pending, approved, enrolled), for the unit limit.
+        $units = $termId
+            ? Enrollment::query()
+                ->join('class_offerings', 'class_offerings.id', '=', 'enrollments.class_offering_id')
+                ->join('subjects', 'subjects.id', '=', 'class_offerings.subject_id')
+                ->whereIn('enrollments.student_id', $studentIds)
+                ->whereIn('enrollments.status', [Enrollment::STATUS_PENDING, Enrollment::STATUS_APPROVED, Enrollment::STATUS_ENROLLED])
+                ->where('class_offerings.term_id', $termId)
+                ->selectRaw('enrollments.student_id, sum(subjects.units) as total')
+                ->groupBy('enrollments.student_id')->pluck('total', 'enrollments.student_id')->all()
+            : [];
+
+        $groups = collect($studentIds)->map(fn ($id) => [
+            'student' => $requests[$id]->first()->student,
+            'requests' => $requests[$id]->sortBy(fn (Enrollment $e) => $e->classOffering->class_code)->values(),
+            'units' => (float) ($units[$id] ?? 0),
+        ]);
 
         // Verified required documents per student on this page, to help the approver.
-        $studentIds = $enrollments->pluck('student_id')->unique()->all();
         $verified = StudentRequirement::whereIn('student_id', $studentIds)
             ->where('status', StudentRequirement::STATUS_VERIFIED)
             ->whereHas('requirement', fn ($q) => $q->where('is_active', true)->where('is_required', true))
             ->selectRaw('student_id, count(*) as total')->groupBy('student_id')->pluck('total', 'student_id')->all();
 
         return view('enrollments.index', [
-            'enrollments' => $enrollments,
+            'groups' => $groups,
+            'students' => $students,
+            'status' => $status,
+            'maxUnits' => (float) \App\Models\Setting::get('max_units_per_term', '24'),
             'counts' => $counts,
             'terms' => Term::with('academicYear')->orderByDesc('start_date')->get(),
             'termId' => $termId,
             'verified' => $verified,
-            'requiredCount' => \App\Models\Requirement::where('is_active', true)->where('is_required', true)->count(),
+            'requiredCount' => $requiredCount,
+            'programs' => \App\Models\Program::orderBy('code')->pluck('code', 'id'),
         ]);
     }
 
@@ -178,13 +225,31 @@ class EnrollmentController extends Controller
     {
         $data = $request->validate([
             'action' => ['required', 'in:approve,enroll'],
-            'ids' => ['required', 'array', 'min:1', 'max:200'],
+            // Either single requests, or whole students (all their pending / approved requests in the term).
+            'ids' => ['required_without:students', 'array', 'max:200'],
             'ids.*' => ['integer'],
-        ], ['ids.required' => 'Tick at least one request first.']);
+            'students' => ['required_without:ids', 'array', 'max:100'],
+            'students.*' => ['integer'],
+            'term' => ['nullable', 'integer'],
+        ], [
+            'ids.required_without' => 'Tick at least one student first.',
+            'students.required_without' => 'Tick at least one student first.',
+        ]);
 
+        $wanted = $data['action'] === 'approve' ? Enrollment::STATUS_PENDING : Enrollment::STATUS_APPROVED;
         $done = 0;
         $problems = [];
-        $requests = Enrollment::with(['student', 'classOffering.subject'])->whereIn('id', $data['ids'])->get();
+        $requests = Enrollment::with(['student', 'classOffering.subject'])
+            ->when(! empty($data['ids']), fn ($q) => $q->whereIn('id', $data['ids']))
+            ->when(! empty($data['students']), fn ($q) => $q->whereIn('student_id', $data['students'])->where('status', $wanted)
+                ->when(! empty($data['term']), fn ($e) => $e->whereHas('classOffering', fn ($c) => $c->where('term_id', (int) $data['term']))))
+            ->get();
+
+        if ($requests->isEmpty()) {
+            return back()->withErrors(['enrollment' => $data['action'] === 'approve'
+                ? 'The selected students have no pending requests to approve.'
+                : 'The selected students have no approved requests to enroll.']);
+        }
 
         foreach ($requests as $enrollment) {
             try {

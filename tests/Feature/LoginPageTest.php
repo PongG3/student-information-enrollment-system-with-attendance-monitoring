@@ -31,7 +31,16 @@ class LoginPageTest extends TestCase
     {
         $this->get('/login')->assertOk()
             ->assertSee('id="togglePassword"', false)
-            ->assertSee('aria-label="Show password"', false);
+            ->assertSee('aria-label="Show password"', false)
+            ->assertSee('class="password-eye"', false)   // an eye inside the field, not a "Show" box
+            ->assertSee('data-eye="hide"', false);
+    }
+
+    public function test_the_email_placeholder_shows_an_example_not_the_label_again(): void
+    {
+        $this->get('/login')->assertOk()
+            ->assertSee('placeholder="e.g. juan.delacruz@school.edu.ph"', false)
+            ->assertDontSee('Enter your school email')->assertDontSee('Enter your password');
     }
 
     public function test_the_form_helps_browsers_and_password_managers(): void

@@ -23,3 +23,16 @@
 .privacy-notice { max-height: 52vh; overflow-y: auto; padding-right: 0.25rem; }
 .privacy-notice h2 { font-size: 0.85rem; font-weight: 700; color: $navy; margin: 0.9rem 0 0.25rem; }
 .privacy-notice p { margin-bottom: 0.25rem; color: $text-muted; }
+
+// Password field with the show/hide eye inside its right edge.
+.password-field { position: relative; }
+.password-field .form-control { padding-right: 2.75rem; }
+.password-field .form-control.is-invalid { padding-right: 4.5rem; background-position: right 2.6rem center; }
+.password-field .form-control::-ms-reveal, .password-field .form-control::-ms-clear { display: none; }   // Edge's own eye
+.password-eye {
+    position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+    display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0;
+    border: 0; border-radius: 50%; background: none; color: $text-muted; line-height: 0;
+}
+.password-eye:hover { color: $navy; background: $surface-hover; }
+.password-eye:focus-visible { outline: 2px solid $teal-strong; outline-offset: 1px; }

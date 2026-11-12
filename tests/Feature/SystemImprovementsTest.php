@@ -173,12 +173,83 @@ class SystemImprovementsTest extends TestCase
 
     public function test_the_requests_page_offers_bulk_actions_and_teachers_cannot_use_them(): void
     {
-        $request = $this->enroll($this->makeStudent('2026-0005', 'Eli'), $this->class, 'pending');
+        $eli = $this->makeStudent('2026-0005', 'Eli');
+        $request = $this->enroll($eli, $this->class, 'pending');
 
         $this->actingAs($this->registrar)->get(route('enrollments.index'))->assertOk()
-            ->assertSee('Approve selected')->assertSee('Enroll selected')->assertSee('name="ids[]" value="' . $request->id . '"', false);
+            ->assertSee('Approve selected')->assertSee('Enroll selected')->assertSee('name="students[]" value="' . $eli->id . '"', false);
 
         $this->actingAs($this->teacher)->post(route('enrollments.bulk'), ['action' => 'approve', 'ids' => [$request->id]])->assertForbidden();
+    }
+
+    // ---------- Requests grouped by student ----------
+
+    public function test_requests_are_grouped_by_student_and_the_page_opens_on_pending(): void
+    {
+        $eli = $this->makeStudent('2026-0005', 'Eli');
+        $this->enroll($eli, $this->class, 'pending');
+        $this->enroll($eli, $this->otherClass, 'pending');
+
+        // Pending is the default tab while requests wait; Ana (enrolled) is not on it.
+        $page = $this->actingAs($this->registrar)->get(route('enrollments.index'))->assertOk()
+            ->assertSee('aria-current="page"', false)
+            ->assertSee('Tester, Eli')->assertDontSee('Tester, Ana')
+            ->assertSee('Approve all 2')
+            ->assertSee('6 of 24 units');
+        $this->assertSame(1, substr_count($page->getContent(), 'Tester, Eli</a>'));   // the student once, not once per class
+
+        // "All" shows everyone.
+        $this->actingAs($this->registrar)->get(route('enrollments.index', ['status' => 'all']))->assertOk()
+            ->assertSee('Tester, Ana')->assertSee('Tester, Eli');
+    }
+
+    public function test_requests_filter_by_program_and_incomplete_documents(): void
+    {
+        $bsit = Program::create(['code' => 'BSIT', 'name' => 'BS Information Technology']);
+        $eli = $this->makeStudent('2026-0005', 'Eli');
+        $gus = $this->makeStudent('2026-0007', 'Gus');
+        $gus->forceFill(['program_id' => $bsit->id])->save();
+        $this->enroll($eli, $this->class, 'pending');
+        $this->enroll($gus, $this->class, 'pending');
+
+        $this->actingAs($this->registrar)->get(route('enrollments.index', ['program' => $bsit->id]))->assertOk()
+            ->assertSee('Tester, Gus')->assertDontSee('Tester, Eli')->assertSee('Clear filters');
+
+        // One required document; Eli has it verified, Gus does not.
+        $requirement = \App\Models\Requirement::create(['name' => 'Birth certificate', 'is_required' => true, 'is_active' => true]);
+        \App\Models\StudentRequirement::create(['student_id' => $eli->id, 'requirement_id' => $requirement->id, 'status' => 'verified']);
+
+        $this->actingAs($this->registrar)->get(route('enrollments.index', ['docs' => 'incomplete']))->assertOk()
+            ->assertSee('Tester, Gus')->assertDontSee('Tester, Eli')
+            ->assertSee('0 of 1 documents');
+    }
+
+    public function test_enrolled_classes_are_dropped_not_cancelled(): void
+    {
+        $this->actingAs($this->registrar)->get(route('enrollments.index', ['status' => 'enrolled']))->assertOk()
+            ->assertSee('>Drop</button>', false)->assertSee('Drop this class?')->assertDontSee('Withdraw this request')
+            ->assertSee('data-request-toggle', false)->assertSee('Collapse all');
+    }
+
+    public function test_a_whole_student_is_approved_at_once(): void
+    {
+        // The two classes must not clash, or the second is (rightly) refused.
+        $this->otherClass->meetings()->update(['start_time' => '13:00', 'end_time' => '14:30']);
+        $eli = $this->makeStudent('2026-0005', 'Eli');
+        $one = $this->enroll($eli, $this->class, 'pending');
+        $two = $this->enroll($eli, $this->otherClass, 'pending');
+        $this->enroll($this->makeStudent('2026-0006', 'Fay'), $this->class, 'pending');   // not selected
+
+        $this->actingAs($this->registrar)->from(route('enrollments.index'))
+            ->post(route('enrollments.bulk'), ['action' => 'approve', 'students' => [$eli->id], 'term' => $this->term->id])
+            ->assertSessionHas('success', '2 requests approved.');
+
+        $this->assertSame(['approved', 'approved'], [$one->fresh()->status, $two->fresh()->status]);
+        $this->assertSame(1, Enrollment::where('status', 'pending')->count());
+
+        // Nothing left to approve for Eli.
+        $this->actingAs($this->registrar)->post(route('enrollments.bulk'), ['action' => 'approve', 'students' => [$eli->id], 'term' => $this->term->id])
+            ->assertSessionHasErrors('enrollment');
     }
 
     // ---------- CSV import ----------

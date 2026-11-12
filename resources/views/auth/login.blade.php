@@ -18,19 +18,23 @@
             <label for="email" class="form-label fw-semibold small">Email address</label>
             <input id="email" type="email" name="email" value="{{ old('email') }}"
                    class="form-control @error('email') is-invalid @enderror"
-                   placeholder="Enter your school email" required autofocus
+                   placeholder="e.g. juan.delacruz@school.edu.ph" required autofocus
                    autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email">
             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
 
         <div class="mb-4">
             <label for="password" class="form-label fw-semibold small">Password</label>
-            <div class="input-group">
+            {{-- The eye sits inside the field's right edge; the label already says what to type. --}}
+            <div class="password-field">
                 <input id="password" type="password" name="password"
                        class="form-control @error('password') is-invalid @enderror"
-                       placeholder="Enter your password" required autocomplete="current-password">
-                <button type="button" class="btn btn-outline-secondary" id="togglePassword"
-                        aria-label="Show password" aria-pressed="false" aria-controls="password">Show</button>
+                       required autocomplete="current-password">
+                <button type="button" class="password-eye" id="togglePassword"
+                        aria-label="Show password" aria-pressed="false" aria-controls="password" title="Show password">
+                    <span data-eye="show"><x-icon name="eye" :size="18" /></span>
+                    <span data-eye="hide" hidden><x-icon name="eye-off" :size="18" /></span>
+                </button>
             </div>
             @error('password')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
         </div>
@@ -50,8 +54,10 @@
             button.addEventListener('click', function () {
                 var show = input.type === 'password';
                 input.type = show ? 'text' : 'password';
-                button.textContent = show ? 'Hide' : 'Show';
+                button.querySelector('[data-eye="show"]').hidden = show;
+                button.querySelector('[data-eye="hide"]').hidden = !show;
                 button.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                button.title = show ? 'Hide password' : 'Show password';
                 button.setAttribute('aria-pressed', show ? 'true' : 'false');
                 input.focus();
             });
