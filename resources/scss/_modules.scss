@@ -295,3 +295,19 @@
 // A teacher as students see them (photo or initials, name, department).
 .teacher-chip { display: inline-flex; align-items: center; gap: 0.5rem; }
 .teacher-chip-photo { flex: 0 0 auto; width: 1.9rem; height: 1.9rem; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: #e4ecf6; color: $navy; font-size: 0.7rem; font-weight: 700; }
+
+// Attendance status cards: a coloured top strip and dot per status (same colours as the attendance sheet).
+.stat-tone { overflow: hidden; }
+.stat-tone::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--tone, transparent); }
+.stat-tone .stat-dot { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--tone); margin-right: 0.4rem; vertical-align: 0.05rem; }
+.stat-tone-present { --tone: #{$success}; }
+.stat-tone-absent { --tone: #{$danger}; }
+.stat-tone-late { --tone: #e0a526; }
+.stat-tone-excused { --tone: #3b82c4; }
+.stat-tone-rate { --tone: #{$navy}; }
+.stat-tone-absent .stat-value { color: #a1223a; }
+.stat-tone-present .stat-value { color: #157a5c; }
+
+// A labelled date box ("From" / "To") in a filter bar.
+.date-field { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.8rem; color: $text-muted; font-weight: 600; }
+.date-field .form-control { width: auto; }

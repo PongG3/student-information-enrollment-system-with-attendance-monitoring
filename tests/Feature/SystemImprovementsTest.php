@@ -480,6 +480,28 @@ class SystemImprovementsTest extends TestCase
         Storage::disk('local')->assertMissing($path);
     }
 
+    // ---------- Attendance monitoring page ----------
+
+    public function test_the_monitoring_page_labels_dates_colours_statuses_and_offers_export(): void
+    {
+        $page = $this->actingAs($this->registrar)->get(route('attendance.index'))->assertOk()
+            ->assertSeeInOrder(['From', 'To', 'Apply'])
+            ->assertSee('Attendance rate (%)')
+            ->assertSee('stat-tone-present', false)->assertSee('stat-tone-absent', false)
+            ->assertSee('Good news: no student is over the absence limit.')
+            ->assertSee('No attendance sheets yet today.')->assertSee('Show this week')
+            // Export opens the reports with the page's filters.
+            ->assertSee(route('reports.pdf', ['class-summary', 'term' => $this->term->id, 'from' => self::TODAY, 'to' => self::TODAY]))
+            ->assertSee(route('reports.excel', ['attendance-daily', 'term' => $this->term->id, 'date' => self::TODAY]));
+
+        // The quick range rides along when the class changes.
+        $page->assertSee('name="range" value="today" data-quick-range', false);
+
+        // Custom dates show as such.
+        $this->actingAs($this->registrar)->get(route('attendance.index', ['from' => '2026-11-02', 'to' => '2026-11-06']))->assertOk()
+            ->assertSee('Custom dates')->assertDontSee('name="range"', false);
+    }
+
     // ---------- Privacy ----------
 
     public function test_the_privacy_notice_is_public_and_linked_from_sign_in(): void

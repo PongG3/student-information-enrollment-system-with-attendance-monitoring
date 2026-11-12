@@ -284,3 +284,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 .file-chip-name { font-weight: 600; font-size: 0.9rem; }
 .file-chip-remove { margin-left: auto; border: 0; background: none; color: $text-muted; font-size: 1.3rem; line-height: 1; padding: 0 0.3rem; border-radius: 6px; }
 .file-chip-remove:hover { color: $danger; background: rgba($danger, 0.08); }
+
+// Good news shown as an empty list (e.g. nobody over the absence limit): green, not grey.
+.empty-state.is-good .empty-state-icon { background: #e3f6ee; color: $success; }
+.empty-state.is-good .empty-state-text { color: #157a5c; font-weight: 600; }
