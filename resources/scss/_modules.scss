@@ -291,3 +291,7 @@
 .crop-btn { width: 2rem; height: 2rem; border-radius: 50%; border: 1px solid $border; background: $surface; color: $navy; font-weight: 700; line-height: 1; }
 .crop-btn:hover { background: $surface-hover; }
 .crop-file { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; padding: 0.45rem 0.65rem; border: 1px solid $border; border-radius: $radius; font-size: 0.85rem; color: $navy; }
+
+// A teacher as students see them (photo or initials, name, department).
+.teacher-chip { display: inline-flex; align-items: center; gap: 0.5rem; }
+.teacher-chip-photo { flex: 0 0 auto; width: 1.9rem; height: 1.9rem; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: #e4ecf6; color: $navy; font-size: 0.7rem; font-weight: 700; }

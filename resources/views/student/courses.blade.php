@@ -34,7 +34,7 @@
                                 <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div></td>
                                 <td>{{ rtrim(rtrim((string) $class->subject->units, '0'), '.') }}</td>
                                 <td class="small">{{ $class->scheduleSummary() ?: '—' }}</td>
-                                <td>{{ $class->teacher->name }}</td>
+                                <td><x-teacher-chip :teacher="$class->teacher" /></td>
                                 <td>
                                     @if ($class->status !== 'open') <x-status-badge :value="$class->status" />
                                     @elseif ($left === 0) <span class="text-danger fw-semibold">Full</span>

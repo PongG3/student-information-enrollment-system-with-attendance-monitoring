@@ -13,6 +13,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentAccountController;
 use App\Http\Controllers\PrivacyPolicyController;
+use App\Http\Controllers\StaffProfileController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentRequirementController;
@@ -138,7 +139,17 @@ Route::post('attendance/sheet', [AttendanceController::class, 'save'])
 Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {
     Route::get('privacy-policy', [PrivacyPolicyController::class, 'show'])->name('privacy-policy.show');
     Route::post('privacy-policy/agree', [PrivacyPolicyController::class, 'agree'])->name('privacy-policy.agree');
+
+    // My Profile for staff: department, office, contact number and photo.
+    Route::get('profile', [StaffProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile', [StaffProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/photo', [StaffProfileController::class, 'uploadPhoto'])->middleware('throttle:10,1')->name('profile.photo');
+    Route::delete('profile/photo', [StaffProfileController::class, 'removePhoto'])->name('profile.photo.remove');
 });
+
+// A staff member's photo: anyone signed in (students see their teachers' photos).
+Route::get('staff/{user}/photo', [StaffProfileController::class, 'photo'])
+    ->middleware(['auth', 'role:admin,registrar,teacher,student'])->whereNumber('user')->name('staff.photo');
 
 // Administrator only.
 Route::middleware(['auth', 'role:admin'])->group(function () {

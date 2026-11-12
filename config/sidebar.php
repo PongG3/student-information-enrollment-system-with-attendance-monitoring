@@ -35,6 +35,7 @@ return [
             ['label' => 'Subject Management', 'route' => 'subjects.index', 'active' => 'subjects.*', 'icon' => 'book', 'group' => 'Academics'],
             ['label' => 'Attendance Monitoring', 'route' => 'attendance.index', 'active' => 'attendance.*', 'icon' => 'check', 'group' => 'Attendance'],
             ['label' => 'Reports', 'route' => 'reports.index', 'active' => 'reports.*', 'icon' => 'chart', 'group' => 'Attendance'],
+            ['label' => 'My Profile', 'route' => 'profile.show', 'active' => 'profile.*', 'icon' => 'user', 'group' => 'Me'],
         ],
     ],
     'teacher' => [
@@ -45,6 +46,7 @@ return [
             ['label' => 'My Classes', 'route' => 'teacher.classes', 'active' => ['teacher.classes', 'classes.show'], 'icon' => 'classes', 'group' => 'Teaching'],
             ['label' => 'Attendance', 'route' => 'attendance.index', 'active' => 'attendance.*', 'icon' => 'check', 'group' => 'Teaching'],
             ['label' => 'Reports', 'route' => 'reports.index', 'active' => 'reports.*', 'icon' => 'chart', 'group' => 'Teaching'],
+            ['label' => 'My Profile', 'route' => 'profile.show', 'active' => 'profile.*', 'icon' => 'user', 'group' => 'Me'],
         ],
     ],
     'student' => [

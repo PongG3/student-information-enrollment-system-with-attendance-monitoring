@@ -17,6 +17,19 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /** Up to two initials, for the avatar when there is no photo. */
+    public function initials(): string
+    {
+        return collect(preg_split('/\s+/', trim($this->name)))->filter()->take(2)
+            ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
+    }
+
+    /** The staff member's photo (null when none), cache-busted by the file name. */
+    public function photoUrl(): ?string
+    {
+        return $this->photo_path ? route('staff.photo', ['user' => $this->id, 'v' => substr(md5($this->photo_path), 0, 8)]) : null;
+    }
+
     /**
      * Get the attributes that should be cast.
      *

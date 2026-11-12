@@ -57,8 +57,19 @@
         @endif
 
         <div class="dropdown">
+            @php
+                // The avatar shows a photo when there is one: staff upload their own; a student's is the approved official one.
+                $avatarPhoto = $user->role === 'student'
+                    ? (\App\Models\Student::where('user_id', $user->id)->value('photo_path') ? route('student.photo') : null)
+                    : $user->photoUrl();
+                $profileUrl = $user->role === 'student' ? route('student.profile') : route('profile.show');
+            @endphp
             <button type="button" class="account-button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu for {{ $user->name }}">
-                <span class="avatar" aria-hidden="true">{{ $initials }}</span>
+                @if ($avatarPhoto)
+                    <img src="{{ $avatarPhoto }}" alt="" class="avatar avatar-photo">
+                @else
+                    <span class="avatar" aria-hidden="true">{{ $initials }}</span>
+                @endif
                 <span class="account-text">
                     <span class="account-name">{{ $user->name }}</span>
                     <span class="account-role">{{ $roleLabel }}</span>
@@ -67,13 +78,18 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end account-menu">
                 <li class="account-menu-head">
-                    <span class="avatar" aria-hidden="true">{{ $initials }}</span>
+                    @if ($avatarPhoto)
+                        <img src="{{ $avatarPhoto }}" alt="" class="avatar avatar-photo">
+                    @else
+                        <span class="avatar" aria-hidden="true">{{ $initials }}</span>
+                    @endif
                     <span class="min-w-0">
                         <span class="account-name text-truncate">{{ $user->name }}</span>
                         <span class="account-role text-truncate">{{ $user->email }}</span>
                     </span>
                 </li>
                 <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ $profileUrl }}"><x-icon name="user" :size="16" /> My Profile</a></li>
                 <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('account.password') }}"><x-icon name="key" :size="16" /> Change Password</a></li>
                 @if (in_array($user->role, \App\Support\PrivacyPolicy::STAFF, true))
                     <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('privacy-policy.show') }}"><x-icon name="shield" :size="16" /> Data Privacy Policy</a></li>

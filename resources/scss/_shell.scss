@@ -194,3 +194,4 @@ $full: 260px;
 .page-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .page-header-centered .page-heading { justify-content: center; }
 @media (max-width: 575px) { .page-actions { width: 100%; } .page-actions > .btn { flex: 1 1 auto; } }
+.avatar-photo { object-fit: cover; padding: 0; background: $surface-muted; }

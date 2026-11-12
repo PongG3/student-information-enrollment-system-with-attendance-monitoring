@@ -74,7 +74,7 @@
                                         <td class="text-nowrap">{{ \App\Services\ScheduleChecker::time($item['meeting']->start_time) }} to {{ \App\Services\ScheduleChecker::time($item['meeting']->end_time) }}</td>
                                         <td class="fw-semibold">{{ $item['class']->subject->code }}<div class="text-secondary small fw-normal">{{ $item['class']->subject->title }}</div></td>
                                         <td>{{ $item['meeting']->room ?: '—' }}</td>
-                                        <td>{{ $item['class']->teacher->name }}</td>
+                                        <td><x-teacher-chip :teacher="$item['class']->teacher" /></td>
                                     </tr>
                                 @endforeach
                             </tbody>
