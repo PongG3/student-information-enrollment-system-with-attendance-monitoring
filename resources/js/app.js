@@ -2,6 +2,7 @@ import '@fontsource-variable/inter';
 import * as bootstrap from 'bootstrap';
 import './page-dialog.js';
 import './bulk-select.js';
+import './file-drop.js';
 
 window.bootstrap = bootstrap;
 

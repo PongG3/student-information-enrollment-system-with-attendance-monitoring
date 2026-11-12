@@ -348,6 +348,34 @@ class SystemImprovementsTest extends TestCase
             ->assertSessionHasErrors('excuse');
     }
 
+    public function test_one_letter_can_cover_every_class_missed_that_day(): void
+    {
+        Storage::fake('local');
+        // Ana also takes the other class, and missed both on Wednesday Nov 4.
+        $this->otherClass->update(['capacity' => 5]);
+        $this->enroll($this->ana, $this->otherClass, 'enrolled');
+        $this->mark($this->class, '2026-11-04', [$this->ana->id => 'absent']);
+        $this->mark($this->otherClass, '2026-11-04', [$this->ana->id => 'late']);
+
+        // The dialog offers the other class for that day, and the button says what it does.
+        $this->actingAs($this->anaUser)->get(route('student.attendance.show', $this->class))->assertOk()
+            ->assertSee('data-excuse-others="CS202"', false)->assertSee('Submit excuse')->assertSee('0 / 500')
+            ->assertSee('data-file-drop', false);
+
+        $this->actingAs($this->anaUser)->post(route('student.attendance.excuse', $this->class), [
+            'date' => '2026-11-04', 'reason' => 'I had a fever and stayed home.', 'all_day' => 1,
+            'file' => UploadedFile::fake()->create('certificate.pdf', 80, 'application/pdf'),
+        ])->assertSessionHas('success', fn ($message) => str_contains($message, 'for 2 classes (CS101, CS202)'));
+
+        $letters = AbsenceExcuse::orderBy('class_offering_id')->get();
+        $this->assertCount(2, $letters);
+        $this->assertSame([$this->class->id, $this->otherClass->id], $letters->pluck('class_offering_id')->all());
+        // Each class has its own copy of the file.
+        $this->assertNotSame($letters[0]->file_path, $letters[1]->file_path);
+        Storage::disk('local')->assertExists($letters[0]->file_path);
+        Storage::disk('local')->assertExists($letters[1]->file_path);
+    }
+
     public function test_saving_another_status_declines_the_letter(): void
     {
         $this->mark($this->class, '2026-11-04', [$this->ana->id => 'absent']);

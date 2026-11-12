@@ -189,6 +189,8 @@ class StudentPortalController extends Controller
             'records' => $records,
             'excuses' => AbsenceExcuse::where('student_id', $student->id)->where('class_offering_id', $offering->id)->get()
                 ->keyBy(fn (AbsenceExcuse $e) => $e->date->toDateString()),
+            // Other classes the student also missed (absent or late) on the same days: one letter can cover them all.
+            'otherMissed' => AbsenceExcuse::otherMissed($student, $offering),
             'counts' => $counts,
             'percentage' => AttendanceStats::percentage($counts, $rules),
             'flagged' => AttendanceStats::isFlagged($counts, $rules),

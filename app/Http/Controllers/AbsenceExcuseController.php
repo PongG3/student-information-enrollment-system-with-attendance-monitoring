@@ -26,6 +26,7 @@ class AbsenceExcuseController extends Controller
             'date' => ['required', 'date_format:Y-m-d'],
             'reason' => ['required', 'string', 'min:10', 'max:500'],
             'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'all_day' => ['nullable', 'boolean'],
         ], [
             'reason.min' => 'Explain the reason in at least 10 characters.',
             'file.mimes' => 'Attach a PDF or a photo (JPG or PNG).',
@@ -46,25 +47,54 @@ class AbsenceExcuseController extends Controller
             return back()->withErrors(['excuse' => 'Your teacher already decided on this letter.']);
         }
 
+        // This class, plus (if asked) every other class missed that day that still accepts a letter.
+        $classIds = [$offering->id];
+        if ($request->boolean('all_day')) {
+            $classIds = array_unique(array_merge($classIds, array_keys(AbsenceExcuse::missedByDay($student)[$data['date']] ?? [])));
+        }
+
         $file = $request->file('file');
-        $path = $file?->store('excuse-letters', 'local');
+        $upload = $file?->store('excuse-letters', 'local');
+        $sent = [];
+
+        foreach ($classIds as $i => $classId) {
+            // Each class keeps its own copy of the file, so replacing one letter never affects another.
+            $path = $upload === null ? null : ($i === 0 ? $upload : $this->copyOf($upload));
+            $sent[] = $this->saveLetter($student, (int) $classId, $data['date'], trim($data['reason']), $path, $file?->getClientOriginalName());
+        }
+
+        $codes = ClassOffering::with('subject')->whereIn('id', $classIds)->get()->pluck('subject.code')->implode(', ');
+        AuditLogger::log('excuse.sent', $sent[0], "Excuse letter sent for {$codes} on {$data['date']}");
+
+        return back()->with('success', count($sent) > 1
+            ? 'Excuse letter submitted for ' . count($sent) . " classes ({$codes}). Each teacher reviews it on their attendance sheet."
+            : 'Excuse letter submitted. Your teacher will review it on the attendance sheet.');
+    }
+
+    private function saveLetter(Student $student, int $classId, string $date, string $reason, ?string $path, ?string $fileName): AbsenceExcuse
+    {
+        $existing = AbsenceExcuse::where('student_id', $student->id)->where('class_offering_id', $classId)->whereDate('date', $date)->first();
         if ($path && $existing?->file_path) {
             Storage::disk('local')->delete($existing->file_path);
         }
 
-        $excuse = AbsenceExcuse::updateOrCreate(
-            ['student_id' => $student->id, 'class_offering_id' => $offering->id, 'date' => $data['date']],
+        return AbsenceExcuse::updateOrCreate(
+            ['student_id' => $student->id, 'class_offering_id' => $classId, 'date' => $date],
             array_filter([
-                'reason' => trim($data['reason']),
+                'reason' => $reason,
                 'file_path' => $path,
-                'file_name' => $file ? mb_substr($file->getClientOriginalName(), 0, 255) : null,
+                'file_name' => $fileName ? mb_substr($fileName, 0, 255) : null,
                 'status' => AbsenceExcuse::STATUS_PENDING,
             ], fn ($value) => $value !== null),
         );
+    }
 
-        AuditLogger::log('excuse.sent', $excuse, "Excuse letter sent for {$offering->class_code} on {$data['date']}");
+    private function copyOf(string $path): string
+    {
+        $copy = 'excuse-letters/' . \Illuminate\Support\Str::random(40) . '.' . pathinfo($path, PATHINFO_EXTENSION);
+        Storage::disk('local')->copy($path, $copy);
 
-        return back()->with('success', 'Excuse letter sent. Your teacher will review it on the attendance sheet.');
+        return $copy;
     }
 
     /** The attached file: the student who sent it, the class's teacher, the registrar and administrators. */
