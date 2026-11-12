@@ -257,3 +257,23 @@
 // Excuse letter dialog: the reason grows only downwards, never wider than the dialog.
 .excuse-reason { resize: vertical; min-height: 5.5rem; max-height: 14rem; }
 .excuse-all-day { padding: 0.6rem 0.75rem 0.6rem 2.2rem; border-radius: $radius; background: $surface-muted; }
+
+// Student profile: grouped details, lock cue on registrar-kept groups, photo button on the avatar.
+.profile-group + .profile-group { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid $border-soft; }
+.profile-group-title { display: flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: $navy-light; margin-bottom: 0.6rem; }
+.profile-lock { display: inline-grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: $surface-muted; color: $text-muted; cursor: help; }
+.profile-edit { font-size: 0.8rem; text-transform: none; letter-spacing: 0; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
+.profile-photo-wrap { position: relative; flex: 0 0 auto; }
+.profile-photo-edit {
+    position: absolute; right: -2px; bottom: -2px; width: 1.75rem; height: 1.75rem; border-radius: 50%;
+    display: grid; place-items: center; border: 2px solid $surface; background: $navy; color: #fff;
+}
+.profile-photo-edit:hover { background: $navy-light; }
+// A submitted photo next to its actions (student dialog and the registrar's student page).
+.photo-review { display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem; border-radius: $radius; background: #fff8e8; border: 1px solid #f3dfb0; }
+.photo-review-img { width: 64px; height: 64px; border-radius: 0.6rem; object-fit: cover; flex: 0 0 auto; background: $surface-muted; }
+// Tighter rhythm inside the grouped card so the whole profile fits a 768 px screen.
+.profile-group + .profile-group { margin-top: 0.7rem; padding-top: 0.7rem; }
+.profile-group-title { margin-bottom: 0.4rem; }
+.profile-group .profile-details { gap: 0.45rem 1.25rem; }
+.card-sies:has(.profile-group) .profile-head { padding-bottom: 0.7rem; margin-bottom: 0.7rem; }

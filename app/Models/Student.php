@@ -26,11 +26,12 @@ class Student extends Model
         'user_id', 'student_number', 'first_name', 'middle_name', 'last_name', 'suffix',
         'gender', 'birth_date', 'address', 'contact_number', 'email',
         'program_id', 'year_level', 'section', 'student_type', 'previous_school', 'photo_path', 'status', 'privacy_consent_at',
+        'pending_photo_path', 'pending_photo_at',
     ];
 
     protected function casts(): array
     {
-        return ['birth_date' => 'date', 'privacy_consent_at' => 'datetime'];
+        return ['birth_date' => 'date', 'privacy_consent_at' => 'datetime', 'pending_photo_at' => 'datetime'];
     }
 
     /** "Last, First Middle Suffix" */

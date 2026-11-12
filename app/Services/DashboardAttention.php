@@ -74,6 +74,19 @@ class DashboardAttention
             }
         }
 
+        // Photos students submitted, waiting for the registrar (or an administrator) to approve them.
+        if (in_array($user->role, ['admin', 'registrar'], true)) {
+            $photos = \App\Models\Student::whereNotNull('pending_photo_path')->orderBy('pending_photo_at')->get(['id']);
+            if ($photos->isNotEmpty()) {
+                $items[] = [
+                    'count' => $photos->count(),
+                    'label' => trans_choice('{1} student photo is waiting for approval|[2,*] student photos are waiting for approval', $photos->count()),
+                    'url' => route('students.show', $photos->first()->id),
+                    'tone' => 'info',
+                ];
+            }
+        }
+
         // The staff data privacy policy is still a draft: nobody has been asked to agree yet.
         if ($user->role === 'admin' && ! \App\Support\PrivacyPolicy::published()) {
             $items[] = [

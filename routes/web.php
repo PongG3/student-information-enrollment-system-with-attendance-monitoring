@@ -90,6 +90,10 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::delete('students/{student}', [StudentController::class, 'archive'])->name('students.archive')->whereNumber('student');
     Route::post('students/{student}/restore', [StudentController::class, 'restore'])->name('students.restore')->whereNumber('student')->withTrashed();
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])->name('students.photo')->whereNumber('student')->withTrashed();
+    // A photo the student submitted: shown to the registrar, then approved (becomes official) or rejected.
+    Route::get('students/{student}/photo/pending', [StudentController::class, 'pendingPhoto'])->name('students.photo.pending')->whereNumber('student');
+    Route::post('students/{student}/photo/approve', [StudentController::class, 'approvePhoto'])->name('students.photo.approve')->whereNumber('student');
+    Route::post('students/{student}/photo/reject', [StudentController::class, 'rejectPhoto'])->name('students.photo.reject')->whereNumber('student');
     Route::post('students/{student}/requirements/{requirement}', [StudentRequirementController::class, 'update'])
         ->name('students.requirements.update')->whereNumber(['student', 'requirement']);
 

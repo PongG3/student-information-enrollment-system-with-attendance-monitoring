@@ -195,6 +195,40 @@ class StudentController extends Controller
         return Storage::disk('local')->response($student->photo_path, null, ['Cache-Control' => 'private, max-age=3600']);
     }
 
+    /** The photo a student submitted, waiting for approval. */
+    public function pendingPhoto(Student $student)
+    {
+        abort_unless($student->pending_photo_path && Storage::disk('local')->exists($student->pending_photo_path), 404);
+
+        return Storage::disk('local')->response($student->pending_photo_path, null, ['Cache-Control' => 'private, no-store']);
+    }
+
+    /** Approve: the submitted photo becomes the official one (the old one is deleted). */
+    public function approvePhoto(Student $student)
+    {
+        abort_unless($student->pending_photo_path, 404);
+        $old = $student->photo_path;
+
+        $student->update(['photo_path' => $student->pending_photo_path, 'pending_photo_path' => null, 'pending_photo_at' => null]);
+        if ($old) {
+            Storage::disk('local')->delete($old);
+        }
+        AuditLogger::log('student.photo_approved', $student, "Approved the new photo of {$student->full_name}");
+
+        return back()->with('success', 'Photo approved. It is now the official photo.');
+    }
+
+    /** Reject: the submitted photo is deleted; the official one stays. */
+    public function rejectPhoto(Student $student)
+    {
+        abort_unless($student->pending_photo_path, 404);
+        Storage::disk('local')->delete($student->pending_photo_path);
+        $student->update(['pending_photo_path' => null, 'pending_photo_at' => null]);
+        AuditLogger::log('student.photo_rejected', $student, "Rejected the photo {$student->full_name} submitted");
+
+        return back()->with('success', 'Photo rejected. The student can send another.');
+    }
+
     private function filtered(Request $request): Builder
     {
         return Student::query()

@@ -121,9 +121,11 @@ class DemoDataSeeder extends Seeder
             );
 
             if ($student->wasRecentlyCreated) {
+                // A believable parent: the family name with a common first name, mother or father in turn.
+                [$parentFirst, $relationship] = [['Maria', 'Mother'], ['Jose', 'Father'], ['Elena', 'Mother'], ['Ramon', 'Father'], ['Liza', 'Mother'], ['Carlos', 'Father'], ['Teresa', 'Mother']][$i % 7];
                 $student->guardians()->create([
-                    'full_name' => 'Guardian of ' . $first . ' ' . $last,
-                    'relationship' => 'Parent',
+                    'full_name' => $parentFirst . ' ' . $last,
+                    'relationship' => $relationship,
                     'contact_number' => '0911-000-000' . ($i + 1),
                     'is_emergency_contact' => true,
                 ]);

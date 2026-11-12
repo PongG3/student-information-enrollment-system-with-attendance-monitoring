@@ -72,6 +72,20 @@
                         </div>
                     </div>
                 </div>
+                @if ($student->pending_photo_path)
+                    {{-- A photo the student submitted: approve it as the official ID photo, or reject it. --}}
+                    <div class="photo-review mb-3">
+                        <img src="{{ route('students.photo.pending', $student) }}" alt="Photo submitted by {{ $student->full_name }}" class="photo-review-img">
+                        <div class="min-w-0">
+                            <div class="fw-semibold small">New photo waiting for approval</div>
+                            <div class="small text-secondary mb-2">Sent {{ $student->pending_photo_at?->format('M j, Y g:i A') }}. Check it is a clear, formal ID photo.</div>
+                            <div class="d-flex gap-2">
+                                <form method="POST" action="{{ route('students.photo.approve', $student) }}">@csrf<button class="btn btn-outline-success btn-sm-sies">Approve</button></form>
+                                <form method="POST" action="{{ route('students.photo.reject', $student) }}">@csrf<button class="btn btn-quiet-danger btn-sm-sies">Reject</button></form>
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 <dl class="profile-details">
                     @foreach ($details as [$label, $value, $wide])
                         <div @class(['is-wide' => $wide])><dt>{{ $label }}</dt><dd>{{ $value }}</dd></div>

@@ -408,6 +408,70 @@ class SystemImprovementsTest extends TestCase
         $this->actingAs($this->anaUser)->get(route('excuses.file', $excuse))->assertOk();
     }
 
+    // ---------- Student self-service: contact details and photo ----------
+
+    public function test_a_student_updates_their_own_contact_details_but_nothing_official(): void
+    {
+        $this->actingAs($this->anaUser)->get(route('student.profile'))->assertOk()
+            ->assertSee('Academic status')->assertSee('Personal information')->assertSee('Contact details')
+            ->assertSee('class="profile-lock"', false)->assertSee('id="contactModal"', false);
+
+        $this->actingAs($this->anaUser)->put(route('student.profile.contact'), [
+            'email' => 'ana.new@example.com', 'contact_number' => '0917 555 1234', 'address' => 'Imus, Cavite',
+            // Not allowed to change these: ignored.
+            'last_name' => 'Hacker', 'program_id' => 999, 'birth_date' => '2000-01-01',
+        ])->assertRedirect(route('student.profile'))->assertSessionHas('success', 'Contact details saved.');
+
+        $ana = $this->ana->fresh();
+        $this->assertSame('0917 555 1234', $ana->contact_number);
+        $this->assertSame('Imus, Cavite', $ana->address);
+        $this->assertSame('Tester', $ana->last_name);
+        $this->assertSame($this->program->id, $ana->program_id);
+        $this->assertTrue(\App\Models\AuditLog::where('action', 'student.contact_updated')->exists());
+
+        $this->actingAs($this->anaUser)->put(route('student.profile.contact'), ['contact_number' => 'call me'])
+            ->assertSessionHasErrors('contact_number');
+    }
+
+    public function test_a_student_photo_waits_for_the_registrar_and_becomes_official_when_approved(): void
+    {
+        Storage::fake('local');
+
+        $this->actingAs($this->anaUser)->post(route('student.profile.photo'), [
+            'photo' => UploadedFile::fake()->image('me.jpg', 400, 400),
+        ])->assertSessionHas('success');
+
+        $ana = $this->ana->fresh();
+        $this->assertNull($ana->photo_path);
+        $this->assertNotNull($ana->pending_photo_path);
+        $this->actingAs($this->anaUser)->get(route('student.photo', ['pending' => 1]))->assertOk();
+
+        // The registrar is told, sees it on the record, and approves it.
+        $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertSee('student photo is waiting for approval');
+        $this->actingAs($this->registrar)->get(route('students.show', $ana))->assertOk()->assertSee('New photo waiting for approval');
+        $this->actingAs($this->registrar)->post(route('students.photo.approve', $ana))->assertSessionHas('success');
+
+        $ana->refresh();
+        $this->assertNotNull($ana->photo_path);
+        $this->assertNull($ana->pending_photo_path);
+        $this->actingAs($this->anaUser)->get(route('student.photo'))->assertOk();
+        $this->actingAs($this->teacher)->post(route('students.photo.approve', $ana))->assertForbidden();
+    }
+
+    public function test_a_rejected_photo_is_removed_and_tiny_photos_are_refused(): void
+    {
+        Storage::fake('local');
+        $this->actingAs($this->anaUser)->post(route('student.profile.photo'), ['photo' => UploadedFile::fake()->image('tiny.png', 50, 50)])
+            ->assertSessionHasErrors('photo');
+
+        $this->actingAs($this->anaUser)->post(route('student.profile.photo'), ['photo' => UploadedFile::fake()->image('me.png', 300, 300)]);
+        $path = $this->ana->fresh()->pending_photo_path;
+
+        $this->actingAs($this->registrar)->post(route('students.photo.reject', $this->ana));
+        $this->assertNull($this->ana->fresh()->pending_photo_path);
+        Storage::disk('local')->assertMissing($path);
+    }
+
     // ---------- Privacy ----------
 
     public function test_the_privacy_notice_is_public_and_linked_from_sign_in(): void
