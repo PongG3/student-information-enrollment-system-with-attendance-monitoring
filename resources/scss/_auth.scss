@@ -36,3 +36,6 @@
 }
 .password-eye:hover { color: $navy; background: $surface-hover; }
 .password-eye:focus-visible { outline: 2px solid $teal-strong; outline-offset: 1px; }
+// Inside the window the dialog itself scrolls, so the notice does not need its own scroll box.
+.privacy-modal-body .privacy-notice { max-height: none; overflow: visible; padding-right: 0; }
+.privacy-modal-body .privacy-notice h2:first-child { margin-top: 0.25rem; }

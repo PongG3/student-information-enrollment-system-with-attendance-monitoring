@@ -36,6 +36,23 @@ class LoginPageTest extends TestCase
             ->assertSee('data-eye="hide"', false);
     }
 
+    public function test_the_privacy_notice_opens_in_a_window_on_the_sign_in_page(): void
+    {
+        $this->get('/login')->assertOk()
+            ->assertSee('data-bs-target="#privacyModal"', false)
+            ->assertSee('id="privacyModal"', false)
+            ->assertSee('What we collect')
+            ->assertSee('How the school handles personal data')   // the seeded "School Name" placeholder is not shown
+            ->assertDontSee('How School Name handles');
+    }
+
+    public function test_each_role_card_has_its_own_icon(): void
+    {
+        $page = $this->get('/login')->assertOk()
+            ->assertSeeInOrder(['Students', 'Teachers', 'Registrar and administrators']);
+        $this->assertSame(3, substr_count($page->getContent(), 'class="role-icon"'));
+    }
+
     public function test_the_email_placeholder_shows_an_example_not_the_label_again(): void
     {
         $this->get('/login')->assertOk()

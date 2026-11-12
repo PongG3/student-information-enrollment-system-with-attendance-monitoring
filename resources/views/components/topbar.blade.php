@@ -75,6 +75,9 @@
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('account.password') }}"><x-icon name="key" :size="16" /> Change Password</a></li>
+                @if (in_array($user->role, \App\Support\PrivacyPolicy::STAFF, true))
+                    <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ route('privacy-policy.show') }}"><x-icon name="shield" :size="16" /> Data Privacy Policy</a></li>
+                @endif
                 <li><button type="button" class="dropdown-item d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#logoutModal"><x-icon name="logout" :size="16" /> Sign out</button></li>
             </ul>
         </div>

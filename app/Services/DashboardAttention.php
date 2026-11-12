@@ -74,6 +74,16 @@ class DashboardAttention
             }
         }
 
+        // The staff data privacy policy is still a draft: nobody has been asked to agree yet.
+        if ($user->role === 'admin' && ! \App\Support\PrivacyPolicy::published()) {
+            $items[] = [
+                'count' => 1,
+                'label' => 'The data privacy policy is not published yet. Review it and publish it so staff agree to it.',
+                'url' => route('privacy-policy.edit'),
+                'tone' => 'info',
+            ];
+        }
+
         // The administrator sees only work waiting on them (setup, requests, missing sheets, temporary passwords);
         // absence alerts stay on the registrar's and teachers' dashboards and in the Absentees report.
         if ($term && $user->role !== 'admin') {

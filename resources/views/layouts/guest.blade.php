@@ -27,7 +27,8 @@
         .auth-form .form-control::placeholder { color: #5f6f86; opacity: 1; }
         .auth-form .form-control:focus { border-color: #174c78; box-shadow: 0 0 0 0.2rem rgba(23, 76, 120, 0.2); }
         .auth-form .btn-outline-secondary { border-color: #9fb0c8; color: #3c4d66; }
-        .auth-roles .role-item { background: #f3f6fb; border-radius: 0.75rem; padding: 0.7rem 0.9rem; }
+        .auth-roles .role-item { background: #f3f6fb; border-radius: 0.75rem; padding: 0.7rem 0.9rem; display: flex; align-items: center; gap: 0.75rem; }
+        .auth-roles .role-icon { flex: 0 0 auto; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 0.6rem; background: #e2f7f3; color: #1b527d; }
         .auth-roles .role-item + .role-item { margin-top: 0.5rem; }
         .school-logo { height: 40px; width: auto; max-width: 120px; object-fit: contain; border-radius: 0.4rem; }
         .school-logo-hero { height: 44px; background: #fff; padding: 3px; }
@@ -51,9 +52,16 @@
             </div>
             <div class="auth-preview auth-roles">
                 <div class="small fw-semibold text-secondary mb-3">WHO CAN SIGN IN</div>
-                <div class="role-item"><div class="fw-semibold">Students</div><small class="text-secondary">See your classes, schedule and attendance</small></div>
-                <div class="role-item"><div class="fw-semibold">Teachers</div><small class="text-secondary">Record and review attendance for your classes</small></div>
-                <div class="role-item"><div class="fw-semibold">Registrar and administrators</div><small class="text-secondary">Manage records, enrollment and reports</small></div>
+                @foreach ([
+                    ['graduation', 'Students', 'See your classes, schedule and attendance'],
+                    ['presentation', 'Teachers', 'Record and review attendance for your classes'],
+                    ['shield', 'Registrar and administrators', 'Manage records, enrollment and reports'],
+                ] as [$icon, $role, $what])
+                    <div class="role-item">
+                        <span class="role-icon" aria-hidden="true"><x-icon :name="$icon" :size="18" /></span>
+                        <div><div class="fw-semibold">{{ $role }}</div><small class="text-secondary">{{ $what }}</small></div>
+                    </div>
+                @endforeach
             </div>
             <small class="opacity-75">Use the account the registrar gave you.</small>
         </section>
@@ -82,8 +90,26 @@
             <div class="auth-form">
                 {{ $slot }}
             </div>
-            <div class="small text-secondary border-top pt-3 mt-3">Authorized users only. Sign-ins and changes are recorded. Personal data is handled under the Data Privacy Act of 2012 (RA 10173): <a href="{{ route('privacy') }}">read the privacy notice</a>.</div>
+            <div class="small text-secondary border-top pt-3 mt-3">Authorized users only. Sign-ins and changes are recorded. Personal data is handled under the Data Privacy Act of 2012 (RA 10173): <a href="{{ route('privacy') }}" data-bs-toggle="modal" data-bs-target="#privacyModal">read the privacy notice</a>.</div>
         </section>
+    </div>
+
+    {{-- The privacy notice in a window, so the sign-in form stays where it is. (The link still works as a page without JavaScript.) --}}
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5 fw-bold" id="privacyTitle">Privacy notice</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body privacy-modal-body">
+                    @include('privacy._notice')
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-navy px-4" data-bs-dismiss="modal">Got it</button>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>

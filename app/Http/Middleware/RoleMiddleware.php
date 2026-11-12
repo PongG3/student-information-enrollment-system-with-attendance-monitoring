@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\PrivacyPolicy;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,16 @@ class RoleMiddleware
         if ($user->must_change_password && ! $request->routeIs('account.password', 'account.password.update')) {
             return redirect()->route('account.password')
                 ->with('warning', 'Please set a new password to continue.');
+        }
+
+        // Staff agree to the published data privacy policy (and to each new version) before working.
+        if (PrivacyPolicy::needsAgreement($user) && ! $request->routeIs('privacy-policy.show', 'privacy-policy.agree', 'account.password', 'account.password.update')) {
+            if ($request->isMethod('GET')) {
+                $request->session()->put('url.intended', $request->fullUrl());
+            }
+
+            return redirect()->route('privacy-policy.show')
+                ->with('warning', 'Please read and agree to the data privacy policy to continue.');
         }
 
         // Wrong role: the server refuses, whatever the menu shows.

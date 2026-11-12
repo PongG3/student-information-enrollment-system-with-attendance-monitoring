@@ -249,7 +249,10 @@ class StageLTest extends TestCase
 
     public function test_a_quiet_dashboard_has_no_attention_panel(): void
     {
-        // No pending requests, and every class sheet for today and the last two weeks is recorded.
+        // No pending requests, every class sheet for today and the last two weeks is recorded,
+        // and the data privacy policy is published (and agreed to).
+        \App\Models\Setting::put(\App\Support\PrivacyPolicy::VERSION, '2026-11-01 08:00:00');
+        $this->admin->forceFill(['privacy_policy_version' => '2026-11-01 08:00:00', 'privacy_policy_agreed_at' => now()])->save();
         $this->catchUpPastSheets();
         $this->sheet($this->mine, []);
         $this->sheet($this->theirs, []);

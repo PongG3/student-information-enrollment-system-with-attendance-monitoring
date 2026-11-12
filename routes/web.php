@@ -12,6 +12,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentAccountController;
+use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentRequirementController;
@@ -129,8 +130,17 @@ Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {
 Route::post('attendance/sheet', [AttendanceController::class, 'save'])
     ->middleware(['auth', 'role:admin,teacher'])->name('attendance.save');
 
+// Staff data privacy policy: every staff member reads and agrees; the administrator writes and publishes it.
+Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {
+    Route::get('privacy-policy', [PrivacyPolicyController::class, 'show'])->name('privacy-policy.show');
+    Route::post('privacy-policy/agree', [PrivacyPolicyController::class, 'agree'])->name('privacy-policy.agree');
+});
+
 // Administrator only.
 Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('privacy-policy/edit', [PrivacyPolicyController::class, 'edit'])->name('privacy-policy.edit');
+    Route::put('privacy-policy', [PrivacyPolicyController::class, 'update'])->name('privacy-policy.update');
+
     Route::resource('users', UserController::class)->except(['show', 'destroy']);
     Route::patch('users/{user}/status', [UserController::class, 'toggleStatus'])->name('users.status');
     Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
