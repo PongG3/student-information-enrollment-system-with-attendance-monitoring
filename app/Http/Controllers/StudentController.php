@@ -259,13 +259,19 @@ class StudentController extends Controller
             'previous_school' => ['nullable', 'string', 'max:255'],
             'status' => [$student ? 'required' : 'nullable', Rule::in([Student::STATUS_ACTIVE, Student::STATUS_INACTIVE, Student::STATUS_GRADUATED, Student::STATUS_WITHDRAWN])],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            // Required when registering; on edit it can be given later (older records have none).
+            'privacy_consent' => [$student ? 'nullable' : 'accepted'],
         ], [
+            'privacy_consent.accepted' => 'Confirm that the student or a guardian agreed to the privacy notice.',
             'contact_number.regex' => 'Enter a valid phone number.',
             'section.regex' => 'Use letters and numbers only, e.g. A or B2.',
             'photo.max' => 'The photo may not be larger than 2 MB.',
         ]);
 
-        unset($data['photo']);
+        unset($data['photo'], $data['privacy_consent']);
+        if ($request->boolean('privacy_consent') && ! $student?->privacy_consent_at) {
+            $data['privacy_consent_at'] = now();
+        }
 
         // "a" and "A" are the same section.
         $data['section'] = isset($data['section']) ? mb_strtoupper(trim($data['section'])) : null;

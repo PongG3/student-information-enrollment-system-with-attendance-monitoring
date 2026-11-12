@@ -16,9 +16,9 @@
     :back="route('students.index')" back-label="Back to student records">
     @unless ($student->trashed())
         <x-slot:actions>
-            <a href="{{ route('students.edit', $student) }}" class="btn btn-outline-secondary">Edit</a>
+            <a href="{{ route('students.edit', $student) }}" data-dialog data-dialog-size="xl" class="btn btn-outline-secondary">Edit</a>
             @if ($student->status === 'active')
-                <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add enrollment</a>
+                <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" data-dialog data-dialog-size="xl" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add enrollment</a>
             @endif
             <button type="button" class="btn btn-outline-danger"
                 data-bs-toggle="modal" data-bs-target="#confirmModal"
@@ -155,7 +155,7 @@
                     @if ($enrollments->isEmpty())
                         <x-empty-state icon="clipboard" message="This student has not requested any class yet.">
                             @if (! $student->trashed() && $student->status === 'active')
-                                <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" class="btn btn-navy btn-sm-sies">Add enrollment</a>
+                                <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" data-dialog data-dialog-size="xl" class="btn btn-navy btn-sm-sies">Add enrollment</a>
                             @endif
                         </x-empty-state>
                     @else

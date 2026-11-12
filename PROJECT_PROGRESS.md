@@ -1,6 +1,6 @@
 # SIES Campus Portal — UI/UX Redesign Progress
 
-Last updated: 2026-11-10. Updated after every redesign step; a module is ticked only after it was changed **and** tested.
+Last updated: 2026-11-12. Updated after every redesign step; a module is ticked only after it was changed **and** tested.
 
 ## How things are checked
 
@@ -28,7 +28,8 @@ Last updated: 2026-11-10. Updated after every redesign step; a module is ticked 
 2. **Tabs** — long forms (student, settings), record pages (student), dashboards (Overview / Trends).
 3. **Two columns** — class form (details | weekly schedule), subject dialog.
 4. **Sticky action bars** — Save/Cancel always visible on long forms and pickers.
-5. **Progressive disclosure** — report filters fold away once a report is shown ("Change filters").
+5. **Progressive disclosure** — once a report is shown its filters move into a "Change filters" dialog.
+6. **Pages in a dialog** — `data-dialog` links open an add/edit page in the shared `#pageDialog` (`?embed=1`, no menu; `resources/js/page-dialog.js`). The dialog fits its content and never the window. A failed save shows its errors inside; a successful one moves the main window on with its message (`App\Http\Middleware\DialogEmbed`). A page that redirects on opening (closed term, signed out) moves the main window too. A page can set its width (`<x-app-layout dialog-size="lg|xl">`): new enrollment is lg for the search step, xl for choosing classes. Used for edit class (two columns from 992 px of frame width), add/edit term and academic year, add/edit student, new enrollment request (both steps), add/edit user, and the dashboard quick actions. Ctrl+click still opens the full page.
 
 ## Viewport audit (after this pass)
 
@@ -40,8 +41,8 @@ No page scrolls sideways at any size. All 38 audited pages fit at 1366×768, 144
 | Audit logs | admin | +910 → fits | Fitted table |
 | Enrollment report | admin/registrar | +970 → fits | Fitted table, folded filters |
 | Master-list report | admin/registrar | +318, table scrolled sideways → fits | Compact report table (headers wrap), folded filters |
-| Registrar dashboard | registrar | +758 → fits | Overview / Trends tabs; 5 charts in one row |
-| Teacher dashboard | teacher | +427 → fits | Overview / Trends tabs |
+| Registrar dashboard | registrar | +758 → fits | Overview / Trends tabs; Trends = weekly attendance, enrollment by month (term months), students to follow up |
+| Teacher dashboard | teacher | +427 → fits | Overview / Trends tabs; Trends = weekly attendance (needs 2 weeks of sheets), attendance by class; Next class card |
 | Student record | admin/registrar | +266 → fits | Profile + tabs (Requirements, Enrollment history, Guardians, Portal account) |
 | New enrollment (step 2) | admin/registrar | +350 → fits | Slim student strip, fitted class picker, sticky bar |
 | Student records list | admin/registrar | +118 → fits | Fitted table |
@@ -60,10 +61,12 @@ Legend: ✅ redesigned and tested · ⬜ not yet
 
 ### Administrator / Registrar
 - ✅ Admin dashboard · ✅ Registrar dashboard
+- Dashboard review (2026-11-12): tab title "Dashboard"; quick actions are tasks only (admin: Add user, Terms & enrollment, Add student); today's sheets are no longer a card (said in Needs attention, listed in Today); admin cards = students + accounts; registrar activity grouped per student; student: honest attendance under 3 meetings, quick actions, notification bell.
+- System review (2026-11-12): missed past sheets (Needs attention chip for the last 2 weeks + "Missing attendance sheets" report, `AppServicesMissingSheets`); attendance sheet is phone-first (list before dates, stacked rows under 576 px); bulk Approve/Enroll selected on enrollment requests; student CSV import with checked preview (`StudentImportController`); excuse letters (student sends for an absence/late, teacher accepts by saving Excused, `absence_excuses` table); privacy notice page + consent recorded on students (`privacy_consent_at`); percentages say how late/excused are counted; unused Breeze auth controllers removed; bell badge moved off the icon.
 - ✅ Student records list · ✅ Student record (tabs) · ✅ Register / edit student (tabs)
 - ✅ Enrollment requests · ✅ New enrollment request
-- ✅ Class list · ✅ Class detail · ✅ Add / edit class (two columns)
-- ✅ Subjects (major/minor, wide dialog) · ✅ Programs · ✅ Academic years & terms · ✅ Holidays
+- ✅ Class list (Add class opens a dialog, 1140×536, fits all desktop sizes) · ✅ Class detail · ✅ Add / edit class page (two columns; fields shared with the dialog via `classes/_fields`)
+- ✅ Subjects (major/minor, wide dialog) · ✅ Programs · ✅ Academic years & terms (Add academic year opens a dialog, 520×370) · ✅ Holidays
 - ✅ Attendance monitoring · ✅ Attendance sheet · ✅ Attendance summary
 - ✅ Reports list · ✅ Report pages
 - ✅ User management · ✅ Audit logs · ✅ System settings (tabs)

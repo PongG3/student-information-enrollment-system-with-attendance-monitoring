@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AbsenceExcuse;
 use App\Models\AttendanceRecord;
 use App\Models\ClassMeeting;
 use App\Models\ClassOffering;
@@ -186,6 +187,8 @@ class StudentPortalController extends Controller
         return view('student.attendance-class', [
             'class' => $offering,
             'records' => $records,
+            'excuses' => AbsenceExcuse::where('student_id', $student->id)->where('class_offering_id', $offering->id)->get()
+                ->keyBy(fn (AbsenceExcuse $e) => $e->date->toDateString()),
             'counts' => $counts,
             'percentage' => AttendanceStats::percentage($counts, $rules),
             'flagged' => AttendanceStats::isFlagged($counts, $rules),

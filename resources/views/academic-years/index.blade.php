@@ -1,6 +1,6 @@
 <x-app-layout title="Academic Years & Terms" subtitle="Set up the school calendar. Closing a year or term locks its records.">
     <x-slot:actions>
-        <a href="{{ route('academic-years.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add academic year</a>
+        <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addYearModal"><x-icon name="plus" :size="16" /> Add academic year</button>
     </x-slot:actions>
 
     @forelse ($years as $year)
@@ -16,8 +16,8 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     @unless ($year->isClosed())
-                        <a href="{{ route('terms.create', ['academic_year' => $year->id]) }}" class="btn btn-outline-secondary btn-sm-sies">Add term</a>
-                        <a href="{{ route('academic-years.edit', $year) }}" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
+                        <a href="{{ route('terms.create', ['academic_year' => $year->id]) }}" data-dialog class="btn btn-outline-secondary btn-sm-sies">Add term</a>
+                        <a href="{{ route('academic-years.edit', $year) }}" data-dialog class="btn btn-outline-secondary btn-sm-sies">Edit</a>
                         @unless ($year->is_current)
                             <button type="button" class="btn btn-outline-secondary btn-sm-sies"
                                 data-bs-toggle="modal" data-bs-target="#confirmModal"
@@ -67,7 +67,7 @@
                                     </td>
                                     <td class="text-end text-nowrap">
                                         @unless ($term->isClosed())
-                                            <a href="{{ route('terms.edit', $term) }}" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
+                                            <a href="{{ route('terms.edit', $term) }}" data-dialog class="btn btn-outline-secondary btn-sm-sies">Edit</a>
                                             @unless ($term->is_current)
                                                 <button type="button" class="btn btn-outline-secondary btn-sm-sies"
                                                     data-bs-toggle="modal" data-bs-target="#confirmModal"
@@ -108,8 +108,10 @@
     @empty
         <div class="card-sies">
             <x-empty-state icon="calendar" message="No academic years yet.">
-                <a href="{{ route('academic-years.create') }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add academic year</a>
+                <button type="button" class="btn btn-navy btn-sm-sies" data-bs-toggle="modal" data-bs-target="#addYearModal"><x-icon name="plus" :size="14" /> Add academic year</button>
             </x-empty-state>
         </div>
     @endforelse
+
+    @include('academic-years._add-dialog')
 </x-app-layout>

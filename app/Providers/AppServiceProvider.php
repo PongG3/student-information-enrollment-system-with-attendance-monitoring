@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\SecurityHeaders;
+use App\Models\AbsenceExcuse;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\AuditLog;
@@ -33,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         // The top bar's notifications are cached briefly; any change they depend on refreshes them at once.
-        foreach ([Enrollment::class, AttendanceSession::class, AttendanceRecord::class, User::class, Term::class] as $model) {
+        foreach ([Enrollment::class, AttendanceSession::class, AttendanceRecord::class, User::class, Term::class, AbsenceExcuse::class] as $model) {
             $model::saved(fn () => Navigation::refreshNotifications());
             $model::deleted(fn () => Navigation::refreshNotifications());
         }

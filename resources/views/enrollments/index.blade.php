@@ -1,6 +1,6 @@
 <x-app-layout title="Enrollment Requests" subtitle="Record requests for students, then approve, enroll, reject or cancel them.">
     <x-slot:actions>
-        <a href="{{ route('enrollments.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> New request</a>
+        <a href="{{ route('enrollments.create') }}" data-dialog data-dialog-size="lg" class="btn btn-navy"><x-icon name="plus" :size="16" /> New request</a>
     </x-slot:actions>
 
     @if ($errors->has('enrollment'))
@@ -52,13 +52,30 @@
 
         @if ($enrollments->isEmpty())
             <x-empty-state icon="clipboard" message="No enrollment requests match.">
-                <a href="{{ route('enrollments.create') }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> New request</a>
+                <a href="{{ route('enrollments.create') }}" data-dialog data-dialog-size="lg" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> New request</a>
             </x-empty-state>
         @else
+            @php $selectable = $enrollments->contains(fn ($e) => in_array($e->status, ['pending', 'approved'], true) && ! $e->classOffering->term->isClosed()); @endphp
+            @if ($selectable)
+                {{-- Bulk: tick pending or approved requests, then approve or enroll them together. Each is still checked on its own. --}}
+                <form method="POST" action="{{ route('enrollments.bulk') }}" id="bulkForm" class="bulk-bar" data-bulk-form>
+                    @csrf
+                    <span class="small text-secondary" data-bulk-count>Tick requests to act on several at once.</span>
+                    <div class="d-flex gap-2 ms-auto">
+                        <button type="submit" name="action" value="approve" class="btn btn-outline-success btn-sm-sies" disabled data-bulk-button>Approve selected</button>
+                        <button type="submit" name="action" value="enroll" class="btn btn-navy btn-sm-sies" disabled data-bulk-button>Enroll selected</button>
+                    </div>
+                </form>
+            @endif
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover align-middle">
                     <thead>
-                        <tr><th>Student</th><th>Class</th><th>Seats</th><th>Documents</th><th>Status</th><th>Requested</th><th class="text-end">Actions</th></tr>
+                        <tr>
+                            @if ($selectable)
+                                <th class="bulk-col"><input type="checkbox" class="form-check-input" data-bulk-all aria-label="Select all pending and approved requests on this page"></th>
+                            @endif
+                            <th>Student</th><th>Class</th><th>Seats</th><th>Documents</th><th>Status</th><th>Requested</th><th class="text-end">Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach ($enrollments as $enrollment)
@@ -69,6 +86,14 @@
                                 $docs = $verified[$enrollment->student_id] ?? 0;
                             @endphp
                             <tr>
+                                @if ($selectable)
+                                    <td class="bulk-col">
+                                        @if (! $locked && in_array($enrollment->status, ['pending', 'approved'], true))
+                                            <input type="checkbox" class="form-check-input" name="ids[]" value="{{ $enrollment->id }}" form="bulkForm"
+                                                   data-bulk-item="{{ $enrollment->status }}" aria-label="Select {{ $student->full_name }} · {{ $class->class_code }}">
+                                        @endif
+                                    </td>
+                                @endif
                                 <td>
                                     <a href="{{ route('students.show', $student) }}" class="fw-semibold text-decoration-none">{{ $student->student_number }}</a>
                                     <div class="small">{{ $student->full_name }}</div>

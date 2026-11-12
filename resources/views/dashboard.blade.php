@@ -4,7 +4,7 @@
     $percent = fn ($value) => $value === null ? '—' : rtrim(rtrim(number_format($value, 1), '0'), '.') . '%';
     $role = auth()->user()->role;
 @endphp
-<x-app-layout>
+<x-app-layout tab-title="Dashboard">
     @include('dashboard._header')
 
     @include('dashboard._attention')
@@ -67,13 +67,15 @@
                                 <x-empty-state icon="clipboard" message="No enrollment requests yet." />
                             @else
                                 <ul class="activity-list">
-                                    @foreach ($recentRequests->take(5) as $latest)
+                                    @foreach ($recentRequests as $latest)
                                         <li class="d-flex justify-content-between align-items-center gap-2">
                                             <div class="min-w-0">
-                                                <div class="activity-text fw-semibold">{{ $latest->student->full_name }}</div>
-                                                <div class="activity-meta">{{ $latest->classOffering->class_code }} · {{ $latest->classOffering->subject->code }} · {{ $latest->updated_at->format('M j') }}</div>
+                                                <a href="{{ route('students.show', $latest['student']) }}" class="activity-text fw-semibold text-navy d-block">{{ $latest['student']->full_name }}</a>
+                                                <div class="activity-meta text-truncate">
+                                                    @if ($latest['subjects']->count() > 1){{ $latest['subjects']->count() }} classes: @endif{{ $latest['subjects']->implode(', ') }} · {{ $latest['date']->format('M j') }}
+                                                </div>
                                             </div>
-                                            <x-status-badge :value="$latest->status" />
+                                            <x-status-badge :value="$latest['status']" />
                                         </li>
                                     @endforeach
                                 </ul>
@@ -84,15 +86,9 @@
             </div>
         </div>
 
-        {{-- ===== Trends: charts built from recorded data only ===== --}}
+        {{-- ===== Trends: change over time, and who needs following up ===== --}}
         <div class="tab-pane fade" id="pane-trends" role="tabpanel" aria-labelledby="tab-trends" tabindex="0">
             @php
-                $statusChart = [
-                    'type' => 'doughnut',
-                    'centerLabel' => 'records',
-                    'labels' => ['Present', 'Late', 'Absent', 'Excused'],
-                    'datasets' => [['label' => 'Records', 'data' => array_values($termCounts), 'colors' => ['green', 'amber', 'red', 'blue']]],
-                ];
                 $attendanceChart = [
                     'type' => 'line',
                     'percent' => true,
@@ -100,18 +96,27 @@
                     'datasets' => [['label' => 'Attendance', 'data' => $attendanceTrend['values'], 'color' => 'navy', 'fill' => true]],
                 ];
             @endphp
-            {{-- Registrar: all five charts in one row on wide screens, so the tab fits one screen. --}}
             <div class="row g-3">
-                <div class="{{ $isTeacher ? 'col-lg-5' : 'col-md-6 col-xl' }}">
-                    <x-chart title="Attendance by status" :config="$statusChart" :empty="array_sum($termCounts) === 0"
-                        empty-message="No attendance has been recorded this term yet." note="This term, to date" :height="190" />
-                </div>
-                <div class="{{ $isTeacher ? 'col-lg-7' : 'col-md-6 col-xl' }}">
-                    <x-chart title="Weekly attendance trend" :config="$attendanceChart" :empty="! $attendanceTrend['hasData']"
-                        empty-message="Attendance trends appear after the first sheets are recorded." note="Percent, week starting" :height="190" />
+                <div class="{{ $isTeacher ? 'col-lg-6' : 'col-md-6 col-xl-4' }}">
+                    <x-chart title="Weekly attendance" :config="$attendanceChart" :empty="! $attendanceTrend['hasData']"
+                        empty-message="The trend appears once two weeks of attendance are recorded." note="Attendance rate, by week" :height="190" />
                 </div>
 
-                @unless ($isTeacher)
+                @if ($isTeacher)
+                    @php
+                        $classChart = [
+                            'type' => 'bar',
+                            'horizontal' => true,
+                            'percent' => true,
+                            'labels' => $byClass['labels'],
+                            'datasets' => [['label' => 'Attendance', 'data' => $byClass['values'], 'color' => 'navy']],
+                        ];
+                    @endphp
+                    <div class="col-lg-6">
+                        <x-chart title="Attendance by class" :config="$classChart" :empty="! $byClass['hasData']"
+                            empty-message="Each class appears once its first sheet is recorded." note="This term, lowest first" :height="190" />
+                    </div>
+                @else
                     @php
                         $trend = [
                             'type' => 'bar',
@@ -121,33 +126,45 @@
                                 ['label' => 'Enrolled', 'data' => $enrollmentTrend['enrolled'], 'color' => 'teal'],
                             ],
                         ];
-                        $statusConfig = [
-                            'type' => 'doughnut',
-                            'centerLabel' => 'requests',
-                            'labels' => $enrollmentStatus['labels'],
-                            'datasets' => [['label' => 'Requests', 'data' => $enrollmentStatus['values'], 'colors' => ['amber', 'blue', 'green', 'red', 'slate']]],
-                        ];
-                        $programChart = [
-                            'type' => 'bar',
-                            'horizontal' => true,
-                            'labels' => $byProgram['labels'],
-                            'datasets' => [['label' => 'Active students', 'data' => $byProgram['values'], 'color' => 'navy']],
-                        ];
                     @endphp
-                    <div class="col-md-6 col-lg-4 col-xl">
-                        <x-chart title="Requests by status" :config="$statusConfig" :empty="! $enrollmentStatus['hasData']"
-                            empty-message="No requests in this term yet." note="Current term" :height="190" />
+                    <div class="col-md-6 col-xl-4">
+                        <x-chart title="Enrollment by month" :config="$trend" :empty="! $enrollmentTrend['hasData']"
+                            empty-message="No enrollment requests in this term yet." note="Requests and enrolled students, this term" :height="190" />
                     </div>
-                    <div class="col-md-6 col-lg-4 col-xl">
-                        <x-chart title="Monthly enrollment trend" :config="$trend" :empty="! $enrollmentTrend['hasData']"
-                            empty-message="No enrollment requests have been recorded this academic year." note="Requests and enrolled students per month" :height="190" />
+
+                    <div class="col-xl-4">
+                        <div class="card-sies h-100">
+                            <div class="card-header-sies">
+                                <div>
+                                    <h2 class="h6 fw-bold mb-1">Students to follow up</h2>
+                                    <div class="small text-secondary">Absent in over {{ \App\Services\AttendanceStats::rules()['threshold'] }}% of meetings this term</div>
+                                </div>
+                                <a href="{{ route('reports.show', 'absentees') }}" class="small fw-semibold text-decoration-none text-nowrap">Full list →</a>
+                            </div>
+                            @if ($flagged->isEmpty())
+                                <x-empty-state icon="check" message="No student is over the absence limit." />
+                            @else
+                                <ul class="list-group list-group-flush">
+                                    @foreach ($flagged as $row)
+                                        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                            <div class="min-w-0">
+                                                <a href="{{ route('students.show', $row['student']) }}" class="fw-semibold small text-navy">{{ $row['student']->full_name }}</a>
+                                                <div class="text-secondary small text-truncate">{{ $row['class']->class_code }} · {{ $row['class']->subject->code }}</div>
+                                            </div>
+                                            <div class="text-end small text-nowrap">
+                                                <span class="badge text-bg-danger">{{ $percent($row['absence_rate']) }} absent</span>
+                                                <div class="text-secondary">{{ $row['counts']['absent'] }} absent · {{ $row['counts']['late'] }} late</div>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
                     </div>
-                    <div class="col-md-6 col-lg-4 col-xl">
-                        <x-chart title="Students by program" :config="$programChart" :empty="! $byProgram['hasData']"
-                            empty-message="No students are registered yet." note="Active students" :height="190" />
-                    </div>
-                @endunless
+                @endif
             </div>
+            {{-- Percentages follow the attendance rules in System Settings; say so where they are shown. --}}
+            <p class="small text-secondary mt-2 mb-0">How percentages are counted: {{ \App\Services\AttendanceStats::policy() }}.</p>
         </div>
     </div>
 </x-app-layout>

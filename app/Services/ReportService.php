@@ -69,6 +69,12 @@ class ReportService
             'group' => 'Attendance',
             'roles' => ['admin', 'registrar', 'teacher'],
         ],
+        'missing-sheets' => [
+            'title' => 'Missing attendance sheets',
+            'description' => 'Past class meetings with no attendance sheet, oldest first.',
+            'group' => 'Attendance',
+            'roles' => ['admin', 'registrar', 'teacher'],
+        ],
         'class-summary' => [
             'title' => 'Class attendance summary',
             'description' => 'One line per class: sheets, totals, attendance percentage and alerts.',
@@ -155,6 +161,7 @@ class ReportService
             'absentees' => [$year, $term, $class, $from, $to, ['name' => 'min', 'label' => 'At least this many absences', 'type' => 'number']],
             'late' => [$year, $term, $class, $from, $to, ['name' => 'min', 'label' => 'At least this many late arrivals', 'type' => 'number']],
             'class-summary' => [$year, $term, $class, $from, $to],
+            'missing-sheets' => [$year, $term, $class, $from, $to],
             default => [],
         };
     }
@@ -173,6 +180,7 @@ class ReportService
             'absentees' => self::exceptions($slug, $user, $f),
             'late' => self::exceptions($slug, $user, $f),
             'class-summary' => self::classSummary($user, $f),
+            'missing-sheets' => self::missingSheets($user, $f),
         };
     }
 
@@ -417,6 +425,30 @@ class ReportService
                     'Frequent-absence alerts' => $entries->where('flag', true)->count()],
             'landscape',
             $isLate ? null : 'Alert: absent in more than ' . $rules['threshold'] . '% of at least ' . AttendanceStats::MIN_MEETINGS_FOR_ALERT . ' meetings.',
+        );
+    }
+
+    private static function missingSheets(User $user, array $f): Report
+    {
+        $classes = self::scopedClasses($user, self::termIds($f, false), $f)->load('meetings');
+        $from = ! empty($f['from']) ? Carbon::createFromFormat('Y-m-d', $f['from'])->startOfDay() : null;
+        $to = ! empty($f['to']) ? Carbon::createFromFormat('Y-m-d', $f['to'])->startOfDay() : null;
+
+        $missing = MissingSheets::find($classes, $from, $to);
+
+        $rows = $missing->map(fn ($row) => [
+            $row['date']->format('Y-m-d'), $row['date']->format('l'), $row['class']->class_code,
+            $row['class']->subject->code . ' · ' . $row['class']->subject->title, $row['class']->teacher->name,
+        ])->all();
+
+        return new Report(
+            'missing-sheets', 'Missing attendance sheets',
+            array_filter(['Period' => self::scopeLabel($f, false), 'Class' => self::classLabel($f), 'From' => $from?->format('M j, Y'), 'To' => $to?->format('M j, Y')]),
+            ['Date', 'Day', 'Class', 'Subject', 'Teacher'],
+            $rows,
+            ['Missing sheets' => count($rows), 'Classes affected' => $missing->pluck('class.id')->unique()->count()],
+            'portrait',
+            'Counts class meetings before today with no sheet, skipping no-class days and cancelled classes. Attendance percentages leave these meetings out.',
         );
     }
 

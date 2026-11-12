@@ -32,7 +32,7 @@
 
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     @if ($isStaff && ! $class->term->isClosed())
-                        <a href="{{ route('classes.edit', $class) }}" class="btn btn-outline-secondary btn-sm-sies">Edit class</a>
+                        <a href="{{ route('classes.edit', $class) }}" data-dialog data-dialog-size="xl" class="btn btn-outline-secondary btn-sm-sies">Edit class</a>
                     @endif
                     <a href="{{ route('attendance.sheet', ['class_offering' => $class->id]) }}" class="btn btn-outline-secondary btn-sm-sies">Attendance sheet</a>
                     <a href="{{ route('attendance.summary', $class) }}" class="btn btn-outline-secondary btn-sm-sies">Attendance summary</a>

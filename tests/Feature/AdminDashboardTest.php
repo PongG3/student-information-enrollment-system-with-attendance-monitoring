@@ -58,8 +58,8 @@ class AdminDashboardTest extends TestCase
     {
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
             ->assertSeeInOrder([
-                'Good', 'Add student', 'New enrollment request', 'Attendance', 'Reports', '1st Semester · 2026-2027',
-                'Registered students', 'Enrolled students', 'Classes this term', 'Attendance today',
+                'Good', 'Add user', 'Terms & enrollment', 'Add student', '1st Semester · 2026-2027',
+                'Registered students', 'Enrolled students', 'Active accounts', 'Inactive accounts',
                 "Today's attendance", 'Present', 'Late', 'Absent', 'Excused',
                 'Recent activity',
             ]);
@@ -103,7 +103,8 @@ class AdminDashboardTest extends TestCase
     public function test_the_registrar_dashboard_is_unchanged(): void
     {
         $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
-            ->assertSee('Recent enrollment activity')->assertSee('Students by program')
+            ->assertSee('Recent enrollment activity')->assertSee('Students to follow up')->assertSee('Enrollment by month')
+            ->assertDontSee('Students by program')->assertDontSee('Requests by status')
             ->assertSee('class="stat-icon"', false);
     }
 }

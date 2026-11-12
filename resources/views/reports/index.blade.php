@@ -5,7 +5,7 @@
             @foreach ($reports as $report)
                 <div class="col-md-6 col-xl-4">
                     <a href="{{ route('reports.show', $report['slug']) }}" class="report-card">
-                        <span class="section-icon" aria-hidden="true"><x-icon :name="str_contains($report['slug'], 'attendance') || in_array($report['slug'], ['absentees', 'late', 'class-summary', 'student-history'], true) ? 'check' : 'students'" :size="18" /></span>
+                        <span class="section-icon" aria-hidden="true"><x-icon :name="str_contains($report['slug'], 'attendance') || in_array($report['slug'], ['absentees', 'late', 'class-summary', 'student-history', 'missing-sheets'], true) ? 'check' : 'students'" :size="18" /></span>
                         <span class="min-w-0">
                             <span class="report-card-title">{{ $report['title'] }}</span>
                             <span class="report-card-text">{{ $report['description'] }}</span>

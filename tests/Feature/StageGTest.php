@@ -178,6 +178,13 @@ class StageGTest extends TestCase
         $this->assertNull($trend['values'][0]);   // no sheets in the earliest weeks
     }
 
+    public function test_one_week_of_attendance_is_not_yet_a_trend(): void
+    {
+        $this->sheet($this->class, '2026-11-09', [$this->s1->id => 'present', $this->s2->id => 'present']);
+
+        $this->assertFalse(DashboardStats::attendanceTrend($this->term)['hasData']);
+    }
+
     public function test_trend_is_limited_to_the_teachers_own_classes(): void
     {
         $other = $this->makeClass('CL-2001', 'CS201', $this->otherTeacher);
@@ -204,7 +211,7 @@ class StageGTest extends TestCase
 
         $this->assertTrue($trend['hasData']);
         $this->assertSame('Aug', $trend['labels'][0]);
-        $this->assertCount(10, $trend['labels']);   // August to May
+        $this->assertCount(5, $trend['labels']);   // the term's months: August to December
 
         $sep = array_search('Sep', $trend['labels']);
         $oct = array_search('Oct', $trend['labels']);
@@ -212,20 +219,6 @@ class StageGTest extends TestCase
         $this->assertSame(1, $trend['enrolled'][$sep]);
         $this->assertSame(1, $trend['requests'][$oct]);
         $this->assertSame(1, $trend['enrolled'][$oct]);
-    }
-
-    public function test_status_and_program_breakdowns(): void
-    {
-        $this->enroll($this->makeStudent('2026-0003'), $this->class, 'pending');
-        Program::create(['code' => 'BSIT', 'name' => 'BS Information Technology']);
-
-        $status = DashboardStats::enrollmentStatus($this->term);
-        $this->assertSame(['Pending', 'Approved', 'Enrolled', 'Rejected', 'Cancelled'], $status['labels']);
-        $this->assertSame([1, 0, 2, 0, 0], $status['values']);
-
-        $programs = DashboardStats::byProgram();
-        $this->assertSame(['BSCS', 'BSIT'], $programs['labels']);
-        $this->assertSame([3, 0], $programs['values']);
     }
 
     public function test_an_empty_system_still_works(): void
@@ -246,9 +239,9 @@ class StageGTest extends TestCase
         // Charts were moved off the administrator's dashboard; their data stays in Reports.
         $this->actingAs($this->admin)->get('/admin/dashboard')
             ->assertOk()
-            ->assertSee('Registered students')->assertSee('Enrolled students')->assertSee('Classes this term')
+            ->assertSee('Registered students')->assertSee('Enrolled students')->assertSee('Active accounts')
             ->assertSee("Today's attendance")->assertSee('Recent activity')
-            ->assertDontSee('Monthly enrollment trend')->assertDontSee('Weekly attendance trend')
+            ->assertDontSee('Enrollment by month')->assertDontSee('Weekly attendance')
             ->assertDontSee('Students by program')
             ->assertDontSee('data-chart', false);
     }

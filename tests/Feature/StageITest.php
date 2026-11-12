@@ -516,4 +516,55 @@ class StageITest extends TestCase
         $this->actingAs($this->anaUser)->get(route('student.schedule', ['term' => $stranger->id]))->assertOk()
             ->assertSee('CS101')->assertDontSee('Other Semester');
     }
+
+    // ---------- Dashboard review (all roles) ----------
+
+    public function test_one_absence_is_shown_not_praised(): void
+    {
+        $this->mark($this->class, self::TODAY, [$this->ana->id => 'absent']);
+
+        // 0% from a single meeting: say what happened and that alerts start later, never "Keep it up".
+        $this->actingAs($this->anaUser)->get(route('student.dashboard'))->assertOk()
+            ->assertSee('From 1 meeting so far')->assertSee('Absent 1 of 1 meeting so far.')
+            ->assertSee('Alerts start once 3 meetings of a class are recorded.')
+            ->assertDontSee('Keep it up');
+    }
+
+    public function test_a_student_with_no_attendance_yet_is_told_so(): void
+    {
+        $this->actingAs($this->anaUser)->get(route('student.dashboard'))->assertOk()
+            ->assertSee('No attendance has been recorded for your classes yet.')->assertSee('Nothing recorded yet');
+    }
+
+    public function test_students_get_quick_actions_and_a_notification_bell(): void
+    {
+        $request = $this->enroll($this->ana, $this->otherClass, 'rejected', 'Section is full');
+        $request->forceFill(['reviewed_at' => now()])->save();
+
+        $this->actingAs($this->anaUser)->get(route('student.dashboard'))->assertOk()
+            ->assertSee('Quick actions')->assertSee('Available courses')->assertSee(route('student.courses'), false)->assertDontSee('Choose classes')
+            ->assertSee('Notifications: 1 waiting')->assertSee('class request was rejected this week');
+    }
+
+    public function test_dashboards_name_themselves_in_the_browser_tab(): void
+    {
+        foreach ([[$this->anaUser, 'student.dashboard'], [$this->admin, 'admin.dashboard'], [$this->teacher, 'teacher.dashboard']] as [$user, $route]) {
+            $this->actingAs($user)->get(route($route))->assertSee('<title>Dashboard · SIES Campus Portal</title>', false);
+        }
+    }
+
+    public function test_the_registrar_sees_one_activity_line_per_student(): void
+    {
+        // Ben was enrolled in two classes at once: one line, not two.
+        $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
+            ->assertSee('2 classes: CS101, CS202');
+    }
+
+    public function test_the_teacher_sees_the_next_class_and_attendance_by_class(): void
+    {
+        // Monday 10:00: the 8:00 meetings are over, so the next one is Wednesday.
+        $this->actingAs($this->teacher)->get(route('teacher.dashboard'))->assertOk()
+            ->assertSeeInOrder(['Next class', 'CS101 · 8:00 AM', 'Wednesday, Nov 11 · Room 101'])
+            ->assertSee('Attendance by class')->assertDontSee('Attendance sheets today');
+    }
 }

@@ -48,6 +48,7 @@ class DashboardController extends Controller
             $data['overview'] = DashboardStats::overview($term);
             $data['week'] = DashboardWeek::changes($term);
             $data['attention'] = DashboardAttention::items($user, $term, $data['today'], $data['overview']);
+            $data['accounts'] = DashboardStats::accounts();
             $data['recent'] = AuditLog::with('user')
                 ->whereNotIn('action', self::ROUTINE_ACTIONS)
                 ->latest('created_at')->latest('id')->limit(5)->get();
@@ -70,6 +71,8 @@ class DashboardController extends Controller
                 'students' => Enrollment::whereIn('class_offering_id', $classIds)->where('status', Enrollment::STATUS_ENROLLED)->distinct()->count('student_id'),
             ];
             $data['flagged'] = $term ? AttendanceStats::flagged($term, $user->id, null, 5) : collect();
+            $data['nextClass'] = DashboardStats::nextClass($term, $user->id);
+            $data['byClass'] = DashboardStats::attendanceByClass($term, $user->id);
             $data['attention'] = DashboardAttention::items($user, $term, $data['today'], null);
 
             return view('dashboard', $data);
@@ -79,10 +82,19 @@ class DashboardController extends Controller
         $data['week'] = DashboardWeek::changes($term);
         $data['attention'] = DashboardAttention::items($user, $term, $data['today'], $data['overview']);
         $data['enrollmentTrend'] = DashboardStats::enrollmentTrend($term);
-        $data['enrollmentStatus'] = DashboardStats::enrollmentStatus($term);
-        $data['byProgram'] = DashboardStats::byProgram();
+        // Students over the absence limit, across all classes: the list to follow up.
+        $data['flagged'] = $term ? AttendanceStats::flagged($term, null, null, 6) : collect();
+        // One line per student, day and status (a student enrolled in four classes is one line, not four).
         $data['recentRequests'] = Enrollment::with(['student', 'classOffering.subject'])
-            ->latest('updated_at')->latest('id')->limit(8)->get();
+            ->latest('updated_at')->latest('id')->limit(40)->get()
+            ->groupBy(fn (Enrollment $e) => $e->student_id . '|' . $e->updated_at->toDateString() . '|' . $e->status)
+            ->map(fn ($group) => [
+                'student' => $group->first()->student,
+                'status' => $group->first()->status,
+                'date' => $group->first()->updated_at,
+                'subjects' => $group->map(fn (Enrollment $e) => $e->classOffering->subject->code)->unique()->sort()->values(),
+            ])
+            ->take(5)->values();
 
         return view('dashboard', $data);
     }

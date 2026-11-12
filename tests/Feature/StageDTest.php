@@ -50,7 +50,7 @@ class StageDTest extends TestCase
     {
         return array_merge([
             'first_name' => 'Alex', 'last_name' => 'Rivera', 'gender' => 'Male', 'birth_date' => '2007-03-14',
-            'program_id' => $this->program->id, 'year_level' => 1, 'student_type' => 'new',
+            'program_id' => $this->program->id, 'year_level' => 1, 'student_type' => 'new', 'privacy_consent' => 1,
             'guardians' => [
                 0 => ['full_name' => 'Pat Rivera', 'relationship' => 'Parent', 'contact_number' => '0912 345 6789', 'is_emergency_contact' => 1],
             ],

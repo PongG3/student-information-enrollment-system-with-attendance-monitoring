@@ -1,10 +1,10 @@
 <x-app-layout title="New Enrollment Request" subtitle="Choose the student, then the classes they want. Each class is checked before it is saved."
-    :back="route('enrollments.index')" back-label="Back to requests">
+    :back="route('enrollments.index')" back-label="Back to requests" :dialog-size="isset($student) && $student ? 'xl' : 'lg'">
     @if (! $term)
         <div class="card-sies p-4">
             <div class="alert alert-warning mb-3">Enrollment is closed. No new requests can be recorded right now.</div>
             <p class="text-secondary small mb-3">An administrator can open it on <strong>Academic Years &amp; Terms</strong> by making a term current and choosing Open enrollment.</p>
-            <a href="{{ route('enrollments.index') }}" class="btn btn-outline-secondary btn-sm-sies">Back to requests</a>
+            <a href="{{ route('enrollments.index') }}" class="btn btn-outline-secondary btn-sm-sies" data-dialog-close>Back to requests</a>
         </div>
     @elseif (! $student)
         @include('enrollments._steps', ['step' => 1])

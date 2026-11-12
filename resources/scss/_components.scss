@@ -253,3 +253,18 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 .report-table { font-size: 0.8rem; }
 .report-table > thead > tr > th { white-space: normal; vertical-align: bottom; line-height: 1.25; }
 .report-table > :not(caption) > * > * { padding: 0.45rem 0.55rem; }
+
+// ---- Page shown inside a dialog (components/page-dialog + js/page-dialog.js) ----
+.page-dialog-body { position: relative; }
+.page-dialog-frame { display: block; width: 100%; border: 0; height: 0; transition: height 0.15s ease; }
+// The embedded page is square and white: clip it so the dialog keeps its rounded bottom corners.
+#pageDialog .modal-content { overflow: hidden; }
+.page-dialog-loading { display: grid; gap: 0.75rem; padding: 1.25rem; }
+.page-dialog-loading[hidden] { display: none; }
+.skeleton-field { height: 2.4rem; }
+// The embedded page itself: no shell, the dialog is the frame.
+.is-embedded body { background: $surface; }
+.embed-content { padding: 1rem 1.25rem 1.1rem; }
+.is-embedded .form-actionbar.is-sticky { bottom: 0; box-shadow: 0 -6px 16px rgba($navy, 0.06); }
+.is-embedded .card-form, .is-embedded .card-form-sm, .is-embedded .card-narrow { max-width: none; }
+.is-embedded .card-sies.card-form, .is-embedded .card-sies.card-narrow { border: 0; box-shadow: none; padding: 0 !important; }

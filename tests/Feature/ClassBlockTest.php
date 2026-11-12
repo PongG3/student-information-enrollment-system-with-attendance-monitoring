@@ -101,6 +101,37 @@ class ClassBlockTest extends TestCase
         $this->assertSame('202620001', $class->fresh()->class_code);
     }
 
+    // ---------- Add Class dialog on the class list ----------
+
+    public function test_the_class_list_has_an_add_class_dialog(): void
+    {
+        $this->actingAs($this->registrar)->get(route('classes.index'))->assertOk()
+            ->assertSee('data-bs-target="#addClassModal"', false)
+            ->assertSee('id="addClassModal"', false)
+            ->assertSee('name="_from_dialog"', false)
+            ->assertSee('Weekly schedule')->assertSee('Create class');
+    }
+
+    public function test_a_class_added_from_the_dialog_returns_to_the_list(): void
+    {
+        $this->actingAs($this->registrar)->from(route('classes.index'))
+            ->post(route('classes.store'), $this->payload(['_from_dialog' => 1]))
+            ->assertRedirect(route('classes.index', ['term' => $this->first->id]))
+            ->assertSessionHas('success', 'Class 202610001 created: CS102 · BSCS 1-C.');
+    }
+
+    public function test_a_failed_save_reopens_the_dialog_with_what_was_typed(): void
+    {
+        $this->actingAs($this->registrar)->from(route('classes.index'))->followingRedirects()
+            ->post(route('classes.store'), $this->payload(['_from_dialog' => 1, 'teacher_id' => '', 'section' => 'Q']))
+            ->assertOk()
+            ->assertSee('The class was not saved.')
+            ->assertSee("getOrCreateInstance(document.getElementById('addClassModal')).show()", false)
+            ->assertSee('value="Q"', false);
+
+        $this->assertSame(0, ClassOffering::count());
+    }
+
     // ---------- Blocks ----------
 
     public function test_a_class_shows_its_block(): void

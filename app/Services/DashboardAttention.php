@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AbsenceExcuse;
 use App\Models\Term;
 use App\Models\User;
 
@@ -41,6 +42,36 @@ class DashboardAttention
                 'url' => route('attendance.index'),
                 'tone' => 'warning',
             ];
+        }
+
+        // Past meetings (last two weeks) that never got a sheet: without this a skipped week goes unnoticed
+        // and the attendance percentages look better than they are.
+        if ($term) {
+            $past = MissingSheets::recentCount($term->id, $isTeacher ? $user->id : null);
+            if ($past > 0) {
+                $items[] = [
+                    'count' => $past,
+                    'label' => trans_choice('{1} past class meeting has no attendance sheet (last 2 weeks)|[2,*] past class meetings have no attendance sheet (last 2 weeks)', $past),
+                    'url' => route('reports.show', ['missing-sheets', 'from' => today()->subDays(14)->toDateString()]),
+                    'tone' => 'danger',
+                ];
+            }
+        }
+
+        // Excuse letters waiting for the teacher's decision (made on that day's sheet).
+        if ($term && $isTeacher) {
+            $waiting = AbsenceExcuse::where('status', AbsenceExcuse::STATUS_PENDING)
+                ->whereHas('classOffering', fn ($q) => $q->where('term_id', $term->id)->where('teacher_id', $user->id))
+                ->orderBy('date')->get(['class_offering_id', 'date']);
+            if ($waiting->isNotEmpty()) {
+                $first = $waiting->first();
+                $items[] = [
+                    'count' => $waiting->count(),
+                    'label' => trans_choice('{1} excuse letter is waiting for your decision|[2,*] excuse letters are waiting for your decision', $waiting->count()),
+                    'url' => route('attendance.sheet', ['class_offering' => $first->class_offering_id, 'date' => $first->date->toDateString()]),
+                    'tone' => 'info',
+                ];
+            }
         }
 
         // The administrator sees only work waiting on them (setup, requests, missing sheets, temporary passwords);

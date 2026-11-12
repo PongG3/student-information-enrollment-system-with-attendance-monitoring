@@ -13,6 +13,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentAccountController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentImportController;
 use App\Http\Controllers\StudentRequirementController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TermController;
@@ -24,6 +25,9 @@ Route::get('/', fn () => redirect()->route('login'));
 
 // The school logo from System Settings (public: shown on the sign-in page).
 Route::get('/school-logo', [SettingController::class, 'logo'])->name('school.logo');
+
+// Privacy notice (Data Privacy Act, RA 10173): public, linked from the sign-in page and the student forms.
+Route::view('/privacy', 'privacy')->name('privacy');
 
 // /dashboard sends each logged-in user to their own role's dashboard.
 Route::get('/dashboard', function () {
@@ -72,6 +76,12 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::get('students', [StudentController::class, 'index'])->name('students.index');
     Route::get('students/export', [StudentController::class, 'export'])->name('students.export');
     Route::get('students/create', [StudentController::class, 'create'])->name('students.create');
+    // Import from CSV: upload -> preview (every row checked) -> confirm.
+    Route::get('students/import', [StudentImportController::class, 'create'])->name('students.import');
+    Route::get('students/import/template', [StudentImportController::class, 'template'])->name('students.import.template');
+    Route::post('students/import/preview', [StudentImportController::class, 'preview'])->name('students.import.preview');
+    Route::post('students/import', [StudentImportController::class, 'store'])->name('students.import.store');
+    Route::post('students/import/cancel', [StudentImportController::class, 'cancel'])->name('students.import.cancel');
     Route::post('students', [StudentController::class, 'store'])->name('students.store');
     Route::get('students/{student}', [StudentController::class, 'show'])->name('students.show')->whereNumber('student')->withTrashed();
     Route::get('students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit')->whereNumber('student');
@@ -91,6 +101,7 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
     Route::get('enrollments/create', [EnrollmentController::class, 'create'])->name('enrollments.create');
     Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
+    Route::post('enrollments/bulk', [EnrollmentController::class, 'bulk'])->name('enrollments.bulk');
     foreach (['approve', 'reject', 'enroll', 'cancel', 'reopen'] as $action) {
         Route::post("enrollments/{enrollment}/{$action}", [EnrollmentController::class, $action])
             ->name("enrollments.{$action}")->whereNumber('enrollment');

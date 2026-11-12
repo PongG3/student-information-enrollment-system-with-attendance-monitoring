@@ -19,6 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->web(prepend: [
         \App\Http\Middleware\ApplySessionTimeout::class,
     ]);
+
+    // Forms saved from a page shown inside a dialog: see App\Http\Middleware\DialogEmbed.
+    $middleware->web(append: [
+        \App\Http\Middleware\DialogEmbed::class,
+    ]);
+    // ...and wrapped around the sign-in check, so "please sign in" opens in the main window too.
+    $middleware->prependToPriorityList(
+        before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+        prepend: \App\Http\Middleware\DialogEmbed::class,
+    );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // "419 Page Expired": a form was sent after the session ended (for example

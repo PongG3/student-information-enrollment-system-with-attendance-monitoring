@@ -11,7 +11,8 @@
     @endforeach
 
     <div class="row g-4">
-        <div class="col-lg-3 order-lg-2">
+        {{-- On phones the sheet comes first (teachers take attendance in class); dates and class details follow it. --}}
+        <div class="col-lg-3 order-2">
             <div class="card-sies p-3 mb-3">
                 <h2 class="h6 fw-bold">Choose a date</h2>
                 <form method="GET" action="{{ route('attendance.sheet') }}" class="d-flex gap-2 mb-3">
@@ -40,7 +41,14 @@
             </div>
         </div>
 
-        <div class="col-lg-9 order-lg-1">
+        <div class="col-lg-9 order-1">
+            {{-- Phones: a compact date picker above the list (the full panel with recent days is below the sheet). --}}
+            <form method="GET" action="{{ route('attendance.sheet') }}" class="d-flex d-lg-none gap-2 mb-2">
+                <input type="hidden" name="class_offering" value="{{ $class->id }}">
+                <input type="date" name="date" value="{{ $date->toDateString() }}" max="{{ today()->toDateString() }}" class="form-control" aria-label="Date">
+                <button class="btn btn-outline-secondary btn-sm-sies">Go</button>
+            </form>
+
             @if (! $editable && $access['messages'])
                 <div class="alert alert-secondary">
                     @foreach ($access['messages'] as $message)<div>{{ $message }}</div>@endforeach
@@ -53,6 +61,10 @@
                 <div class="small text-secondary mb-2">Recorded by {{ $session->takenBy->name }} on {{ $session->created_at->format('M j, Y g:i A') }}.</div>
             @elseif ($editable)
                 <div class="small text-secondary mb-2">No sheet yet for this date. Everyone starts as Present. Change the exceptions, then save.</div>
+            @endif
+            @php $waiting = $excuses->where('status', 'pending')->count(); @endphp
+            @if ($editable && $waiting > 0)
+                <div class="alert alert-info py-2 small">{{ $waiting }} excuse {{ \Illuminate\Support\Str::plural('letter', $waiting) }} waiting. Set the student to <strong>Excused</strong> to accept it; saving any other status declines it.</div>
             @endif
 
             <form method="POST" action="{{ route('attendance.save') }}" novalidate @if ($editable) data-attendance-sheet @endif>
@@ -87,6 +99,17 @@
                                             <td>
                                                 <div class="fw-semibold">{{ $student->full_name }}</div>
                                                 <div class="text-secondary small">{{ $student->student_number }}</div>
+                                                @if ($excuse = $excuses->get($student->id))
+                                                    {{-- Excuse letter: saving the sheet as Excused accepts it; any other status declines it. --}}
+                                                    <div class="excuse-note small mt-1">
+                                                        <x-status-badge :value="['pending' => 'pending', 'accepted' => 'verified', 'declined' => 'rejected'][$excuse->status]"
+                                                            :label="'Excuse letter' . ($excuse->status === 'pending' ? '' : ' ' . $excuse->status)" />
+                                                        <span class="text-secondary">“{{ \Illuminate\Support\Str::limit($excuse->reason, 90) }}”</span>
+                                                        @if ($excuse->file_path)
+                                                            <a href="{{ route('excuses.file', $excuse) }}" target="_blank" class="fw-semibold text-decoration-none">View file</a>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                             </td>
                                             @if ($editable)
                                                 <td>
@@ -100,7 +123,7 @@
                                                 </td>
                                                 <td>
                                                     <input type="text" name="rows[{{ $student->id }}][remarks]" maxlength="255" class="form-control"
-                                                        value="{{ old("rows.{$student->id}.remarks", $record?->remarks) }}" placeholder="Required for Excused" aria-label="Remarks for {{ $student->full_name }}">
+                                                        value="{{ old("rows.{$student->id}.remarks", $record?->remarks ?: ($excuse && $excuse->status === 'pending' ? 'Excuse letter' : null)) }}" placeholder="Required for Excused" aria-label="Remarks for {{ $student->full_name }}">
                                                 </td>
                                             @else
                                                 <td>@if ($record) <x-status-badge :value="$record->status" /> @else <span class="text-secondary small">Not recorded</span> @endif</td>

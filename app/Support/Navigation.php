@@ -2,10 +2,13 @@
 
 namespace App\Support;
 
+use App\Models\Enrollment;
+use App\Models\Student;
 use App\Models\Term;
 use App\Models\User;
 use App\Services\DashboardAttention;
 use App\Services\DashboardStats;
+use App\Services\StudentPortalData;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -55,11 +58,15 @@ final class Navigation
      */
     public static function notifications(User $user): array
     {
-        if (! in_array($user->role, ['admin', 'registrar', 'teacher'], true)) {
+        if (! in_array($user->role, ['admin', 'registrar', 'teacher', 'student'], true)) {
             return [];
         }
 
         $version = (int) Cache::get('notifications.version', 0);
+
+        if ($user->role === 'student') {
+            return Cache::remember("notifications.{$version}.{$user->id}", 60, fn () => self::studentNotifications($user));
+        }
 
         return Cache::remember("notifications.{$version}.{$user->id}", 60, function () use ($user) {
             $term = Term::where('is_current', true)->first();
@@ -69,6 +76,50 @@ final class Navigation
 
             return DashboardAttention::items($user, $term, $today, $overview);
         });
+    }
+
+    /**
+     * A student's notifications: what happened to their requests this week, attendance alerts,
+     * and an open enrollment they have not used yet.
+     *
+     * @return array<int, array{count: int, label: string, url: string, tone: string}>
+     */
+    private static function studentNotifications(User $user): array
+    {
+        $student = Student::where('user_id', $user->id)->first();
+        $term = Term::where('is_current', true)->first();
+        if (! $student || ! $term) {
+            return [];
+        }
+
+        $items = [];
+        $inTerm = fn ($q) => $q->where('term_id', $term->id);
+        $recent = Enrollment::where('student_id', $student->id)->whereHas('classOffering', $inTerm)
+            ->where('reviewed_at', '>=', now()->subDays(7));
+
+        foreach ([
+            [Enrollment::STATUS_ENROLLED, '{1} class request was enrolled this week|[2,*] class requests were enrolled this week', 'info'],
+            [Enrollment::STATUS_APPROVED, '{1} class request was approved this week|[2,*] class requests were approved this week', 'info'],
+            [Enrollment::STATUS_REJECTED, '{1} class request was rejected this week|[2,*] class requests were rejected this week', 'danger'],
+        ] as [$status, $label, $tone]) {
+            $count = (clone $recent)->where('status', $status)->count();
+            if ($count > 0) {
+                $items[] = ['count' => $count, 'label' => trans_choice($label, $count), 'url' => route('student.enrollments'), 'tone' => $tone];
+            }
+        }
+
+        $classes = StudentPortalData::enrolledClasses($student, $term);
+        $flagged = StudentPortalData::attendance($student, $classes)['rows']->where('flagged', true)->count();
+        if ($flagged > 0) {
+            $items[] = ['count' => $flagged, 'label' => trans_choice('{1} class is over the absence limit|[2,*] classes are over the absence limit', $flagged), 'url' => route('student.attendance'), 'tone' => 'danger'];
+        }
+
+        $hasRequests = Enrollment::where('student_id', $student->id)->whereHas('classOffering', $inTerm)->exists();
+        if ($term->enrollment_open && ! $hasRequests) {
+            $items[] = ['count' => 1, 'label' => "Enrollment is open. See the registrar's office to enroll.", 'url' => route('student.courses'), 'tone' => 'warning'];
+        }
+
+        return $items;
     }
 
     /** Something the notifications are built from changed: everyone's list is rebuilt on their next page. */

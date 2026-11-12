@@ -44,10 +44,14 @@ class ClassOfferingController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Staff can add a class from a dialog on this page (teachers never reach this list).
+        $newClass = new ClassOffering(['term_id' => $termId, 'section' => 'A', 'capacity' => 40, 'status' => ClassOffering::STATUS_OPEN]);
+
         return view('classes.index', [
             'classes' => $classes,
             'terms' => Term::with('academicYear')->orderByDesc('start_date')->get(),
             'termId' => $termId,
+            'form' => $this->formData($newClass, []),
         ]);
     }
 
@@ -80,6 +84,14 @@ class ClassOfferingController extends Controller
         });
 
         AuditLogger::log('class.created', $class, "Created class {$class->class_code}", null, $data + ['meetings' => $meetings]);
+
+        // Added from the dialog on the class list: stay on the list.
+        if ($request->boolean('_from_dialog')) {
+            $class->load(['subject', 'program']);
+
+            return redirect()->route('classes.index', ['term' => $class->term_id])
+                ->with('success', "Class {$class->class_code} created: {$class->subject->code} · {$class->block_label}.");
+        }
 
         return redirect()->route('classes.show', $class)->with('success', 'Class created.');
     }

@@ -1,5 +1,7 @@
 import '@fontsource-variable/inter';
 import * as bootstrap from 'bootstrap';
+import './page-dialog.js';
+import './bulk-select.js';
 
 window.bootstrap = bootstrap;
 
@@ -208,6 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('shown.bs.tab', refit);
     document.addEventListener('shown.bs.collapse', refit);  // e.g. report filters opened
     document.addEventListener('hidden.bs.collapse', refit);
+
+    // Form dialogs: put the cursor in the first field when they open, so typing can start at once.
+    // (Dialogs without fields, such as confirmations, are left alone.)
+    document.addEventListener('shown.bs.modal', (event) => {
+        const field = event.target.querySelector('form input:not([type="hidden"]):not([disabled]):not([readonly]), form select:not([disabled]), form textarea:not([disabled])');
+        if (field && !event.target.contains(document.activeElement?.closest('input, select, textarea'))) field.focus();
+    });
 
     // "Copy" buttons (temporary passwords): copy the text and say so on the button.
     document.addEventListener('click', async (event) => {

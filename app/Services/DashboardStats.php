@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\AcademicYear;
 use App\Models\AttendanceSession;
 use App\Models\ClassOffering;
 use App\Models\Enrollment;
 use App\Models\NonClassDay;
-use App\Models\Program;
 use App\Models\Student;
 use App\Models\Term;
 use App\Models\User;
@@ -168,46 +166,49 @@ class DashboardStats
         return [
             'labels' => array_map(fn (Carbon $monday) => $monday->format('M j'), $mondays),
             'values' => $values,
-            'hasData' => count(array_filter($values, fn ($value) => $value !== null)) > 0,
+            // One point is not a trend: wait for two weeks with sheets.
+            'hasData' => count(array_filter($values, fn ($value) => $value !== null)) >= 2,
         ];
     }
 
     /**
-     * Requests and enrolled students per month across the academic year.
+     * Requests and enrolled students per month for the term: from its first request (enrollment may open
+     * before classes start) or its start, to its end.
      *
      * @return array{labels: string[], requests: int[], enrolled: int[], hasData: bool}
      */
     public static function enrollmentTrend(?Term $term): array
     {
-        $year = $term?->academicYear ?? AcademicYear::where('is_current', true)->first();
-
-        if (! $year) {
+        if (! $term) {
             return ['labels' => [], 'requests' => [], 'enrolled' => [], 'hasData' => false];
         }
 
-        $rows = Enrollment::whereHas('classOffering.term', fn ($q) => $q->where('academic_year_id', $year->id))
+        $rows = Enrollment::whereHas('classOffering', fn ($q) => $q->where('term_id', $term->id))
             ->get(['requested_at', 'enrolled_at', 'status']);
 
         $requests = [];
         $enrolled = [];
+        $first = $term->start_date->copy()->startOfMonth();
         foreach ($rows as $row) {
             if ($row->requested_at) {
                 $key = $row->requested_at->format('Y-m');
                 $requests[$key] = ($requests[$key] ?? 0) + 1;
+                $first = $first->min($row->requested_at->copy()->startOfMonth());
             }
             if ($row->status === Enrollment::STATUS_ENROLLED && $row->enrolled_at) {
                 $key = $row->enrolled_at->format('Y-m');
                 $enrolled[$key] = ($enrolled[$key] ?? 0) + 1;
+                $first = $first->min($row->enrolled_at->copy()->startOfMonth());
             }
         }
 
         $labels = [];
         $requestValues = [];
         $enrolledValues = [];
-        $month = $year->start_date->copy()->startOfMonth();
-        $last = $year->end_date->copy()->startOfMonth();
+        $month = $first->copy();
+        $last = $term->end_date->copy()->startOfMonth();
 
-        for ($i = 0; $i < 14 && $month->lte($last); $i++, $month->addMonth()) {
+        for ($i = 0; $i < 12 && $month->lte($last); $i++, $month->addMonth()) {
             $key = $month->format('Y-m');
             $labels[] = $month->format('M');
             $requestValues[] = $requests[$key] ?? 0;
@@ -222,34 +223,103 @@ class DashboardStats
         ];
     }
 
-    /** Requests by status in the term. */
-    public static function enrollmentStatus(?Term $term): array
+    /**
+     * A teacher's next meeting from now, within the next two weeks of the term (skipping non-class days).
+     *
+     * @return array{class: ClassOffering, start: Carbon, room: ?string}|null
+     */
+    public static function nextClass(?Term $term, int $teacherId): ?array
     {
-        $raw = $term
-            ? Enrollment::whereHas('classOffering', fn ($q) => $q->where('term_id', $term->id))
-                ->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')->all()
-            : [];
+        if (! $term) {
+            return null;
+        }
 
-        $order = [Enrollment::STATUS_PENDING, Enrollment::STATUS_APPROVED, Enrollment::STATUS_ENROLLED, Enrollment::STATUS_REJECTED, Enrollment::STATUS_CANCELLED];
+        $classes = ClassOffering::with(['subject', 'meetings'])
+            ->where('term_id', $term->id)->where('teacher_id', $teacherId)
+            ->where('status', '!=', ClassOffering::STATUS_CANCELLED)->get();
+        if ($classes->isEmpty()) {
+            return null;
+        }
+
+        $now = now();
+        $from = $now->copy()->startOfDay()->max($term->start_date->copy()->startOfDay());
+        $holidays = NonClassDay::whereBetween('date', [$from->toDateString(), $from->copy()->addDays(14)->toDateString()])
+            ->pluck('date')->map(fn ($date) => Carbon::parse($date)->toDateString())->all();
+
+        for ($day = $from->copy(); $day->lte($from->copy()->addDays(14)) && $day->lte($term->end_date); $day->addDay()) {
+            if (in_array($day->toDateString(), $holidays, true)) {
+                continue;
+            }
+
+            $next = $classes
+                ->flatMap(fn (ClassOffering $class) => $class->meetings->where('day_of_week', $day->dayOfWeekIso)
+                    ->map(fn ($meeting) => ['class' => $class, 'start' => $day->copy()->setTimeFromTimeString($meeting->start_time), 'room' => $meeting->room]))
+                ->filter(fn ($item) => $item['start']->gt($now))
+                ->sortBy(fn ($item) => $item['start'])
+                ->first();
+
+            if ($next) {
+                return $next;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Attendance rate per class this term (one teacher's classes, or all), lowest first.
+     *
+     * @return array{labels: string[], values: array<int, ?float>, hasData: bool}
+     */
+    public static function attendanceByClass(?Term $term, ?int $teacherId = null): array
+    {
+        if (! $term) {
+            return ['labels' => [], 'values' => [], 'hasData' => false];
+        }
+
+        $rows = DB::table('attendance_records as r')
+            ->join('attendance_sessions as s', 's.id', '=', 'r.attendance_session_id')
+            ->join('class_offerings as c', 'c.id', '=', 's.class_offering_id')
+            ->where('c.term_id', $term->id)
+            ->when($teacherId, fn ($q) => $q->where('c.teacher_id', $teacherId))
+            ->select('c.id', 'r.status', DB::raw('count(*) as total'))
+            ->groupBy('c.id', 'r.status')
+            ->get();
+
+        $raw = [];
+        foreach ($rows as $row) {
+            $raw[$row->id][$row->status] = $row->total;
+        }
+
+        $rules = AttendanceStats::rules();
+        $classes = ClassOffering::with('subject')->whereIn('id', array_keys($raw))->get()
+            ->map(fn (ClassOffering $class) => [
+                'label' => $class->subject->code . ' · ' . $class->class_code,
+                'value' => AttendanceStats::percentage(AttendanceStats::counts($raw[$class->id]), $rules),
+            ])
+            ->sortBy('value')->values();
 
         return [
-            'labels' => array_map('ucfirst', $order),
-            'values' => array_map(fn ($status) => (int) ($raw[$status] ?? 0), $order),
-            'hasData' => array_sum($raw) > 0,
+            'labels' => $classes->pluck('label')->all(),
+            'values' => $classes->pluck('value')->all(),
+            'hasData' => $classes->isNotEmpty(),
         ];
     }
 
-    /** Active students per active program. */
-    public static function byProgram(): array
+    /**
+     * Sign-in accounts, for the administrator.
+     *
+     * @return array{active: int, staff: int, students: int, inactive: int}
+     */
+    public static function accounts(): array
     {
-        $programs = Program::where('is_active', true)
-            ->withCount(['students as active_students' => fn ($q) => $q->where('status', Student::STATUS_ACTIVE)])
-            ->orderBy('code')->get();
+        $active = User::where('is_active', true);
 
         return [
-            'labels' => $programs->pluck('code')->all(),
-            'values' => $programs->pluck('active_students')->map(fn ($n) => (int) $n)->all(),
-            'hasData' => $programs->sum('active_students') > 0,
+            'active' => (clone $active)->count(),
+            'staff' => (clone $active)->whereIn('role', ['admin', 'registrar', 'teacher'])->count(),
+            'students' => (clone $active)->where('role', 'student')->count(),
+            'inactive' => User::where('is_active', false)->count(),
         ];
     }
 }

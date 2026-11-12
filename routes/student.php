@@ -1,11 +1,12 @@
 <?php
 
+use App\Http\Controllers\AbsenceExcuseController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Middleware\StudentPortal;
 use Illuminate\Support\Facades\Route;
 
-// The student portal. Read-only: there are only GET routes here, so nothing can be changed.
-// (Students change their password on the shared /account/password page.)
+// The student portal. Read-only except for one thing: a student may send an excuse letter for an
+// absence or late arrival (the teacher decides it). Students change their password on /account/password.
 Route::middleware(['auth', 'role:student', StudentPortal::class])
     ->prefix('student')->name('student.')
     ->group(function () {
@@ -17,4 +18,10 @@ Route::middleware(['auth', 'role:student', StudentPortal::class])
         Route::get('attendance', [StudentPortalController::class, 'attendance'])->name('attendance');
         Route::get('attendance/{class}', [StudentPortalController::class, 'attendanceClass'])
             ->whereNumber('class')->name('attendance.show');
+        Route::post('attendance/{class}/excuse', [AbsenceExcuseController::class, 'store'])
+            ->whereNumber('class')->middleware('throttle:20,1')->name('attendance.excuse');
     });
+
+// An excuse letter's attached file: its student, the class's teacher, the registrar and administrators.
+Route::get('excuse-letters/{excuse}/file', [AbsenceExcuseController::class, 'file'])
+    ->middleware(['auth', 'role:admin,registrar,teacher,student'])->whereNumber('excuse')->name('excuses.file');

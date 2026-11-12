@@ -1,6 +1,7 @@
 @php
     $user = auth()->user();
     $canSearch = in_array($user->role, ['admin', 'registrar', 'teacher'], true);
+    $canNotify = $canSearch || $user->role === 'student';
     $roleLabel = config('sidebar.' . $user->role . '.role_label');
     $initials = collect(preg_split('/\s+/', trim($user->name)))->filter()->take(2)
         ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('');
@@ -23,8 +24,8 @@
     @endif
 
     <div class="topbar-actions">
-        {{-- Notifications: the same "needs attention" items as the dashboard, from any page. --}}
-        @if ($canSearch)
+        {{-- Notifications: the same "needs attention" items as the dashboard (for students: their requests and alerts). --}}
+        @if ($canNotify)
             <div class="dropdown">
                 <button type="button" class="topbar-icon-button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
                         aria-label="{{ $waiting > 0 ? "Notifications: {$waiting} waiting" : 'Notifications: nothing waiting' }}" title="Notifications">

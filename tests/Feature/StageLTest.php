@@ -104,6 +104,15 @@ class StageLTest extends TestCase
         }
     }
 
+    /** Record every past meeting of the last two weeks, so only today's work is left. */
+    private function catchUpPastSheets(): void
+    {
+        $classes = ClassOffering::with(['term', 'meetings'])->get();
+        foreach (\App\Services\MissingSheets::find($classes, today()->subDays(14)) as $row) {
+            $this->sheet($row['class'], [], $row['date']->toDateString());
+        }
+    }
+
     // ---------- Sidebar ----------
 
     public function test_every_menu_item_has_a_real_icon_and_a_real_page(): void
@@ -240,7 +249,8 @@ class StageLTest extends TestCase
 
     public function test_a_quiet_dashboard_has_no_attention_panel(): void
     {
-        // No pending requests, and every class sheet for today is recorded.
+        // No pending requests, and every class sheet for today and the last two weeks is recorded.
+        $this->catchUpPastSheets();
         $this->sheet($this->mine, []);
         $this->sheet($this->theirs, []);
 
@@ -282,6 +292,7 @@ class StageLTest extends TestCase
 
     public function test_a_teacher_is_told_about_their_own_missing_sheet_only(): void
     {
+        $this->catchUpPastSheets();
         $this->actingAs($this->teacher)->get(route('teacher.dashboard'))->assertOk()
             ->assertSee('Needs attention')
             ->assertSee('class has no attendance sheet today');
@@ -301,27 +312,34 @@ class StageLTest extends TestCase
             ->assertSee('No current term is set');
     }
 
-    // ---------- Honest attendance card ----------
+    // ---------- Today's sheets: said once in "Needs attention", listed in the Today panel ----------
 
-    public function test_the_attendance_card_says_when_only_some_sheets_are_recorded(): void
+    public function test_the_today_panel_counts_the_sheets_recorded(): void
     {
         $student = $this->makeStudent('2026-0108', 'Lia', 'Tan');
         $this->enroll($student, $this->mine, 'enrolled');
         $this->sheet($this->mine, [$student->id => 'present']);
 
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('Partial: 1 of 2 sheets recorded');
+            ->assertSeeInOrder(['Sheets recorded', '1 of 2'])
+            ->assertSee('class sheet is not recorded yet today');
 
         $this->sheet($this->theirs, []);
 
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('All 2 sheets recorded');
+            ->assertSeeInOrder(['Sheets recorded', '2 of 2'])
+            ->assertDontSee('not recorded yet today');
     }
 
-    public function test_the_attendance_card_says_so_when_nothing_is_recorded(): void
+    public function test_todays_sheets_are_not_repeated_as_a_card(): void
     {
-        $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('Nothing recorded yet');
+        foreach ([$this->admin, $this->registrar] as $user) {
+            $this->actingAs($user)->get(route($user->role . '.dashboard'))->assertOk()
+                ->assertDontSee('Attendance today')->assertDontSee('Nothing recorded yet');
+        }
+
+        $this->actingAs($this->teacher)->get(route('teacher.dashboard'))->assertOk()
+            ->assertDontSee('Attendance sheets today');
     }
 
     // ---------- Menu polish ----------
@@ -379,21 +397,25 @@ class StageLTest extends TestCase
 
     public function test_quick_actions_match_the_role(): void
     {
+        // Quick actions are tasks; pages to look at (Attendance, Reports) are in the menu.
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('Quick actions')->assertSee('Add student')->assertSee('New enrollment request')
-            ->assertSee(route('students.create'), false);
+            ->assertSee('Quick actions')->assertSee('Add user')->assertSee('Terms &amp; enrollment', false)->assertSee('Add student')
+            ->assertSee(route('users.create'), false)->assertDontSee('New enrollment request');
+
+        $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
+            ->assertSee('Add student')->assertSee('New enrollment request')->assertDontSee('Add user');
 
         $this->actingAs($this->teacher)->get(route('teacher.dashboard'))->assertOk()
-            ->assertSee('Quick actions')->assertSee('Open attendance')->assertSee('My classes')
-            ->assertDontSee('Add student');
+            ->assertSee('Quick actions')->assertSee('Open attendance')
+            ->assertDontSee('Add student')->assertDontSee('Enrollment is open');
     }
 
     public function test_repeated_cards_are_gone_and_the_banner_has_no_tagline(): void
     {
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertDontSee('Pending enrollments')->assertDontSee('Active accounts')
+            ->assertDontSee('Pending enrollments')->assertDontSee('Attendance today')
             ->assertDontSee('One organized workspace')
-            ->assertSee('Registered students')->assertSee('Enrolled students')->assertSee('Classes this term')->assertSee('Attendance today');
+            ->assertSee('Registered students')->assertSee('Enrolled students')->assertSee('Active accounts')->assertSee('Inactive accounts');
     }
 
     public function test_cards_show_what_changed_this_week(): void
@@ -411,21 +433,14 @@ class StageLTest extends TestCase
             ->assertSee('class="stat-go"', false)->assertSee('class="attention-go', false);
     }
 
-    public function test_the_attendance_card_shows_a_plain_count_until_every_sheet_is_in(): void
+    public function test_the_registrar_sees_the_term_attendance_rate(): void
     {
         $student = $this->makeStudent('2026-0115', 'Xia', 'Yap');
         $this->enroll($student, $this->mine, 'enrolled');
         $this->sheet($this->mine, [$student->id => 'present']);
 
-        // One of two sheets: no big percentage, just the facts.
-        $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('1 of 1 present')->assertSee('Partial: 1 of 2 sheets recorded');
-
-        $this->sheet($this->theirs, []);
-
-        // Every sheet in: the percentage appears.
-        $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('100%')->assertDontSee('1 of 1 present');
+        $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
+            ->assertSeeInOrder(['Attendance this term', '100%', 'All classes · late counts as attended']);
     }
 
     public function test_classes_without_a_sheet_are_listed_first_with_a_button(): void
@@ -444,16 +459,16 @@ class StageLTest extends TestCase
             ->assertSee('Not yet')->assertDontSee('Take attendance');
     }
 
-    public function test_doughnut_charts_know_their_centre_label(): void
+    public function test_the_registrar_trends_are_charts_of_change_over_time(): void
     {
         // The charts only draw once there is something to show.
         $student = $this->makeStudent('2026-0116', 'Zed', 'Alva');
         $this->enroll($student, $this->mine, 'enrolled');
-        $this->sheet($this->mine, [$student->id => 'present']);
 
-        // The registrar's dashboard keeps its charts (the administrator's has none).
+        // The registrar's dashboard keeps its trends (the administrator's has none); the snapshot donuts are gone.
         $this->actingAs($this->registrar)->get(route('registrar.dashboard'))->assertOk()
-            ->assertSee('centerLabel', false)->assertSee('records', false);
+            ->assertSee('data-chart', false)->assertSee('Enrollment by month')->assertSee('Students to follow up')
+            ->assertDontSee('doughnut', false);
     }
 
     // ---------- Shell: breadcrumbs, notifications, account menu ----------
@@ -480,6 +495,7 @@ class StageLTest extends TestCase
 
     public function test_the_notification_bell_lists_waiting_work_and_refreshes_at_once(): void
     {
+        $this->catchUpPastSheets();
         $this->sheet($this->mine, []);
         $this->sheet($this->theirs, []);
 

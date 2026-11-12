@@ -170,6 +170,43 @@ class EnrollmentController extends Controller
         return $this->run(fn () => EnrollmentWorkflow::reopen($enrollment, $request->user()), 'Request reopened as pending.');
     }
 
+    /**
+     * Approve or enroll several requests at once. Each one runs through the same checks as a single
+     * action (seats, units, schedule conflicts); the ones that pass are saved, the others are listed.
+     */
+    public function bulk(Request $request)
+    {
+        $data = $request->validate([
+            'action' => ['required', 'in:approve,enroll'],
+            'ids' => ['required', 'array', 'min:1', 'max:200'],
+            'ids.*' => ['integer'],
+        ], ['ids.required' => 'Tick at least one request first.']);
+
+        $done = 0;
+        $problems = [];
+        $requests = Enrollment::with(['student', 'classOffering.subject'])->whereIn('id', $data['ids'])->get();
+
+        foreach ($requests as $enrollment) {
+            try {
+                $data['action'] === 'approve'
+                    ? EnrollmentWorkflow::approve($enrollment, $request->user())
+                    : EnrollmentWorkflow::enroll($enrollment, $request->user());
+                $done++;
+            } catch (EnrollmentRuleException $e) {
+                $who = ($enrollment->student?->full_name ?? 'Student') . ' · ' . $enrollment->classOffering->subject->code;
+                $problems[] = $who . ': ' . implode(' ', $e->messages);
+            }
+        }
+
+        $verb = $data['action'] === 'approve' ? 'approved' : 'enrolled';
+        $redirect = back();
+        if ($done > 0) {
+            $redirect = $redirect->with('success', $done . ' ' . ($done === 1 ? 'request' : 'requests') . " {$verb}.");
+        }
+
+        return $problems === [] ? $redirect : $redirect->withErrors(['enrollment' => $problems]);
+    }
+
     private function run(callable $action, string $success)
     {
         try {

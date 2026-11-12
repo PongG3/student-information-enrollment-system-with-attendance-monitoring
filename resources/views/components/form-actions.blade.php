@@ -9,7 +9,7 @@
     @endif
     <div class="form-actions ms-sm-auto">
         @if ($cancel)
-            <a href="{{ $cancel }}" class="btn btn-outline-secondary px-4">Cancel</a>
+            <a href="{{ $cancel }}" class="btn btn-outline-secondary px-4" data-dialog-close>Cancel</a>
         @endif
         {{ $slot }}
         <button type="submit" class="btn btn-navy px-4">{{ $submit }}</button>

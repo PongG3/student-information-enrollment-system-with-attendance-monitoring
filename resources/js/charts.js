@@ -55,7 +55,7 @@ const build = (canvas) => {
     // Doughnut legend: "Present 12 (80%)", always in the same order.
     const legendLabels = isDoughnut
         ? {
-            usePointStyle: true, boxWidth: 8,
+            usePointStyle: true, boxWidth: 8, boxHeight: 8, // small dots, not font-sized discs
             generateLabels: (chart) => {
                 const set = chart.data.datasets[0];
                 const total = sum(set.data);
@@ -71,7 +71,7 @@ const build = (canvas) => {
                 });
             },
         }
-        : { usePointStyle: true, boxWidth: 8 };
+        : { usePointStyle: true, boxWidth: 8, boxHeight: 8 };
 
     // The total in the middle of a doughnut.
     const centerTotal = {

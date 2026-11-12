@@ -1,6 +1,6 @@
 <x-app-layout title="Class Management" subtitle="Subjects offered each term, with teacher, schedule and seats.">
     <x-slot:actions>
-        <a href="{{ route('classes.create', ['term' => $termId]) }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add class</a>
+        <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addClassModal"><x-icon name="plus" :size="16" /> Add class</button>
     </x-slot:actions>
 
     <div class="card-sies">
@@ -29,7 +29,7 @@
 
         @if ($classes->isEmpty())
             <x-empty-state icon="classes" message="No classes found for this term.">
-                <a href="{{ route('classes.create', ['term' => $termId]) }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add class</a>
+                <button type="button" class="btn btn-navy btn-sm-sies" data-bs-toggle="modal" data-bs-target="#addClassModal"><x-icon name="plus" :size="14" /> Add class</button>
             </x-empty-state>
         @else
             <div class="table-responsive" data-fit-viewport>
@@ -52,7 +52,7 @@
                                 <td class="text-end text-nowrap">
                                     <a href="{{ route('classes.show', $class) }}" class="btn btn-outline-secondary btn-sm-sies">View</a>
                                     @unless ($class->term->isClosed())
-                                        <a href="{{ route('classes.edit', $class) }}" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
+                                        <a href="{{ route('classes.edit', $class) }}" data-dialog data-dialog-size="xl" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
                                     @endunless
                                 </td>
                             </tr>
@@ -63,4 +63,6 @@
             <x-table-footer :items="$classes" noun="class" />
         @endif
     </div>
+
+    @include('classes._add-dialog')
 </x-app-layout>

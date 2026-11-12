@@ -1,29 +1,48 @@
 @use('App\Services\StudentPortalData', 'Portal')
-<x-app-layout>
+<x-app-layout tab-title="Dashboard">
+    @php
+        // Quick actions: the offered classes come first while enrollment is open (requests go through the registrar).
+        $enrolling = $term && $term->enrollment_open;
+        $actions = array_values(array_filter([
+            $enrolling ? ['Available courses', route('student.courses'), 'book', true] : null,
+            ['My schedule', route('student.schedule'), 'calendar', ! $enrolling],
+            ['My attendance', route('student.attendance'), 'check', false],
+        ]));
+    @endphp
     <div class="welcome-banner mb-3">
-        <div class="row align-items-center g-3">
-            <div class="col-lg-8">
-                <div class="eyebrow">{{ now()->format('l, F j, Y') }}</div>
-                <h1 class="welcome-title mb-1">{{ $greeting }}</h1>
-                <p class="mb-0 opacity-75">{{ $student->student_number }} · {{ $student->program->code }} · Year {{ $student->year_level }}</p>
-            </div>
-            <div class="col-lg-4">
-                <div class="small opacity-75">Current term</div>
-                @if ($term)
-                    <div class="fw-semibold">{{ $term->name }} · {{ $term->academicYear->name }}</div>
-                    <div class="small opacity-75">Enrollment is {{ $term->enrollment_open ? 'open' : 'closed' }}</div>
-                @else
-                    <div class="fw-semibold">Not set</div>
-                @endif
-            </div>
+        <div>
+            <div class="eyebrow">{{ now()->format('l, F j, Y') }}</div>
+            <h1 class="welcome-title">{{ $greeting }}</h1>
+            <div class="small opacity-75">{{ $student->student_number }} · {{ $student->program->code }} · Year {{ $student->year_level }}</div>
+        </div>
+        <nav class="quick-actions" aria-label="Quick actions">
+            @foreach ($actions as [$label, $url, $icon, $primary])
+                <a href="{{ $url }}" class="quick-action {{ $primary ? 'is-primary' : '' }}"><x-icon :name="$icon" :size="16" /> {{ $label }}</a>
+            @endforeach
+        </nav>
+        <div class="welcome-term">
+            @if ($term)
+                <div class="fw-semibold">{{ $term->name }} · {{ $term->academicYear->name }}</div>
+                <div class="small opacity-75">Enrollment is {{ $term->enrollment_open ? 'open' : 'closed' }}</div>
+            @else
+                <div class="fw-semibold">No current term</div>
+            @endif
         </div>
     </div>
-
+    @php
+        $meetingsRecorded = array_sum($attendance['overall']);
+        // A percentage from one or two meetings says little: say how many it is based on.
+        $attendanceNote = match (true) {
+            $meetingsRecorded === 0 => 'Nothing recorded yet',
+            $meetingsRecorded < \App\Services\AttendanceStats::MIN_MEETINGS_FOR_ALERT => 'From ' . $meetingsRecorded . ' ' . \Illuminate\Support\Str::plural('meeting', $meetingsRecorded) . ' so far',
+            default => 'This term, to date',
+        };
+    @endphp
     <div class="row g-3 mb-4">
         @foreach ([
             ['My classes', $classes->count(), $term ? $term->name : 'No current term', route('student.schedule')],
             ['Units', Portal::number(Portal::units($classes)), 'This term', route('student.enrollments')],
-            ['Attendance', Portal::percent($attendance['percentage']), 'This term, to date', route('student.attendance')],
+            ['Attendance', Portal::percent($attendance['percentage']), $attendanceNote, route('student.attendance')],
             ['Requests in progress', $openRequests, 'Pending or approved', route('student.enrollments')],
         ] as [$label, $value, $note, $url])
             <div class="col-6 col-xl-3">
@@ -68,9 +87,28 @@
         <div class="col-lg-5">
             <div class="card-sies h-100">
                 <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Attendance alerts</h2></div>
-                @php $alerts = $attendance['rows']->where('flagged', true); @endphp
-                @if ($alerts->isEmpty())
-                    <x-empty-state icon="check" message="No attendance concerns. Keep it up." />
+                @php
+                    $alerts = $attendance['rows']->where('flagged', true);
+                    // Absences in classes with too few meetings to judge yet: shown, not hidden behind "Keep it up".
+                    $early = $attendance['rows']->where('flagged', false)->filter(fn ($row) => $row['counts']['absent'] > 0);
+                    $recorded = array_sum($attendance['overall']);
+                    $minimum = \App\Services\AttendanceStats::MIN_MEETINGS_FOR_ALERT;
+                @endphp
+                @if ($alerts->isEmpty() && $early->isEmpty())
+                    <x-empty-state icon="check" :message="$recorded === 0 ? 'No attendance has been recorded for your classes yet.' : 'No attendance concerns. Keep it up.'" />
+                @elseif ($alerts->isEmpty())
+                    <ul class="list-group list-group-flush">
+                        @foreach ($early as $row)
+                            <li class="list-group-item">
+                                <div class="fw-semibold">{{ $row['class']->subject->code }} · {{ $row['class']->subject->title }}</div>
+                                <div class="small text-secondary">
+                                    Absent {{ $row['counts']['absent'] }} of {{ $row['meetings'] }} {{ \Illuminate\Support\Str::plural('meeting', $row['meetings']) }} so far.
+                                    <a href="{{ route('student.attendance.show', $row['class']) }}">See dates</a>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="px-3 pb-3 small text-secondary">Alerts start once {{ $minimum }} meetings of a class are recorded.</div>
                 @else
                     <ul class="list-group list-group-flush">
                         @foreach ($alerts as $row)

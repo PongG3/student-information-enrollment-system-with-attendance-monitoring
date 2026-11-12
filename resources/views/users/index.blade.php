@@ -1,6 +1,6 @@
 <x-app-layout title="User Management" subtitle="Create staff accounts, assign roles, and control who can sign in.">
     <x-slot:actions>
-        <a href="{{ route('users.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add user</a>
+        <a href="{{ route('users.create') }}" data-dialog class="btn btn-navy"><x-icon name="plus" :size="16" /> Add user</a>
     </x-slot:actions>
 
     @if (session('temp_password'))
@@ -51,7 +51,7 @@
                                 <td>{{ $roleLabels[$user->role] ?? ucfirst($user->role) }}</td>
                                 <td><x-status-badge :value="$user->is_active ? 'active' : 'inactive'" /></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('users.edit', $user) }}" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
+                                    <a href="{{ route('users.edit', $user) }}" data-dialog class="btn btn-outline-secondary btn-sm-sies">Edit</a>
                                     @unless ($user->is(auth()->user()))
                                         <button type="button" class="btn btn-outline-secondary btn-sm-sies"
                                             data-bs-toggle="modal" data-bs-target="#confirmModal"

@@ -169,6 +169,18 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-tab-step="-1">← Previous</button>
                     <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-tab-step="1">Next →</button>
                 </div>
+                {{-- Data Privacy Act (RA 10173): consent is recorded once, with the date. --}}
+                @if ($editing && $student->privacy_consent_at)
+                    <span class="small text-secondary ms-2">Privacy notice agreed {{ $student->privacy_consent_at->format('M j, Y') }}</span>
+                @else
+                    <div class="form-check mb-0 ms-2 small">
+                        <input class="form-check-input @error('privacy_consent') is-invalid @enderror" type="checkbox" name="privacy_consent" value="1" id="privacyConsent" @checked(old('privacy_consent'))>
+                        <label class="form-check-label" for="privacyConsent">
+                            Student or guardian agreed to the <a href="{{ route('privacy') }}" target="_blank">privacy notice</a>@unless ($editing) <span class="text-danger fw-bold">*</span>@endunless
+                        </label>
+                        @error('privacy_consent')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                @endif
             </x-slot:lead>
         </x-form-actions>
     </form>

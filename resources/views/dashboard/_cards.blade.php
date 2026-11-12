@@ -1,38 +1,37 @@
-{{-- The four summary cards. Needs: $today, $term, $isTeacher and the role's card data. --}}
+{{-- The four summary cards. Needs: $term, $isTeacher and the role's card data.
+     Today's sheets are not a card: "Needs attention" and the Today panel already say it. --}}
 @php
     $percent = fn ($value) => $value === null ? '—' : rtrim(rtrim(number_format($value, 1), '0'), '.') . '%';
-    // Say plainly when today's figure only covers part of the classes.
-    $todayNote = match (true) {
-        $today['expected'] === 0 => 'No sheets expected today',
-        $today['recorded'] === 0 => 'Nothing recorded yet',
-        $today['recorded'] < $today['expected'] => 'Partial: ' . $today['recorded'] . ' of ' . $today['expected'] . ' sheets recorded',
-        default => 'All ' . $today['expected'] . ' ' . \Illuminate\Support\Str::plural('sheet', $today['expected']) . ' recorded',
-    };
-
-    // A percentage only means something once every sheet is in; until then show the plain count.
-    $todayTotal = array_sum($today['counts']);
-    $todayComplete = $today['expected'] > 0 && $today['recorded'] >= $today['expected'];
-    $todayValue = match (true) {
-        $todayComplete => $percent($today['percentage']),
-        $todayTotal > 0 => $today['counts']['present'] . ' of ' . $todayTotal . ' present',
-        default => '—',
-    };
-    $todaySmall = ! $todayComplete && $todayTotal > 0;
+    // The attendance rule behind the percentage, said on the card itself.
+    $lateRule = 'late counts as ' . (\App\Services\AttendanceStats::rules()['late'] ? 'attended' : 'absent');
+    $role = auth()->user()->role;
 
     // [label, value, note, link, icon, change this week, smaller value text]
     if ($isTeacher) {
+        $next = $nextClass ?? null;
+        $nextValue = $next ? $next['class']->subject->code . ' · ' . \App\Services\ScheduleChecker::time($next['start']->format('H:i')) : '—';
+        $nextNote = $next
+            ? ($next['start']->isToday() ? 'Today' : ($next['start']->isTomorrow() ? 'Tomorrow' : $next['start']->format('l, M j'))) . ($next['room'] ? ' · ' . $next['room'] : '')
+            : 'No meetings in the next two weeks';
         $cards = [
             ['My classes', $teacherCards['classes'], $term ? $term->name : 'No current term', route('teacher.classes'), 'classes', null, false],
-            ['Enrolled students', $teacherCards['students'], 'Across my classes', null, 'students', null, false],
-            ['Attendance sheets today', $today['recorded'] . ' of ' . $today['expected'], 'Recorded of expected', route('attendance.index'), 'check', null, false],
-            ['Attendance this term', $percent($termPercentage), 'My classes, to date', route('attendance.index', ['range' => 'month']), 'chart', null, false],
+            ['Enrolled students', $teacherCards['students'], 'Across my classes', route('teacher.classes'), 'students', null, false],
+            ['Next class', $nextValue, $nextNote, $next ? route('classes.show', $next['class']) : null, 'calendar', null, true],
+            ['Attendance this term', $percent($termPercentage), 'My classes · ' . $lateRule, route('attendance.index', ['range' => 'month']), 'chart', null, false],
+        ];
+    } elseif ($role === 'admin') {
+        $cards = [
+            ['Registered students', $overview['students'], 'Not archived', route('students.index'), 'students', $week['students'], false],
+            ['Enrolled students', $overview['enrolled'], $term ? $term->name : 'No current term', route('enrollments.index', array_filter(['status' => 'enrolled', 'term' => $term?->id])), 'clipboard', $week['enrolled'], false],
+            ['Active accounts', $accounts['active'], $accounts['staff'] . ' staff · ' . $accounts['students'] . ' ' . \Illuminate\Support\Str::plural('student', $accounts['students']), route('users.index', ['status' => 'active']), 'user', null, false],
+            ['Inactive accounts', $accounts['inactive'], 'Cannot sign in', route('users.index', ['status' => 'inactive']), 'key', null, false],
         ];
     } else {
         $cards = [
             ['Registered students', $overview['students'], 'Not archived', route('students.index'), 'students', $week['students'], false],
             ['Enrolled students', $overview['enrolled'], $term ? $term->name : 'No current term', route('enrollments.index', array_filter(['status' => 'enrolled', 'term' => $term?->id])), 'clipboard', $week['enrolled'], false],
             ['Classes this term', $overview['classes'], $overview['subjects'] . ' ' . \Illuminate\Support\Str::plural('subject', $overview['subjects']) . ' offered', route('classes.index'), 'classes', null, false],
-            ['Attendance today', $todayValue, $todayNote, route('attendance.index'), 'check', null, $todaySmall],
+            ['Attendance this term', $percent($termPercentage), 'All classes · ' . $lateRule, route('reports.index'), 'chart', null, false],
         ];
     }
 @endphp

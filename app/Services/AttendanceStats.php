@@ -31,6 +31,15 @@ class AttendanceStats
         ];
     }
 
+    /** How percentages are worked out, in words (shown wherever a percentage appears). */
+    public static function policy(?array $rules = null): string
+    {
+        $rules ??= self::rules();
+
+        return ($rules['late'] ? 'Late counts as attended' : 'Late counts as not attended')
+            . ' · excused ' . ($rules['excused'] === 'excluded' ? 'is left out' : 'counts as attended');
+    }
+
     public static function counts(array $raw): array
     {
         return [

@@ -1,14 +1,14 @@
 {{--
     Administrator dashboard: only what the administrator acts on every day.
-    Charts and trends live in Reports; this page keeps the header, four cards,
-    what needs attention, today's attendance and the latest activity.
+    Charts and trends live in Reports; this page keeps the header, what needs attention,
+    four account and student cards, today's attendance and the latest activity.
 --}}
-<x-app-layout>
+<x-app-layout tab-title="Dashboard">
     @include('dashboard._header')
 
-    @include('dashboard._cards', ['compact' => true])
-
     @include('dashboard._attention')
+
+    @include('dashboard._cards', ['compact' => true])
 
     <div class="row g-3">
         <div class="col-lg-7">

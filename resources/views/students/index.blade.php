@@ -3,8 +3,9 @@
 @endphp
 <x-app-layout title="Student Records" subtitle="Register students, keep their records, and archive instead of deleting.">
     <x-slot:actions>
+        <a href="{{ route('students.import') }}" class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Import CSV</a>
         <a href="{{ route('students.export', request()->query()) }}" class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Export CSV</a>
-        <a href="{{ route('students.create') }}" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add student</a>
+        <a href="{{ route('students.create') }}" data-dialog data-dialog-size="xl" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add student</a>
     </x-slot:actions>
 
     <div class="card-sies">
@@ -61,7 +62,7 @@
                 </x-empty-state>
             @else
                 <x-empty-state icon="students" message="No students are registered yet.">
-                    <a href="{{ route('students.create') }}" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add the first student</a>
+                    <a href="{{ route('students.create') }}" data-dialog data-dialog-size="xl" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> Add the first student</a>
                 </x-empty-state>
             @endif
         @else
@@ -94,7 +95,7 @@
                                             data-confirm-action="{{ route('students.restore', $student) }}"
                                             data-confirm-button="Restore">Restore</button>
                                     @else
-                                        <a href="{{ route('students.edit', $student) }}" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
+                                        <a href="{{ route('students.edit', $student) }}" data-dialog data-dialog-size="xl" class="btn btn-outline-secondary btn-sm-sies">Edit</a>
                                     @endif
                                 </td>
                             </tr>

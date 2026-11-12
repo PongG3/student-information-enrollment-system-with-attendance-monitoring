@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\AttendanceException;
+use App\Models\AbsenceExcuse;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSession;
 use App\Models\ClassOffering;
@@ -117,6 +118,7 @@ class AttendanceController extends Controller
             'session' => $session,
             'records' => $records,
             'students' => AttendanceService::eligible($class, $date, $records->keys()->all()),
+            'excuses' => AbsenceExcuse::where('class_offering_id', $class->id)->whereDate('date', $date)->get()->keyBy('student_id'),
             'access' => AttendanceService::access($request->user(), $class, $date),
             'classDays' => $classDays,
         ]);
@@ -161,6 +163,9 @@ class AttendanceController extends Controller
         } catch (AttendanceException $e) {
             return back()->withErrors(['sheet' => $e->messages])->withInput();
         }
+
+        // Excuse letters for this day: Excused accepts them, any other status declines them.
+        AbsenceExcuse::settle($class, $date, $user);
 
         $message = $result['new']
             ? 'Attendance saved.'

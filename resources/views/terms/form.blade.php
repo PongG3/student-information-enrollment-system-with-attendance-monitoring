@@ -18,7 +18,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-navy px-4">{{ $editing ? 'Save changes' : 'Add term' }}</button>
-                <a href="{{ route('academic-years.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                <a href="{{ route('academic-years.index') }}" class="btn btn-outline-secondary px-4" data-dialog-close>Cancel</a>
             </div>
         </form>
     </div>

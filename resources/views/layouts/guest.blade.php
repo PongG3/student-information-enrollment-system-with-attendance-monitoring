@@ -19,7 +19,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Sign in · SIES Campus Portal</title>
+    <title>{{ $attributes->get('title', 'Sign in') }} · SIES Campus Portal</title>
     @vite(['resources/scss/app.scss', 'resources/js/app.js'])
     <style>
         /* Sign-in pages only: easier to read on weak screens and projectors. */
@@ -82,7 +82,7 @@
             <div class="auth-form">
                 {{ $slot }}
             </div>
-            <div class="small text-secondary border-top pt-3 mt-3">Authorized users only. Sign-ins and changes are recorded.</div>
+            <div class="small text-secondary border-top pt-3 mt-3">Authorized users only. Sign-ins and changes are recorded. Personal data is handled under the Data Privacy Act of 2012 (RA 10173): <a href="{{ route('privacy') }}">read the privacy notice</a>.</div>
         </section>
     </div>
 </body>

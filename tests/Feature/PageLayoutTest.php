@@ -92,7 +92,7 @@ class PageLayoutTest extends TestCase
         // Everything filled in except the guardians: the form comes back on the Guardians tab, marked.
         $this->actingAs($this->registrar)->from(route('students.create'))->followingRedirects()->post(route('students.store'), [
             'first_name' => 'Alex', 'last_name' => 'Rivera', 'gender' => 'Male', 'birth_date' => '2007-03-14',
-            'program_id' => $this->program->id, 'year_level' => 1, 'student_type' => 'new',
+            'program_id' => $this->program->id, 'year_level' => 1, 'student_type' => 'new', 'privacy_consent' => 1,
         ])->assertOk()
             ->assertSee('class="tab-pane fade show active" id="pane-guardians"', false)
             ->assertSee('class="form-tab-error"', false)
