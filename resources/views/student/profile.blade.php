@@ -155,7 +155,7 @@
                                             @if ($row['status'] !== 'verified')
                                                 <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="modal" data-bs-target="#requirementModal"
                                                     data-requirement-action="{{ route('student.requirements.upload', $row['requirement']) }}"
-                                                    data-requirement-name="{{ $row['requirement']->name }}">{{ $row['row']?->file_path ? 'Replace' : 'Upload' }}</button>
+                                                    data-requirement-name="{{ $row['requirement']->name }}" data-requirement-id="{{ $row['requirement']->id }}">{{ $row['row']?->file_path ? 'Replace' : 'Upload' }}</button>
                                             @endif
                                         </td>
                                     </tr>
@@ -181,7 +181,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <x-file-drop name="file" id="requirementFile" accept=".pdf,.jpg,.jpeg,.png" hint="PDF or photo, up to 5 MB. Make sure every page is readable." :max-mb="5" />
+                    <x-file-drop name="file" id="requirementFile" accept=".pdf,.jpg,.jpeg,.png" hint="PDF or photo, up to 5 MB. Make sure every page is readable." :max-mb="5"
+                        required required-message="Choose the file of this document first, then press Upload." />
+                    <input type="hidden" name="_requirement" value="{{ old('_requirement') }}" data-requirement-id>
                     <p class="small text-secondary mt-3 mb-0">The registrar checks it and marks it verified. Bring the original when the registrar asks for it.</p>
                 </div>
                 <div class="modal-footer">
@@ -297,6 +299,7 @@
                     if (!button) return;
                     requirementModal.querySelector('[data-requirement-form]').action = button.dataset.requirementAction;
                     requirementModal.querySelector('[data-requirement-name]').textContent = button.dataset.requirementName;
+                    requirementModal.querySelector('[data-requirement-id]').value = button.dataset.requirementId;
                 });
                 // Locked fields explain themselves on hover or focus.
                 document.querySelectorAll('.profile-lock[data-bs-toggle="tooltip"]').forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el));
@@ -305,6 +308,11 @@
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('contactModal')).show();
                 @elseif ($errors->has('photo'))
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('photoModal')).show();
+                @elseif ($errors->has('file') && ($reopen = $requirements->firstWhere('requirement.id', (int) old('_requirement'))))
+                    {{-- The server refused the file (e.g. wrong type): reopen the same document's window with the reason. --}}
+                    requirementModal.querySelector('[data-requirement-form]').action = @json(route('student.requirements.upload', $reopen['requirement']));
+                    requirementModal.querySelector('[data-requirement-name]').textContent = @json($reopen['requirement']->name);
+                    bootstrap.Modal.getOrCreateInstance(requirementModal).show();
                 @endif
             });
         </script>

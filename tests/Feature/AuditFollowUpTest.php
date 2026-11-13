@@ -121,10 +121,29 @@ class AuditFollowUpTest extends TestCase
     public function test_a_wrong_requirement_file_is_refused(): void
     {
         $requirement = Requirement::create(['name' => 'ID Photo', 'is_required' => true, 'is_active' => true]);
-        $this->actingAs($this->anaUser)->post(route('student.requirements.upload', $requirement), [
+        $this->actingAs($this->anaUser)->from(route('student.profile'))->post(route('student.requirements.upload', $requirement), [
             'file' => UploadedFile::fake()->create('virus.exe', 10, 'application/octet-stream'),
+            '_requirement' => $requirement->id,
         ])->assertSessionHasErrors('file');
         $this->assertSame(0, StudentRequirement::count());
+
+        // Following the redirect back to the profile: the same document's window opens again with the reason.
+        $this->actingAs($this->anaUser)->from(route('student.profile'))->followingRedirects()
+            ->post(route('student.requirements.upload', $requirement), [
+                'file' => UploadedFile::fake()->create('virus.exe', 10, 'application/octet-stream'),
+                '_requirement' => $requirement->id,
+            ])
+            ->assertSee(json_encode(route('student.requirements.upload', $requirement)), false)
+            ->assertSee('bootstrap.Modal.getOrCreateInstance(requirementModal).show()', false);
+    }
+
+    public function test_the_upload_window_checks_for_a_file_before_sending(): void
+    {
+        Requirement::create(['name' => 'ID Photo', 'is_required' => true, 'is_active' => true]);
+
+        // The drop box is marked required, so the window says "choose a file" instead of closing.
+        $this->actingAs($this->anaUser)->get(route('student.profile'))
+            ->assertSee('data-required="Choose the file of this document first, then press Upload."', false);
     }
 
     // ---------- Photo rejected with a reason ----------

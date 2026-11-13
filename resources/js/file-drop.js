@@ -17,6 +17,7 @@ document.querySelectorAll('[data-file-drop]').forEach((box) => {
     const show = () => {
         const file = input.files[0];
         error.hidden = true;
+        input.classList.remove('is-invalid');
         if (file && !fits(file)) {
             error.textContent = 'This kind of file is not accepted.';
         } else if (file && file.size > maxBytes) {
@@ -62,4 +63,20 @@ document.querySelectorAll('[data-file-drop]').forEach((box) => {
 
     // A form reset (e.g. the dialog reopened for another day) clears the chip too.
     input.form?.addEventListener('reset', () => setTimeout(show));
+
+    // A required file: sending with nothing chosen is stopped here, so the window stays open and says why
+    // (otherwise the page reloads, the window closes, and the error is hidden behind it).
+    if (box.dataset.required) {
+        input.form?.addEventListener('submit', (event) => {
+            if (input.files.length) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            error.textContent = box.dataset.required;
+            error.hidden = false;
+            input.classList.add('is-invalid');
+            zone.focus?.();
+        }, true);
+        // Opening the window again starts clean.
+        box.closest('.modal')?.addEventListener('hidden.bs.modal', () => { input.value = ''; show(); });
+    }
 });

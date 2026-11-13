@@ -1,8 +1,8 @@
-@props(['name' => 'file', 'id' => null, 'accept' => '', 'hint' => '', 'maxMb' => 5])
+@props(['name' => 'file', 'id' => null, 'accept' => '', 'hint' => '', 'maxMb' => 5, 'required' => false, 'requiredMessage' => 'Choose a file to upload first.'])
 {{-- A file field as a dashed drop box: drag a file onto it or click to browse. Once chosen, the file shows as a
      chip (name and size) with × to remove it. It is still a normal <input type="file">, so forms work without JavaScript. --}}
 @php $id ??= 'file-' . $name; @endphp
-<div class="file-drop" data-file-drop data-max-mb="{{ $maxMb }}">
+<div class="file-drop" data-file-drop data-max-mb="{{ $maxMb }}" @if ($required) data-required="{{ $requiredMessage }}" @endif>
     <input type="file" name="{{ $name }}" id="{{ $id }}" accept="{{ $accept }}"
         {{ $attributes->class(['file-drop-input', 'is-invalid' => $errors->has($name)]) }}>
     <label for="{{ $id }}" class="file-drop-zone" data-file-drop-zone>
