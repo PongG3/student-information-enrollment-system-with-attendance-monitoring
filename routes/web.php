@@ -102,6 +102,9 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::post('students/{student}/photo/reject', [StudentController::class, 'rejectPhoto'])->name('students.photo.reject')->whereNumber('student');
     Route::post('students/{student}/requirements/{requirement}', [StudentRequirementController::class, 'update'])
         ->name('students.requirements.update')->whereNumber(['student', 'requirement']);
+    // Send a document back to the student with a reason (they are told on their profile and by email).
+    Route::post('students/{student}/requirements/{requirement}/return', [StudentRequirementController::class, 'returnToStudent'])
+        ->name('students.requirements.return')->whereNumber(['student', 'requirement']);
 
     // Sign-in accounts for students (created from the student's own record).
     Route::post('students/{student}/account', [StudentAccountController::class, 'store'])->name('students.account.store')->whereNumber('student');

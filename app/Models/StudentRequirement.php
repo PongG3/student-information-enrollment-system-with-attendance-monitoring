@@ -14,6 +14,7 @@ class StudentRequirement extends Model
     protected $fillable = [
         'student_id', 'requirement_id', 'status', 'submitted_at',
         'verified_by', 'verified_at', 'remarks', 'file_path', 'file_name',
+        'returned_reason', 'returned_at', 'returned_by',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class StudentRequirement extends Model
         return [
             'submitted_at' => 'datetime',
             'verified_at' => 'datetime',
+            'returned_at' => 'datetime',
         ];
     }
 
@@ -37,5 +39,16 @@ class StudentRequirement extends Model
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function returner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'returned_by');
+    }
+
+    /** Sent back by the registrar and not handed in again yet: the student sees why. */
+    public function isReturned(): bool
+    {
+        return $this->status === self::STATUS_PENDING && $this->returned_at !== null;
     }
 }

@@ -87,12 +87,23 @@ final class Navigation
     private static function studentNotifications(User $user): array
     {
         $student = Student::where('user_id', $user->id)->first();
-        $term = Term::where('is_current', true)->first();
-        if (! $student || ! $term) {
+        if (! $student) {
             return [];
         }
 
         $items = [];
+
+        // Documents the registrar sent back: the student needs to hand them in again.
+        $returned = \App\Models\StudentRequirement::where('student_id', $student->id)
+            ->where('status', \App\Models\StudentRequirement::STATUS_PENDING)->whereNotNull('returned_at')->count();
+        if ($returned > 0) {
+            $items[] = ['count' => $returned, 'label' => trans_choice('{1} document was returned by the registrar|[2,*] documents were returned by the registrar', $returned), 'url' => route('student.profile'), 'tone' => 'danger'];
+        }
+
+        $term = Term::where('is_current', true)->first();
+        if (! $term) {
+            return $items;
+        }
         $inTerm = fn ($q) => $q->where('term_id', $term->id);
         $recent = Enrollment::where('student_id', $student->id)->whereHas('classOffering', $inTerm)
             ->where('reviewed_at', '>=', now()->subDays(7));

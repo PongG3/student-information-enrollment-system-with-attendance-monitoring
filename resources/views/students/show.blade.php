@@ -150,13 +150,16 @@
                                                 @if ($row->file_path)
                                                     <a href="{{ route('requirements.file', $row) }}" class="small ms-1">Student's scan</a>
                                                 @endif
+                                                @if ($row->isReturned())
+                                                    <div class="small text-secondary mt-1">Returned {{ $row->returned_at->format('M j') }}{{ $row->returner ? ' by ' . $row->returner->name : '' }}: “{{ $row->returned_reason }}”</div>
+                                                @endif
                                             </td>
                                             <td class="small text-secondary">
                                                 @if ($row->verified_at) {{ $row->verifier?->name ?? 'Staff' }} · {{ $row->verified_at->format('M j, Y') }} @else — @endif
                                             </td>
                                             @unless ($student->trashed())
                                                 <td class="text-end text-nowrap">
-                                                    @foreach (['submitted' => ['Mark submitted', 'secondary'], 'verified' => ['Verify', 'success'], 'pending' => ['Reset', 'secondary']] as $status => [$label, $variant])
+                                                    @foreach (['submitted' => ['Mark submitted', 'secondary'], 'verified' => ['Verify', 'success']] as $status => [$label, $variant])
                                                         @if ($row->status !== $status)
                                                             <form method="POST" class="d-inline"
                                                                   action="{{ route('students.requirements.update', [$student, $row->requirement]) }}">
@@ -166,6 +169,14 @@
                                                             </form>
                                                         @endif
                                                     @endforeach
+                                                    {{-- Sending a document back always asks for a reason, which the student is told. --}}
+                                                    @if ($row->status !== 'pending' || $row->file_path)
+                                                        <button type="button" class="btn btn-outline-danger btn-sm-sies" data-bs-toggle="modal" data-bs-target="#returnDocModal"
+                                                            data-return-action="{{ route('students.requirements.return', [$student, $row->requirement]) }}"
+                                                            data-return-name="{{ $row->requirement->name }}"
+                                                            data-return-id="{{ $row->requirement->id }}"
+                                                            data-return-has-file="{{ $row->file_path ? '1' : '0' }}">Return…</button>
+                                                    @endif
                                                 </td>
                                             @endunless
                                         </tr>
@@ -302,4 +313,85 @@
     </div>
 
     <x-reason-modal />
+
+    {{-- Return a document to the student: confirm, and say why (the student sees the reason and gets an email). --}}
+    <div class="modal fade" id="returnDocModal" tabindex="-1" aria-labelledby="returnDocTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="" class="modal-content" novalidate data-return-form>
+                @csrf
+                <input type="hidden" name="_requirement" value="{{ old('_requirement') }}" data-return-id>
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title h5 fw-bold" id="returnDocTitle">Return this document?</h2>
+                        <div class="small text-secondary" data-return-name></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2 small mb-3">
+                        It goes back to <strong>Pending</strong> for {{ $student->first_name }}<span data-return-file-note>, and the uploaded scan is deleted</span>.
+                        {{ $student->first_name }} will need to hand it in again.
+                    </div>
+                    <label for="returnReason" class="form-label fw-semibold small">Message to {{ $student->first_name }} <span class="text-danger">*</span></label>
+                    <textarea id="returnReason" name="reason" rows="4" maxlength="500" class="form-control @error('reason') is-invalid @enderror"
+                        placeholder="e.g. The scan is blurry and the birth date cannot be read. Please upload a clearer copy.">{{ old('reason') }}</textarea>
+                    <div class="invalid-feedback" data-return-error>{{ $errors->first('reason') ?: 'Tell the student why the document is being returned.' }}</div>
+                    <div class="form-text d-flex justify-content-between">
+                        <span>Shown on {{ $student->first_name }}'s profile and sent by email. Also saved in the audit log.</span>
+                        <span data-return-count>0 / 500</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger px-4">Return document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = document.getElementById('returnDocModal');
+                const form = modal.querySelector('[data-return-form]');
+                const reason = modal.querySelector('#returnReason');
+                const count = modal.querySelector('[data-return-count]');
+                const setCount = () => { count.textContent = `${reason.value.length} / 500`; };
+                reason.addEventListener('input', () => { setCount(); if (reason.value.trim().length >= 5) reason.classList.remove('is-invalid'); });
+
+                modal.addEventListener('show.bs.modal', (event) => {
+                    const button = event.relatedTarget;
+                    if (!button) return;   // reopened after a server error: keep what was typed
+                    form.action = button.dataset.returnAction;
+                    modal.querySelector('[data-return-name]').textContent = button.dataset.returnName;
+                    modal.querySelector('[data-return-id]').value = button.dataset.returnId;
+                    modal.querySelector('[data-return-file-note]').hidden = button.dataset.returnHasFile !== '1';
+                    reason.value = '';
+                    reason.classList.remove('is-invalid');
+                    setCount();
+                });
+                modal.addEventListener('shown.bs.modal', () => reason.focus());
+
+                // No reason, no return: the window stays open and says so.
+                form.addEventListener('submit', (event) => {
+                    if (reason.value.trim().length >= 5) return;
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    modal.querySelector('[data-return-error]').textContent = reason.value.trim() === ''
+                        ? 'Tell the student why the document is being returned.'
+                        : 'Write a reason of at least 5 characters.';
+                    reason.classList.add('is-invalid');
+                    reason.focus();
+                }, true);
+
+                @if ($errors->has('reason') && ($reopen = $requirements->firstWhere('requirement.id', (int) old('_requirement'))))
+                    form.action = @json(route('students.requirements.return', [$student, $reopen->requirement]));
+                    modal.querySelector('[data-return-name]').textContent = @json($reopen->requirement->name);
+                    modal.querySelector('[data-return-file-note]').hidden = {{ $reopen->file_path ? 'false' : 'true' }};
+                    setCount();
+                    bootstrap.Modal.getOrCreateInstance(modal).show();
+                @endif
+            });
+        </script>
+    @endpush
 </x-app-layout>

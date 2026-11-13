@@ -43,6 +43,10 @@ class RequirementUploadController extends Controller
             'submitted_at' => now(),
             'verified_by' => null,
             'verified_at' => null,
+            // Handed in again: the earlier "returned" note no longer applies.
+            'returned_reason' => null,
+            'returned_at' => null,
+            'returned_by' => null,
         ])->save();
 
         AuditLogger::log('requirement.uploaded', $student, "{$student->full_name} uploaded {$requirement->name}");

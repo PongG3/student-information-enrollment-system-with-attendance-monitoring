@@ -147,7 +147,17 @@
                                         <td class="fw-semibold">{{ $row['requirement']->name }}
                                             @unless ($row['requirement']->is_required)<span class="text-secondary small fw-normal">(optional)</span>@endunless
                                         </td>
-                                        <td><x-status-badge :value="$row['status']" /></td>
+                                        <td>
+                                            @if ($row['row']?->isReturned())
+                                                <x-status-badge value="rejected" label="Returned" />
+                                                <div class="returned-note small mt-1">
+                                                    <span class="fw-semibold">The registrar returned this{{ $row['row']->returned_at ? ' on ' . $row['row']->returned_at->format('M j') : '' }}:</span>
+                                                    “{{ $row['row']->returned_reason }}”
+                                                </div>
+                                            @else
+                                                <x-status-badge :value="$row['status']" />
+                                            @endif
+                                        </td>
                                         <td class="text-end text-nowrap">
                                             @if ($row['row']?->file_path)
                                                 <a href="{{ route('requirements.file', $row['row']) }}" class="small me-2">Download</a>

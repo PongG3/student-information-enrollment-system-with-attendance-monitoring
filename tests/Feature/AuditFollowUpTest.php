@@ -137,6 +137,48 @@ class AuditFollowUpTest extends TestCase
             ->assertSee('bootstrap.Modal.getOrCreateInstance(requirementModal).show()', false);
     }
 
+    public function test_the_registrar_returns_a_document_with_a_reason_the_student_sees(): void
+    {
+        Storage::fake('local');
+        \Illuminate\Support\Facades\Notification::fake();
+        $requirement = Requirement::create(['name' => 'PSA Birth Certificate', 'is_required' => true, 'is_active' => true]);
+        $this->actingAs($this->anaUser)->post(route('student.requirements.upload', $requirement), [
+            'file' => UploadedFile::fake()->create('psa.pdf', 200, 'application/pdf'),
+        ]);
+        $row = StudentRequirement::firstOrFail();
+        $file = $row->file_path;
+
+        // The record offers "Return…" (a confirmation window), not an instant reset.
+        $this->actingAs($this->registrar)->get(route('students.show', $this->ana))
+            ->assertSee('Return…')->assertSee('Return this document?')->assertDontSee('>Reset<', false);
+
+        // No reason: refused, nothing changes.
+        $this->actingAs($this->registrar)->post(route('students.requirements.return', [$this->ana, $requirement]), ['reason' => ''])
+            ->assertSessionHasErrors('reason');
+        $this->assertSame('submitted', $row->fresh()->status);
+
+        $this->actingAs($this->registrar)->post(route('students.requirements.return', [$this->ana, $requirement]), [
+            'reason' => 'The scan is blurry; the birth date cannot be read.',
+        ])->assertSessionHas('success');
+
+        $row->refresh();
+        $this->assertSame('pending', $row->status);
+        $this->assertNull($row->file_path);
+        Storage::disk('local')->assertMissing($file);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'requirement.returned']);
+        \Illuminate\Support\Facades\Notification::assertSentOnDemand(\App\Notifications\Notice::class,
+            fn ($notice) => str_starts_with($notice->subject, 'Document returned') && in_array('Reason: The scan is blurry; the birth date cannot be read.', $notice->lines, true));
+
+        // The student sees why, and the bell says so; a new upload clears the note.
+        $this->actingAs($this->anaUser)->get(route('student.profile'))
+            ->assertSee('The registrar returned this')->assertSee('the birth date cannot be read', false)
+            ->assertSee('document was returned by the registrar');
+        $this->actingAs($this->anaUser)->post(route('student.requirements.upload', $requirement), [
+            'file' => UploadedFile::fake()->create('psa2.pdf', 200, 'application/pdf'),
+        ]);
+        $this->assertNull($row->fresh()->returned_reason);
+    }
+
     public function test_the_upload_window_checks_for_a_file_before_sending(): void
     {
         Requirement::create(['name' => 'ID Photo', 'is_required' => true, 'is_active' => true]);

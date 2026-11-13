@@ -210,6 +210,9 @@
 // Excuse letter under a student's name on the attendance sheet.
 .excuse-note { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; max-width: 28rem; }
 
+// A document the registrar sent back, with the reason, on the student's profile.
+.returned-note { max-width: 24rem; white-space: normal; padding: 0.35rem 0.55rem; border-radius: 6px; background: #fdf3f5; color: #7a2236; }
+
 // Attendance sheet on phones: name above the status buttons, and buttons small enough that all four fit.
 @media (max-width: 575.98px) {
     [data-attendance-sheet] .table > thead { display: none; }

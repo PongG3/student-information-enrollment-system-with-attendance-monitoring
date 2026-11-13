@@ -199,8 +199,11 @@ class StageDTest extends TestCase
             'student_id' => $student->id, 'requirement_id' => $requirement->id, 'status' => 'verified', 'verified_by' => $registrar->id,
         ]);
 
-        $this->actingAs($registrar)->post(route('students.requirements.update', [$student, $requirement]), ['status' => 'pending']);
-        $this->assertDatabaseHas('student_requirements', ['student_id' => $student->id, 'status' => 'pending', 'verified_by' => null]);
+        // Going back to pending is no longer an instant reset: it needs the "return" action with a reason.
+        $this->actingAs($registrar)->post(route('students.requirements.update', [$student, $requirement]), ['status' => 'pending'])
+            ->assertSessionHasErrors('status');
+        $this->actingAs($registrar)->post(route('students.requirements.return', [$student, $requirement]), ['reason' => 'Wrong document attached.']);
+        $this->assertDatabaseHas('student_requirements', ['student_id' => $student->id, 'status' => 'pending', 'verified_by' => null, 'returned_reason' => 'Wrong document attached.']);
     }
 
     public function test_search_and_filters_narrow_the_list(): void
