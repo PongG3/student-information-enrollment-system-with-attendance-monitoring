@@ -28,6 +28,7 @@ Route::middleware(['auth', 'role:student', StudentPortal::class])
         Route::post('profile/photo', [StudentSelfServiceController::class, 'uploadPhoto'])->middleware('throttle:10,1')->name('profile.photo');
         Route::delete('profile/photo', [StudentSelfServiceController::class, 'cancelPhoto'])->name('profile.photo.cancel');
         Route::get('photo', [StudentSelfServiceController::class, 'photo'])->name('photo');
+        Route::get('registration-form', [\App\Http\Controllers\RegistrationFormController::class, 'mine'])->middleware('throttle:10,1')->name('registration-form');
         Route::get('personal-data', [\App\Http\Controllers\PersonalDataController::class, 'mine'])->middleware('throttle:5,1')->name('personal-data');
         Route::post('requirements/{requirement}', [RequirementUploadController::class, 'store'])
             ->whereNumber('requirement')->middleware('throttle:20,1')->name('requirements.upload');

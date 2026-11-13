@@ -34,7 +34,12 @@
                         @foreach ($subjects as $subject)
                             <tr>
                                 <td class="fw-semibold">{{ $subject->code }}</td>
-                                <td>{{ $subject->title }}</td>
+                                <td>
+                                    {{ $subject->title }}
+                                    @if ($subject->prerequisites->isNotEmpty())
+                                        <div class="small text-secondary">Needs {{ $subject->prerequisites->pluck('code')->implode(', ') }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ rtrim(rtrim(number_format((float) $subject->units, 1), '0'), '.') }}</td>
                                 <td><span class="category-badge is-{{ $subject->category }}">{{ $subject->categoryLabel() }}</span></td>
                                 <td>
@@ -51,7 +56,7 @@
                                         data-bs-toggle="modal" data-bs-target="#subjectModal"
                                         data-id="{{ $subject->id }}"
                                         data-action="{{ route('subjects.update', $subject) }}"
-                                        data-values="{{ json_encode(['code' => $subject->code, 'title' => $subject->title, 'units' => (float) $subject->units, 'description' => $subject->description, 'category' => $subject->category, 'is_active' => $subject->is_active, 'program_ids' => $subject->programs->pluck('id')->all()]) }}">Edit</button>
+                                        data-values="{{ json_encode(['code' => $subject->code, 'title' => $subject->title, 'units' => (float) $subject->units, 'description' => $subject->description, 'category' => $subject->category, 'is_active' => $subject->is_active, 'program_ids' => $subject->programs->pluck('id')->all(), 'prerequisite_ids' => $subject->prerequisites->pluck('id')->all()]) }}">Edit</button>
                                 </td>
                             </tr>
                         @endforeach
@@ -102,6 +107,20 @@
                 @endforeach
             </div>
             @error('program_ids')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        </fieldset>
+        <fieldset class="mb-3">
+            <legend class="form-label mb-1">Prerequisites <span class="text-secondary fw-normal small">(optional)</span></legend>
+            <div class="form-text mt-0 mb-2">Subjects a student must have completed in an earlier term, e.g. Programming 1 before Programming 2.</div>
+            <div class="program-checks prerequisite-checks">
+                @foreach ($allSubjects as $option)
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="prerequisite_ids[]" value="{{ $option->id }}" id="subjectPrereq{{ $option->id }}"
+                            @checked(in_array((string) $option->id, array_map('strval', (array) old('prerequisite_ids', [])), true))>
+                        <label class="form-check-label" for="subjectPrereq{{ $option->id }}"><strong>{{ $option->code }}</strong> <span class="text-secondary small">{{ $option->title }}</span></label>
+                    </div>
+                @endforeach
+            </div>
+            @error('prerequisite_ids')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
         </fieldset>
         </div>
         </div>

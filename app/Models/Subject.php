@@ -40,6 +40,45 @@ class Subject extends Model
         return $this->belongsToMany(Program::class)->withTimestamps()->orderBy('code');
     }
 
+    /** Subjects that must be completed before this one (e.g. Programming 2 needs Programming 1). */
+    public function prerequisites(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'subject_prerequisites', 'subject_id', 'prerequisite_id')
+            ->withTimestamps()->orderBy('code');
+    }
+
+    /** Subjects that list this one as a prerequisite. */
+    public function requiredFor(): BelongsToMany
+    {
+        return $this->belongsToMany(Subject::class, 'subject_prerequisites', 'prerequisite_id', 'subject_id')->orderBy('code');
+    }
+
+    /** Would requiring $prerequisiteId for this subject create a loop (A needs B, B needs A)? */
+    public function wouldLoop(int $prerequisiteId): bool
+    {
+        if ($prerequisiteId === $this->id) {
+            return true;
+        }
+
+        // Walk down from the proposed prerequisite; finding this subject means a loop.
+        $seen = [];
+        $queue = [$prerequisiteId];
+        while ($queue !== []) {
+            $id = array_shift($queue);
+            if (isset($seen[$id])) {
+                continue;
+            }
+            $seen[$id] = true;
+            $next = \Illuminate\Support\Facades\DB::table('subject_prerequisites')->where('subject_id', $id)->pluck('prerequisite_id')->map(fn ($v) => (int) $v)->all();
+            if (in_array($this->id, $next, true)) {
+                return true;
+            }
+            array_push($queue, ...$next);
+        }
+
+        return false;
+    }
+
     public function isMajor(): bool
     {
         return $this->category === self::MAJOR;

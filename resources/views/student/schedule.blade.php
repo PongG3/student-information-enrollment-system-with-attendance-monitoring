@@ -9,6 +9,11 @@
                 @endforeach
             </select>
             <span class="small text-secondary">{{ $classes->count() }} {{ \Illuminate\Support\Str::plural('class', $classes->count()) }} · {{ \App\Services\StudentPortalData::number($units) }} units</span>
+            @if ($term && $classes->isNotEmpty())
+                <a href="{{ route('student.registration-form', ['term' => $term->id]) }}" data-download class="btn btn-outline-secondary btn-sm-sies ms-auto">
+                    <x-icon name="file" :size="14" /> Registration form (PDF)
+                </a>
+            @endif
         </form>
     </div>
 

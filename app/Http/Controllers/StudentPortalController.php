@@ -81,7 +81,7 @@ class StudentPortalController extends Controller
         $search = trim((string) $request->input('q', ''));
 
         $classes = $term
-            ? ClassOffering::with(['subject', 'teacher', 'meetings', 'program'])
+            ? ClassOffering::with(['subject.prerequisites', 'teacher', 'meetings', 'program'])
                 ->withCount(['enrollments as seats_taken' => fn ($q) => $q->holdingSeat()])
                 ->where('term_id', $term->id)
                 ->where('status', '!=', ClassOffering::STATUS_CANCELLED)

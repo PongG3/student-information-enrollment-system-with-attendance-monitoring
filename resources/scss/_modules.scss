@@ -148,6 +148,7 @@
 // ---- Subjects: which programs' curriculum has the subject ----
 .program-chip { display: inline-block; font-size: 0.72rem; font-weight: 700; color: $navy-light; background: #e3eef8; border: 1px solid #c9dcef; border-radius: 999px; padding: 0.1rem 0.5rem; margin: 0 0.25rem 0.15rem 0; }
 .program-checks { display: grid; gap: 0.35rem; padding: 0.6rem 0.75rem; border: 1px solid $border; border-radius: $radius; background: $surface-muted; }
+.prerequisite-checks { max-height: 9.5rem; overflow-y: auto; } // the subject list can be long: it scrolls inside the dialog
 .category-badge { display: inline-block; font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 0.15rem 0.6rem; }
 .category-badge.is-major { background: $navy; color: #fff; }
 .category-badge.is-minor { background: $border-soft; color: $text-muted; }

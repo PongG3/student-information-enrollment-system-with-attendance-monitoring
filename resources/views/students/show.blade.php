@@ -178,7 +178,27 @@
             </div>
             <div class="tab-pane fade" id="pane-enrollments" role="tabpanel" aria-labelledby="tab-enrollments" tabindex="0">
                 <div class="card-sies">
-                    <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Enrollment history</h2></div>
+                    @php
+                        // Terms with officially enrolled classes: each has a Certificate of Registration.
+                        $corTerms = $enrollments->where('status', 'enrolled')->map(fn ($e) => $e->classOffering->term)
+                            ->unique('id')->sortByDesc('start_date')->values();
+                    @endphp
+                    <div class="card-header-sies">
+                        <h2 class="h6 fw-bold mb-0">Enrollment history</h2>
+                        @if ($corTerms->isNotEmpty())
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-outline-secondary btn-sm-sies dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <x-icon name="file" :size="14" /> Registration form
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><h3 class="dropdown-header">Certificate of Registration (PDF)</h3></li>
+                                    @foreach ($corTerms as $corTerm)
+                                        <li><a class="dropdown-item" data-download href="{{ route('students.registration-form', [$student, 'term' => $corTerm->id]) }}">{{ $corTerm->name }} · {{ $corTerm->academicYear->name }}</a></li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
                     @if ($enrollments->isEmpty())
                         <x-empty-state icon="clipboard" message="This student has not requested any class yet.">
                             @if (! $student->trashed() && $student->status === 'active')

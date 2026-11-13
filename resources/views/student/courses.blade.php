@@ -31,7 +31,7 @@
                             @php $left = max(0, $class->capacity - $class->seats_taken); @endphp
                             <tr>
                                 <td class="fw-semibold">{{ $class->class_code }}<div class="text-secondary small fw-normal">{{ $class->block_label }}</div></td>
-                                <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div></td>
+                                <td>{{ $class->subject->code }}<div class="text-secondary small">{{ $class->subject->title }}</div>@if ($class->subject->prerequisites->isNotEmpty())<div class="small text-secondary">Needs {{ $class->subject->prerequisites->pluck('code')->implode(', ') }}</div>@endif</td>
                                 <td>{{ rtrim(rtrim((string) $class->subject->units, '0'), '.') }}</td>
                                 <td class="small">{{ $class->scheduleSummary() ?: '—' }}</td>
                                 <td><x-teacher-chip :teacher="$class->teacher" /></td>

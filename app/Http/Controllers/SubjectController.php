@@ -15,7 +15,7 @@ class SubjectController extends Controller
 {
     public function index(Request $request)
     {
-        $subjects = Subject::with('programs')->withCount('classOfferings')
+        $subjects = Subject::with(['programs', 'prerequisites'])->withCount('classOfferings')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $like = Like::contains($request->input('search'));
                 $query->where(fn ($w) => $w->where('code', 'like', $like)->orWhere('title', 'like', $like));
@@ -28,28 +28,40 @@ class SubjectController extends Controller
         return view('subjects.index', [
             'subjects' => $subjects,
             'programs' => Program::orderBy('code')->get(),
+            'allSubjects' => Subject::orderBy('code')->get(['id', 'code', 'title']),
         ]);
     }
 
     public function store(Request $request)
     {
-        [$data, $programIds] = $this->validated($request);
+        [$data, $programIds, $prerequisiteIds] = $this->validated($request);
         $subject = Subject::create($data);
         $subject->programs()->sync($programIds);
+        $subject->prerequisites()->sync($prerequisiteIds);
 
-        AuditLogger::log('subject.created', $subject, "Created subject {$subject->code}", null, $data + ['programs' => $subject->load('programs')->programsLabel()]);
+        AuditLogger::log('subject.created', $subject, "Created subject {$subject->code}", null, $data + [
+            'programs' => $subject->load('programs')->programsLabel(),
+            'prerequisites' => $subject->load('prerequisites')->prerequisites->pluck('code')->implode(', ') ?: 'None',
+        ]);
 
         return redirect()->route('subjects.index')->with('success', 'Subject added.');
     }
 
     public function update(Request $request, Subject $subject)
     {
-        [$data, $programIds] = $this->validated($request, $subject);
-        $old = $subject->only(['code', 'title', 'units', 'category', 'description', 'is_active']) + ['programs' => $subject->programsLabel()];
+        [$data, $programIds, $prerequisiteIds] = $this->validated($request, $subject);
+        $old = $subject->only(['code', 'title', 'units', 'category', 'description', 'is_active']) + [
+            'programs' => $subject->programsLabel(),
+            'prerequisites' => $subject->prerequisites->pluck('code')->implode(', ') ?: 'None',
+        ];
         $subject->update($data);
         $subject->programs()->sync($programIds);
+        $subject->prerequisites()->sync($prerequisiteIds);
 
-        AuditLogger::log('subject.updated', $subject, "Updated subject {$subject->code}", $old, $data + ['programs' => $subject->load('programs')->programsLabel()]);
+        AuditLogger::log('subject.updated', $subject, "Updated subject {$subject->code}", $old, $data + [
+            'programs' => $subject->load('programs')->programsLabel(),
+            'prerequisites' => $subject->load('prerequisites')->prerequisites->pluck('code')->implode(', ') ?: 'None',
+        ]);
 
         return redirect()->route('subjects.index')->with('success', 'Subject updated.');
     }
@@ -66,10 +78,25 @@ class SubjectController extends Controller
             'category' => ['nullable', Rule::in(array_keys(Subject::CATEGORIES))],
             'program_ids' => ['nullable', 'array'],
             'program_ids.*' => ['integer', 'exists:programs,id'],
-        ], ['code.regex' => 'Use letters, numbers and dashes only.']);
+            'prerequisite_ids' => ['nullable', 'array', 'max:10'],
+            'prerequisite_ids.*' => ['integer', 'exists:subjects,id'],
+        ], ['code.regex' => 'Use letters, numbers and dashes only.', 'prerequisite_ids.max' => 'Choose at most 10 prerequisites.']);
 
         $programIds = array_values(array_unique(array_map('intval', $data['program_ids'] ?? [])));
-        unset($data['program_ids']);
+        $prerequisiteIds = array_values(array_unique(array_map('intval', $data['prerequisite_ids'] ?? [])));
+        unset($data['program_ids'], $data['prerequisite_ids']);
+
+        // A subject cannot need itself, and prerequisites cannot go in a circle (A needs B, B needs A).
+        if ($subject) {
+            foreach ($prerequisiteIds as $id) {
+                if ($subject->wouldLoop($id)) {
+                    $code = Subject::find($id)?->code;
+                    throw ValidationException::withMessages(['prerequisite_ids' => $id === $subject->id
+                        ? 'A subject cannot be its own prerequisite.'
+                        : "{$code} already needs {$subject->code} (directly or through other subjects), so it cannot also be its prerequisite."]);
+                }
+            }
+        }
 
         // Major = a program's own subject (needs its programs); minor = general education, open to all.
         $data['category'] ??= $programIds === [] ? Subject::MINOR : Subject::MAJOR;
@@ -93,6 +120,6 @@ class SubjectController extends Controller
             }
         }
 
-        return [$data, $programIds];
+        return [$data, $programIds, $prerequisiteIds];
     }
 }

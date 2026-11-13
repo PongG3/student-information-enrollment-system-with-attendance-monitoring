@@ -34,6 +34,15 @@ class EnrollmentRules
         $holding = $rows->whereIn('status', [Enrollment::STATUS_APPROVED, Enrollment::STATUS_ENROLLED])
             ->map(fn ($row) => $row->classOffering)->values();
 
+        // Subjects the student has completed: officially enrolled in a class of a term that began before this one.
+        // (The system keeps no grades, so finishing an earlier term enrolled counts as completing the subject.)
+        $termStart = \App\Models\Term::whereKey($termId)->value('start_date');
+        $completed = Enrollment::where('student_id', $student->id)
+            ->where('status', Enrollment::STATUS_ENROLLED)
+            ->whereHas('classOffering.term', fn ($q) => $q->where('start_date', '<', $termStart))
+            ->with('classOffering:id,subject_id')->get()
+            ->map(fn ($row) => (int) $row->classOffering->subject_id)->unique()->values()->all();
+
         $verified = StudentRequirement::where('student_id', $student->id)
             ->where('status', StudentRequirement::STATUS_VERIFIED)
             ->pluck('requirement_id')->all();
@@ -43,6 +52,7 @@ class EnrollmentRules
             'requested' => $rows->map(fn ($row) => $row->classOffering)->values(),
             'units' => (float) $holding->sum(fn ($class) => (float) $class->subject->units),
             'maxUnits' => (float) Setting::get('max_units_per_term', '24'),
+            'completed' => $completed,
             'unverified' => Requirement::where('is_active', true)->where('is_required', true)
                 ->whereNotIn('id', $verified ?: [0])->orderBy('name')->pluck('name')->all(),
         ];
@@ -60,7 +70,7 @@ class EnrollmentRules
      */
     public static function problems(Student $student, ClassOffering $class, array $context, bool $forApproval = false, ?Collection $extra = null): array
     {
-        $class->loadMissing(['term', 'subject.programs', 'meetings']);
+        $class->loadMissing(['term', 'subject.programs', 'subject.prerequisites', 'meetings']);
         $extra = ($extra ?? collect())->reject(fn ($other) => $other->id === $class->id)->values();
         $problems = [];
 
@@ -71,6 +81,12 @@ class EnrollmentRules
         // Curriculum: the subject must belong to the student's program (general subjects are open to all).
         if (! $class->subject->isOpenTo($student->program_id)) {
             $problems[] = "{$class->subject->code} is a major subject for {$class->subject->programsLabel()} students only.";
+        }
+
+        // Prerequisites: every one must be completed in an earlier term (taking both in the same term is not enough).
+        $missing = $class->subject->prerequisites->reject(fn ($pre) => in_array((int) $pre->id, $context['completed'] ?? [], true));
+        if ($missing->isNotEmpty()) {
+            $problems[] = "{$class->subject->code} needs " . $missing->pluck('code')->implode(' and ') . ' completed first.';
         }
 
         if ($class->term->isClosed()) {

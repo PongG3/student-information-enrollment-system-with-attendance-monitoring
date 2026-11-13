@@ -93,6 +93,8 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::post('students/{student}/restore', [StudentController::class, 'restore'])->name('students.restore')->whereNumber('student')->withTrashed();
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])->name('students.photo')->whereNumber('student')->withTrashed();
     // Everything held about one student, as a PDF (Data Privacy Act access request).
+    // Certificate of Registration (study load) for one term, as a PDF.
+    Route::get('students/{student}/registration-form', [\App\Http\Controllers\RegistrationFormController::class, 'staff'])->name('students.registration-form')->whereNumber('student');
     Route::get('students/{student}/personal-data', [PersonalDataController::class, 'staff'])->name('students.personal-data')->whereNumber('student')->withTrashed();
     // A photo the student submitted: shown to the registrar, then approved (becomes official) or rejected.
     Route::get('students/{student}/photo/pending', [StudentController::class, 'pendingPhoto'])->name('students.photo.pending')->whereNumber('student');

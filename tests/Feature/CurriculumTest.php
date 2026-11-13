@@ -132,7 +132,9 @@ class CurriculumTest extends TestCase
         $this->assertSame('minor', Subject::where('code', 'GE-ETH')->value('category'));
 
         $this->actingAs($this->registrar)->get(route('subjects.index', ['category' => 'minor']))->assertOk()
-            ->assertSee('GE-ETH')->assertDontSee('CS102')->assertSee('class="category-badge is-minor"', false);
+            // The table lists minors only (the prerequisite picker in the dialog still names every subject).
+            ->assertSee('<td class="fw-semibold">GE-ETH</td>', false)->assertDontSee('<td class="fw-semibold">CS102</td>', false)
+            ->assertSee('class="category-badge is-minor"', false);
     }
 
     // ---------- Classes ----------
