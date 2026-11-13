@@ -5,7 +5,8 @@
 @endphp
 <x-app-layout :title="$class->class_code . ' · ' . $class->subject->title"
     :subtitle="$date->format('l, F j, Y') . ' · ' . $class->term->name . ' · ' . $class->term->academicYear->name"
-    :back="route('attendance.index')" back-label="Back to attendance">
+    :back="auth()->user()->role === 'teacher' ? route('teacher.classes') : route('attendance.index')"
+    :back-label="auth()->user()->role === 'teacher' ? 'Back to my classes' : 'Back to attendance'">
     @foreach (array_merge($errors->get('sheet'), $errors->get('rows.*') ? array_merge(...array_values($errors->get('rows.*'))) : [], $errors->get('rows'), $errors->get('reason')) as $message)
         <div class="alert alert-danger py-2">{{ $message }}</div>
     @endforeach
@@ -59,7 +60,7 @@
 
             @if ($session)
                 <div class="small text-secondary mb-2">Recorded by {{ $session->takenBy->name }} on {{ $session->created_at->format('M j, Y g:i A') }}.</div>
-            @elseif ($editable)
+            @elseif ($editable && $students->isNotEmpty())
                 <div class="small text-secondary mb-2">No sheet yet for this date. Everyone starts as Present. Change the exceptions, then save.</div>
             @endif
             @php $waiting = $excuses->where('status', 'pending')->count(); @endphp
@@ -82,12 +83,18 @@
                             @endif
                         </div>
                         @if ($editable && $students->isNotEmpty())
-                            <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="present">Mark everyone present</button>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="present">Mark everyone present</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="absent" data-mark-confirm="Mark every student absent? You can still change any of them before saving.">Mark everyone absent</button>
+                            </div>
                         @endif
                     </div>
 
                     @if ($students->isEmpty())
-                        <x-empty-state icon="students" message="No enrolled students for this date." />
+                        <x-empty-state icon="students" message="Nobody is enrolled in this class for this date, so there is nothing to record.">
+                            <a href="{{ route('classes.show', $class) }}" class="btn btn-outline-secondary btn-sm-sies">View class roster</a>
+                            <span class="small text-secondary d-block mt-2">Students appear here once the registrar's office enrolls them.</span>
+                        </x-empty-state>
                     @else
                         <div class="table-responsive" data-fit-viewport>
                             <table class="table table-sies align-middle">
@@ -98,7 +105,7 @@
                                             $record = $records->get($student->id);
                                             $current = old("rows.{$student->id}.status", $record?->status ?? ($session ? null : 'present'));
                                         @endphp
-                                        <tr>
+                                        <tr data-student-row>
                                             <td>
                                                 <div class="fw-semibold">{{ $student->full_name }}</div>
                                                 <div class="text-secondary small">{{ $student->student_number }}</div>
@@ -124,9 +131,10 @@
                                                         @endforeach
                                                     </div>
                                                 </td>
-                                                <td>
+                                                <td class="remarks-cell">
                                                     <input type="text" name="rows[{{ $student->id }}][remarks]" maxlength="255" class="form-control"
-                                                        value="{{ old("rows.{$student->id}.remarks", $record?->remarks ?: ($excuse && $excuse->status === 'pending' ? 'Excuse letter' : null)) }}" placeholder="Required for Excused" aria-label="Remarks for {{ $student->full_name }}">
+                                                        value="{{ old("rows.{$student->id}.remarks", $record?->remarks ?: ($excuse && $excuse->status === 'pending' ? 'Excuse letter' : null)) }}" placeholder="Reason" aria-label="Remarks for {{ $student->full_name }} (required for Excused)">
+                                                    <div class="invalid-feedback">Add a reason for the excused absence.</div>
                                                 </td>
                                             @else
                                                 <td>@if ($record) <x-status-badge :value="$record->status" /> @else <span class="text-secondary small">Not recorded</span> @endif</td>
@@ -151,11 +159,11 @@
                     <div class="form-actionbar is-sticky mt-3">
                         <div class="attendance-tally" aria-live="polite">
                             @foreach ($labels as $value => $label)
-                                <span class="tally tally-{{ $colors[$value] }}"><strong data-tally="{{ $value }}">0</strong> {{ $label }}</span>
+                                <span class="tally tally-{{ $colors[$value] }}" title="{{ $label }}"><strong data-tally="{{ $value }}">0</strong> <span class="d-none d-sm-inline">{{ $label }}</span><span class="d-sm-none" aria-label="{{ $label }}">{{ $label[0] }}</span></span>
                             @endforeach
                         </div>
                         <div class="form-actions ms-sm-auto">
-                            <a href="{{ route('attendance.index') }}" class="btn btn-outline-secondary px-4">Back</a>
+                            <a href="{{ auth()->user()->role === 'teacher' ? route('teacher.classes') : route('attendance.index') }}" class="btn btn-outline-secondary px-4 d-none d-sm-inline-flex" data-leave>Back</a>
                             <button type="submit" class="btn btn-navy px-4">{{ $session ? 'Save changes' : 'Save attendance' }}</button>
                         </div>
                     </div>

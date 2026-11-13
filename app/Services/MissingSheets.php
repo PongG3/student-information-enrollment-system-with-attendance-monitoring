@@ -24,6 +24,9 @@ class MissingSheets
     public static function find(Collection $classes, ?Carbon $from = null, ?Carbon $to = null): Collection
     {
         $classes = $classes->filter(fn (ClassOffering $class) => $class->status !== ClassOffering::STATUS_CANCELLED)->values();
+        // A class nobody is enrolled in has no sheet to take.
+        $withStudents = ClassOffering::whereIn('id', $classes->pluck('id'))->hasStudents()->pluck('id')->flip();
+        $classes = $classes->filter(fn (ClassOffering $class) => isset($withStudents[$class->id]))->values();
         if ($classes->isEmpty()) {
             return collect();
         }

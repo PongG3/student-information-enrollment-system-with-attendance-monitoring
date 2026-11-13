@@ -50,6 +50,11 @@ class StageLTest extends TestCase
 
         $this->mine = $this->makeClass('CL-1001', 'CS101', 'Intro to Computing', $this->teacher);
         $this->theirs = $this->makeClass('CL-2002', 'MATH3', 'Calculus', $this->otherTeacher);
+
+        // A class nobody joined has no sheet to take, so the alerts below need someone enrolled.
+        $anchor = $this->makeStudent('2026-9999', 'Pat', 'Anchor');
+        $this->enroll($anchor, $this->mine, 'enrolled');
+        $this->enroll($anchor, $this->theirs, 'enrolled');
     }
 
     protected function tearDown(): void
@@ -427,7 +432,8 @@ class StageLTest extends TestCase
         $this->makeStudent('2026-0114', 'Val', 'Wong');
 
         $this->actingAs($this->admin)->get(route('admin.dashboard'))->assertOk()
-            ->assertSee('+2 this week')->assertSee('class="stat-change"', false);
+            // +3: the two students here, plus the one enrolled in setUp.
+            ->assertSee('+3 this week')->assertSee('class="stat-change"', false);
     }
 
     public function test_linked_cards_show_a_view_hint(): void

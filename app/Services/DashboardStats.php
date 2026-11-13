@@ -69,6 +69,7 @@ class DashboardStats
             $classes = ClassOffering::with(['subject', 'meetings'])
                 ->where('term_id', $term->id)
                 ->where('status', '!=', ClassOffering::STATUS_CANCELLED)
+                ->hasStudents()
                 ->when($teacherId, fn ($q) => $q->where('teacher_id', $teacherId))
                 ->whereHas('meetings', fn ($q) => $q->where('day_of_week', $today->dayOfWeekIso))
                 ->orderBy('class_code')->get();

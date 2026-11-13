@@ -102,19 +102,79 @@ document.addEventListener('DOMContentLoaded', () => {
             sheet.querySelectorAll('input[type="radio"][name$="[status]"]:checked').forEach((r) => { counts[r.value] = (counts[r.value] || 0) + 1; });
             sheet.querySelectorAll('[data-tally]').forEach((el) => { el.textContent = counts[el.dataset.tally] || 0; });
         };
+        // On phones the remarks box only shows for a student who is not simply present (or who already has a remark).
+        const syncRow = (row) => {
+            const status = row.querySelector('input[type="radio"][name$="[status]"]:checked')?.value;
+            const remarks = row.querySelector('input[name$="[remarks]"]');
+            row.classList.toggle('show-remarks', (status && status !== 'present') || !!remarks?.value);
+        };
+        const markInvalid = (row, bad) => {
+            const remarks = row.querySelector('input[name$="[remarks]"]');
+            remarks?.classList.toggle('is-invalid', bad);
+            row.classList.toggle('row-invalid', bad);
+        };
+        let dirty = false;
         sheet.addEventListener('change', (event) => {
             const radio = event.target;
-            if (radio.type === 'radio' && radio.value === 'excused') {
-                const remarks = radio.closest('tr')?.querySelector('input[name$="[remarks]"]');
-                if (remarks && !remarks.value) remarks.focus();
+            const row = radio.closest('[data-student-row]');
+            if (radio.type === 'radio' && row) {
+                syncRow(row);
+                if (radio.value === 'excused') {
+                    const remarks = row.querySelector('input[name$="[remarks]"]');
+                    if (remarks && !remarks.value) remarks.focus({ preventScroll: true });
+                } else {
+                    markInvalid(row, false);
+                }
             }
+            dirty = true;
             tally();
         });
-        sheet.querySelector('[data-mark-all]')?.addEventListener('click', (event) => {
-            const value = event.currentTarget.dataset.markAll;
-            sheet.querySelectorAll(`input[type="radio"][value="${value}"]`).forEach((r) => { r.checked = true; });
-            tally();
+        sheet.addEventListener('input', (event) => {
+            const row = event.target.closest?.('[data-student-row]');
+            if (row && event.target.matches('input[name$="[remarks]"]')) {
+                syncRow(row);
+                if (event.target.value.trim().length >= 3) markInvalid(row, false);
+                dirty = true;
+            }
         });
+        sheet.querySelectorAll('[data-mark-all]').forEach((button) => button.addEventListener('click', () => {
+            const message = button.dataset.markConfirm;
+            if (message && !window.confirm(message)) return;
+            sheet.querySelectorAll(`input[type="radio"][value="${button.dataset.markAll}"]`).forEach((r) => {
+                r.checked = true;
+                const row = r.closest('[data-student-row]');
+                if (row) { syncRow(row); markInvalid(row, false); }
+            });
+            dirty = true;
+            tally();
+        }));
+
+        // Excused needs a reason: show it on the row itself, jump to the first one, and do not send yet.
+        sheet.addEventListener('submit', (event) => {
+            let first = null;
+            sheet.querySelectorAll('[data-student-row]').forEach((row) => {
+                const excused = row.querySelector('input[type="radio"][value="excused"]:checked');
+                const remarks = row.querySelector('input[name$="[remarks]"]');
+                const bad = !!excused && (remarks?.value.trim().length ?? 0) < 3;
+                markInvalid(row, bad);
+                if (bad && !first) first = row;
+            });
+            if (first) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                first.querySelector('input[name$="[remarks]"]')?.focus({ preventScroll: true });
+                return;
+            }
+            dirty = false;
+        }, true);
+
+        // Leaving with marks that were not saved: ask first.
+        window.addEventListener('beforeunload', (event) => {
+            if (dirty) { event.preventDefault(); event.returnValue = ''; }
+        });
+
+        sheet.querySelectorAll('[data-student-row]').forEach(syncRow);
         tally();
     });
 

@@ -1,5 +1,5 @@
 <x-app-layout :title="$isStaff ? 'Attendance Monitoring' : 'Attendance'"
-    :subtitle="$isStaff ? 'Daily, weekly and monthly attendance across classes.' : 'Attendance for your classes. Open a class to record or review a sheet.'">
+    :subtitle="$isStaff ? 'Daily, weekly and monthly attendance across classes.' : 'Take attendance for today, catch up on missed sheets, and review your classes below.'">
     @php
         $query = array_filter(['term' => $term?->id, 'class_offering' => $classId]);
         $percentFormat = fn ($value) => $value === null ? '—' : rtrim(rtrim(number_format($value, 1), '0'), '.') . '%';
@@ -31,6 +31,72 @@
             </ul>
         </div>
     </x-slot:actions>
+
+    @if ($take)
+        {{-- Teachers: where attendance is taken. Today's classes first, then the oldest meetings still missing a sheet. --}}
+        <div class="row g-3 mb-4">
+            @php $showMissed = $take['missed']->isNotEmpty() || $take['locked'] > 0; @endphp
+            <div class="col-lg-{{ $showMissed ? 7 : 12 }}">
+                <div class="card-sies h-100">
+                    <div class="card-header-sies">
+                        <h2 class="h6 fw-bold mb-0">Take attendance · today</h2>
+                        <span class="small text-secondary">{{ today()->format('D, M j') }}</span>
+                    </div>
+                    @if ($take['today']['classes']->isEmpty())
+                        <x-empty-state icon="calendar" :message="$take['today']['note'] ?? 'No classes meet today.'">
+                            <a href="{{ route('teacher.classes') }}" class="btn btn-outline-secondary btn-sm-sies">My classes</a>
+                        </x-empty-state>
+                    @else
+                        <ul class="list-group list-group-flush">
+                            @foreach ($take['today']['classes']->sortBy(fn ($row) => $row['recorded'] ? 1 : 0)->values() as $row)
+                                <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                    <div class="min-w-0">
+                                        <span class="fw-semibold">{{ $row['class']->subject->code }}</span>
+                                        <span class="small text-secondary">· {{ $row['class']->class_code }} · {{ $row['class']->scheduleSummary() }}</span>
+                                    </div>
+                                    <div class="text-nowrap">
+                                        @if ($row['recorded'])
+                                            <x-status-badge value="verified" label="Recorded" />
+                                            <a href="{{ route('attendance.sheet', ['class_offering' => $row['class']->id, 'date' => today()->toDateString()]) }}" class="btn btn-outline-secondary btn-sm-sies ms-1">Open</a>
+                                        @else
+                                            <a href="{{ route('attendance.sheet', ['class_offering' => $row['class']->id, 'date' => today()->toDateString()]) }}" class="btn btn-navy btn-sm-sies">Take attendance</a>
+                                        @endif
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            </div>
+            @if ($showMissed)
+                <div class="col-lg-5">
+                    <div class="card-sies h-100">
+                        <div class="card-header-sies"><h2 class="h6 fw-bold mb-0">Still to record</h2><span class="small text-secondary">oldest first</span></div>
+                        @if ($take['missed']->isEmpty())
+                            <x-empty-state icon="check" tone="good" message="Nothing you can still record is missing." />
+                        @else
+                            <ul class="list-group list-group-flush">
+                                @foreach ($take['missed'] as $row)
+                                    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                        <div class="small"><span class="fw-semibold">{{ $row['class']->subject->code }}</span> · {{ $row['date']->format('D, M j') }}</div>
+                                        <a href="{{ route('attendance.sheet', ['class_offering' => $row['class']->id, 'date' => $row['date']->toDateString()]) }}" class="btn btn-outline-secondary btn-sm-sies">Record</a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if ($take['missedMore'] > 0)
+                                <div class="px-3 pt-2 small text-secondary">and {{ $take['missedMore'] }} more</div>
+                            @endif
+                        @endif
+                        @if ($take['locked'] > 0)
+                            <div class="px-3 py-2 small text-secondary border-top">
+                                {{ $take['locked'] }} older {{ \Illuminate\Support\Str::plural('meeting', $take['locked']) }} (more than {{ $take['window'] }} days ago) can only be recorded by an administrator.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
 
     <div class="card-sies p-3 mb-4">
         {{-- Term and class apply at once; quick ranges are links; Apply is only for your own From–To dates. --}}

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\ScheduleChecker;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,13 @@ class ClassOffering extends Model
         return Attribute::get(fn () => $this->program_id && $this->year_level
             ? ($this->program?->code ?? '') . ' ' . $this->year_level . '-' . $this->section
             : 'Section ' . $this->section);
+    }
+
+    /** Classes that have, or had, enrolled students. A class nobody joined has no sheet to take. */
+    public function scopeHasStudents(Builder $query): Builder
+    {
+        return $query->whereHas('enrollments', fn ($e) => $e
+            ->where(fn ($w) => $w->where('status', Enrollment::STATUS_ENROLLED)->orWhereNotNull('enrolled_at')));
     }
 
     public function program(): BelongsTo

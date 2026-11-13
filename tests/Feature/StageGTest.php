@@ -135,6 +135,7 @@ class StageGTest extends TestCase
     {
         $this->sheet($this->class, '2026-11-09', [$this->s1->id => 'present', $this->s2->id => 'absent']);
         $second = $this->makeClass('CL-1002', 'CS102', $this->otherTeacher);
+        $this->enroll($this->s1, $second, 'enrolled');   // a class nobody joined has no sheet to take
 
         $today = DashboardStats::today($this->term);
 

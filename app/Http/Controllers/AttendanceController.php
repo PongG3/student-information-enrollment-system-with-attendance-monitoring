@@ -12,6 +12,8 @@ use App\Models\Student;
 use App\Models\Term;
 use App\Services\AttendanceService;
 use App\Services\AttendanceStats;
+use App\Services\DashboardStats;
+use App\Services\MissingSheets;
 use App\Notifications\Notice;
 use App\Support\Notify;
 use Carbon\Carbon;
@@ -74,7 +76,26 @@ class AttendanceController extends Controller
             ->orderByDesc('session_date')->orderByDesc('id')
             ->paginate(15)->withQueryString();
 
+        // Teachers come here to take attendance: today's classes, and the oldest meetings still without a sheet.
+        $currentTerm = $isTeacher ? Term::with('academicYear')->where('is_current', true)->first() : null;
+        $take = null;
+        if ($isTeacher && $currentTerm) {
+            $mine = ClassOffering::with(['term', 'meetings', 'subject'])->where('term_id', $currentTerm->id)->where('teacher_id', $user->id)->get();
+            // Only meetings the teacher can still record (inside the edit window); older ones need an administrator.
+            $window = AttendanceService::windowDays();
+            $missed = MissingSheets::find($mine, today()->subDays(14));
+            $editable = $missed->filter(fn ($row) => $row['date']->gte(today()->subDays($window)))->values();
+            $take = [
+                'today' => DashboardStats::today($currentTerm, $user->id),
+                'missed' => $editable->take(5),
+                'missedMore' => max(0, $editable->count() - 5),
+                'locked' => $missed->count() - $editable->count(),
+                'window' => $window,
+            ];
+        }
+
         return view('attendance.index', [
+            'take' => $take,
             'term' => $term,
             'terms' => Term::with('academicYear')->orderByDesc('start_date')->get(),
             'classes' => $classes,
