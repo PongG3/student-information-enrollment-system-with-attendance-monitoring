@@ -63,10 +63,10 @@ class UserController extends Controller
             'name' => $user->name, 'email' => $user->email, 'role' => $user->role,
         ]);
 
-        Notify::temporaryPassword($user, $password, true);
+        Notify::temporaryPassword($user, true);
 
         return redirect()->route('users.index')
-            ->with('success', 'User created. The temporary password was also emailed.')
+            ->with('success', 'User created. A link to choose a password was emailed; give them the temporary password below if they need to sign in now.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }
@@ -102,6 +102,11 @@ class UserController extends Controller
         $old = $user->only(['name', 'email', 'role']);
         $data['email'] = strtolower($data['email']);
         $user->forceFill($data)->save();
+
+        // A changed email or role takes effect at the next sign-in, on every device.
+        if ($user->wasChanged(['email', 'role']) && ! $user->is($request->user())) {
+            $this->endSessions($user);
+        }
 
         AuditLogger::log('user.updated', $user, "Updated account of {$user->name}", $old, $user->only(['name', 'email', 'role']));
 
@@ -150,10 +155,10 @@ class UserController extends Controller
 
         AuditLogger::log('user.password_reset', $user, "Reset password of {$user->name}");
 
-        Notify::temporaryPassword($user, $password, false);
+        Notify::temporaryPassword($user, false);
 
         return redirect()->route('users.index')
-            ->with('success', 'Password reset. The temporary password was also emailed.')
+            ->with('success', 'Password reset. A link to choose a new password was emailed; give them the temporary password below if they need to sign in now.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }

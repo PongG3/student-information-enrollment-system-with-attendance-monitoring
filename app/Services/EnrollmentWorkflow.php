@@ -32,6 +32,8 @@ class EnrollmentWorkflow
         return DB::transaction(function () use ($student, $classIds, $by) {
             $classIds = array_values(array_unique($classIds));
 
+            Student::withTrashed()->whereKey($student->id)->lockForUpdate()->first();   // same order as lock()
+
             $classes = ClassOffering::with(['term', 'subject', 'meetings'])
                 ->whereIn('id', $classIds)->orderBy('id')->lockForUpdate()->get();
 
@@ -140,6 +142,7 @@ class EnrollmentWorkflow
             $fresh->update([
                 'status' => Enrollment::STATUS_ENROLLED,
                 'enrolled_at' => now(),
+                'dropped_at' => null,
                 'reviewed_by' => $fresh->reviewed_by ?? $by->id,
                 'reviewed_at' => $fresh->reviewed_at ?? now(),
             ]);
@@ -169,7 +172,10 @@ class EnrollmentWorkflow
                 'status' => Enrollment::STATUS_CANCELLED,
                 'reviewed_by' => $by->id,
                 'reviewed_at' => now(),
-                'enrolled_at' => null,
+                // An enrolled student keeps the date they joined and gets a drop date, so class days from
+                // before they left can still be recorded. Anyone not yet enrolled has neither.
+                'enrolled_at' => $old === Enrollment::STATUS_ENROLLED ? $fresh->enrolled_at : null,
+                'dropped_at' => $old === Enrollment::STATUS_ENROLLED ? now() : null,
                 'status_reason' => $reason,
             ]);
 
@@ -197,6 +203,7 @@ class EnrollmentWorkflow
                 'reviewed_by' => null,
                 'reviewed_at' => null,
                 'enrolled_at' => null,
+                'dropped_at' => null,
                 'status_reason' => null,
             ]);
 
@@ -204,12 +211,16 @@ class EnrollmentWorkflow
         });
     }
 
-    /** Lock the class and the request so two people cannot book the last seat together. */
+    /**
+     * Lock the student, the class and the request. The class lock stops two people booking the last seat; the
+     * student lock stops two approvals for different classes passing the schedule and unit checks together.
+     * Always taken in this order (student, then class) so two requests never wait on each other.
+     */
     private static function lock(Enrollment $enrollment): array
     {
+        $student = Student::withTrashed()->lockForUpdate()->findOrFail($enrollment->student_id);
         $class = ClassOffering::with(['term', 'subject', 'meetings'])->lockForUpdate()->findOrFail($enrollment->class_offering_id);
         $fresh = Enrollment::lockForUpdate()->findOrFail($enrollment->id);
-        $student = Student::withTrashed()->findOrFail($fresh->student_id);
 
         return [$fresh, $class, $student];
     }

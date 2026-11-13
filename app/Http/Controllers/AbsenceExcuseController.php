@@ -119,12 +119,16 @@ class AbsenceExcuseController extends Controller
         $user = $request->user();
         $allowed = match ($user->role) {
             'admin', 'registrar' => true,
-            'teacher' => $excuse->classOffering->teacher_id === $user->id,
+            'teacher' => (int) $excuse->classOffering->teacher_id === (int) $user->id,
             'student' => $excuse->student->user_id === $user->id,
             default => false,
         };
         abort_unless($allowed && $excuse->file_path && Storage::disk('local')->exists($excuse->file_path), 404);
 
-        return Storage::disk('local')->response($excuse->file_path, $excuse->file_name ?? 'excuse-letter');
+        // Shown in the browser so a teacher can read it at a glance, but sandboxed: nothing inside a file can run script here.
+        return Storage::disk('local')->response($excuse->file_path, $excuse->file_name ?? 'excuse-letter', [
+            'Content-Security-Policy' => "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'",
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 }

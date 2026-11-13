@@ -288,7 +288,7 @@ class EnrollmentController extends Controller
         $validator = Validator::make($request->all(), ['reason' => ['required', 'string', 'min:5', 'max:255']]);
 
         if ($validator->fails()) {
-            throw new EnrollmentRuleException(['Please give a reason of at least 5 characters.']);
+            throw \Illuminate\Validation\ValidationException::withMessages(['enrollment' => 'Please give a reason of at least 5 characters.']);
         }
 
         return trim($validator->validated()['reason']);

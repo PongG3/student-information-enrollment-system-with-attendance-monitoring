@@ -21,7 +21,7 @@ class Enrollment extends Model
 
     protected $fillable = [
         'student_id', 'class_offering_id', 'status', 'requested_by', 'requested_at',
-        'reviewed_by', 'reviewed_at', 'enrolled_at', 'status_reason',
+        'reviewed_by', 'reviewed_at', 'enrolled_at', 'dropped_at', 'status_reason',
     ];
 
     protected function casts(): array
@@ -30,6 +30,7 @@ class Enrollment extends Model
             'requested_at' => 'datetime',
             'reviewed_at' => 'datetime',
             'enrolled_at' => 'datetime',
+            'dropped_at' => 'datetime',
         ];
     }
 

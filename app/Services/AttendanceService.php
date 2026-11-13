@@ -104,8 +104,14 @@ class AttendanceService
     public static function eligible(ClassOffering $class, Carbon $date, array $alsoIds = []): Collection
     {
         $ids = Enrollment::where('class_offering_id', $class->id)
-            ->where('status', Enrollment::STATUS_ENROLLED)
-            ->where(fn ($q) => $q->whereNull('enrolled_at')->orWhereDate('enrolled_at', '<=', $date))
+            ->where(fn ($q) => $q
+                // Enrolled now, and joined on or before this date.
+                ->where(fn ($e) => $e->where('status', Enrollment::STATUS_ENROLLED)
+                    ->where(fn ($d) => $d->whereNull('enrolled_at')->orWhereDate('enrolled_at', '<=', $date)))
+                // Dropped later: still belongs on class days between joining and leaving.
+                ->orWhere(fn ($e) => $e->where('status', Enrollment::STATUS_CANCELLED)
+                    ->whereNotNull('enrolled_at')->whereNotNull('dropped_at')
+                    ->whereDate('enrolled_at', '<=', $date)->whereDate('dropped_at', '>=', $date)))
             ->pluck('student_id')
             ->merge($alsoIds)
             ->unique()
@@ -187,7 +193,11 @@ class AttendanceService
                         'session_date' => $date->toDateString(),
                         'taken_by' => $user->id,
                     ]);
-                } catch (QueryException) {
+                } catch (QueryException $e) {
+                    // Only a duplicate (class, date) means someone else got there first; anything else is a real fault.
+                    if ((string) $e->getCode() !== '23000') {
+                        throw $e;
+                    }
                     throw new AttendanceException(['Someone else just saved this sheet. Reload the page and try again.']);
                 }
             }

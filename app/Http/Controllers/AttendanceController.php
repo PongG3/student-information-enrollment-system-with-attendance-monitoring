@@ -170,8 +170,13 @@ class AttendanceController extends Controller
         }
 
         // Excuse letters for this day: Excused accepts them, any other status declines them.
-        AbsenceExcuse::settle($class, $date, $user);
-        $this->alertNewAbsences($class, $overBefore);
+        // The sheet is already saved. A problem in these follow-ups is logged, never shown as a failed save.
+        try {
+            AbsenceExcuse::settle($class, $date, $user);
+            $this->alertNewAbsences($class, $overBefore);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $message = $result['new']
             ? 'Attendance saved.'

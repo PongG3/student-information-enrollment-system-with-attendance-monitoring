@@ -18,7 +18,7 @@ class AccountPasswordController extends Controller
     {
         $data = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', 'different:current_password', Password::min(10)->letters()->numbers()],
+            'password' => ['required', 'confirmed', 'different:current_password', Password::min(12)->letters()->mixedCase()->numbers()],
         ]);
 
         $user = $request->user();

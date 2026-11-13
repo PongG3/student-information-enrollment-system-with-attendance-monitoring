@@ -50,10 +50,10 @@ class StudentAccountController extends Controller
             'email' => $user->email,
         ]);
 
-        Notify::temporaryPassword($user, $password, true);
+        Notify::temporaryPassword($user, true);
 
         return redirect()->route('students.show', $student)
-            ->with('success', 'Portal account created. The temporary password was also emailed.')
+            ->with('success', 'Portal account created. A link to choose a password was emailed; give the student the temporary password below if they need to sign in now.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }
@@ -68,10 +68,10 @@ class StudentAccountController extends Controller
 
         AuditLogger::log('student.account_password_reset', $student, "Reset portal password of {$student->full_name} ({$student->student_number})");
 
-        Notify::temporaryPassword($user, $password, false);
+        Notify::temporaryPassword($user, false);
 
         return redirect()->route('students.show', $student)
-            ->with('success', 'Password reset. The temporary password was also emailed.')
+            ->with('success', 'Password reset. A link to choose a new password was emailed; give the student the temporary password below if they need to sign in now.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }
