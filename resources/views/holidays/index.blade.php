@@ -20,7 +20,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
-                    <thead><tr><th>Date</th><th>Day</th><th>Description</th><th class="text-end">Actions</th></tr></thead>
+                    <thead><tr><th scope="col">Date</th><th scope="col">Day</th><th scope="col">Description</th><th scope="col" class="text-end">Actions</th></tr></thead>
                     <tbody>
                         @foreach ($holidays as $holiday)
                             <tr>

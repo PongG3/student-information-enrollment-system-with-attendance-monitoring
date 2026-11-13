@@ -60,13 +60,12 @@ class StudentPortalController extends Controller
         $student = $this->student($request);
         $student->load('guardians');
 
-        $requirements = Requirement::where('is_active', true)->orderBy('name')->get()->map(function (Requirement $requirement) use ($student) {
-            return [
-                'requirement' => $requirement,
-                'status' => StudentRequirement::where('student_id', $student->id)
-                    ->where('requirement_id', $requirement->id)->value('status') ?? StudentRequirement::STATUS_PENDING,
-            ];
-        });
+        $rows = StudentRequirement::where('student_id', $student->id)->get()->keyBy('requirement_id');
+        $requirements = Requirement::where('is_active', true)->orderBy('name')->get()->map(fn (Requirement $requirement) => [
+            'requirement' => $requirement,
+            'status' => $rows[$requirement->id]->status ?? StudentRequirement::STATUS_PENDING,
+            'row' => $rows[$requirement->id] ?? null,   // has the uploaded scan, if any
+        ]);
 
         return view('student.profile', compact('student', 'requirements'));
     }

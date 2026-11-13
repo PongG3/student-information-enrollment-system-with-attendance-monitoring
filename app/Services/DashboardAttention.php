@@ -87,6 +87,19 @@ class DashboardAttention
             }
         }
 
+        // Documents students uploaded, waiting to be checked and verified.
+        if (in_array($user->role, ['admin', 'registrar'], true)) {
+            $uploads = \App\Models\StudentRequirement::where('status', 'submitted')->whereNotNull('file_path')->orderBy('submitted_at')->get(['student_id']);
+            if ($uploads->isNotEmpty()) {
+                $items[] = [
+                    'count' => $uploads->count(),
+                    'label' => trans_choice('{1} uploaded document is waiting to be verified|[2,*] uploaded documents are waiting to be verified', $uploads->count()),
+                    'url' => route('students.show', $uploads->first()->student_id) . '#pane-requirements',
+                    'tone' => 'info',
+                ];
+            }
+        }
+
         // The staff data privacy policy is still a draft: nobody has been asked to agree yet.
         if ($user->role === 'admin' && ! \App\Support\PrivacyPolicy::published()) {
             $items[] = [

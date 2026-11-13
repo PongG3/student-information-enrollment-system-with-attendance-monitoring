@@ -48,7 +48,7 @@
             @else
                 <div class="table-responsive">
                     <table class="table table-sies table-hover">
-                        <thead><tr><th>Term</th><th>Dates</th><th>Status</th><th>Enrollment</th><th class="text-end">Actions</th></tr></thead>
+                        <thead><tr><th scope="col">Term</th><th scope="col">Dates</th><th scope="col">Status</th><th scope="col">Enrollment</th><th scope="col" class="text-end">Actions</th></tr></thead>
                         <tbody>
                             @foreach ($year->terms as $term)
                                 <tr>

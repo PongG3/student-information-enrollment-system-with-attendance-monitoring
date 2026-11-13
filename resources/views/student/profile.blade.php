@@ -1,4 +1,9 @@
 <x-app-layout title="My Profile" subtitle="Your record at the registrar's office. You can update your contact details and send a new photo; ask the registrar to correct anything else.">
+    <x-slot:actions>
+        <a href="{{ route('student.personal-data') }}" data-download class="btn btn-outline-secondary" title="Everything the school holds about you, as a PDF">
+            <x-icon name="file" :size="16" /> Download my data
+        </a>
+    </x-slot:actions>
     @php
         // Groups: [heading, locked by the registrar?, [[label, value, full width], ...]]
         $groups = [
@@ -43,7 +48,15 @@
                         </div>
                         @if ($student->pending_photo_path)
                             <div class="small mt-1"><x-status-badge value="pending" label="New photo waiting for approval" /></div>
+                        @elseif ($student->photo_rejected_at)
+                            {{-- Shown until the student sends another photo. --}}
+                            <div class="small mt-1 text-danger">
+                                Your last photo was not approved{{ $student->photo_rejected_reason ? ': ' . $student->photo_rejected_reason : '.' }}
+                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-bs-toggle="modal" data-bs-target="#photoModal">Send another</button>
+                            </div>
                         @endif
+                        @error('requirement')<div class="small mt-1 text-danger">{{ $message }}</div>@enderror
+                        @error('file')<div class="small mt-1 text-danger">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
@@ -82,7 +95,7 @@
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies mb-0">
-                            <thead><tr><th>Name</th><th>Relationship</th><th>Contact</th><th>Emergency</th></tr></thead>
+                            <thead><tr><th scope="col">Name</th><th scope="col">Relationship</th><th scope="col">Contact</th><th scope="col">Emergency</th></tr></thead>
                             <tbody>
                                 @foreach ($student->guardians->sortByDesc('is_emergency_contact') as $guardian)
                                     <tr>
@@ -127,7 +140,7 @@
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sies mb-0">
-                            <thead><tr><th>Requirement</th><th>Status</th></tr></thead>
+                            <thead><tr><th scope="col">Requirement</th><th scope="col">Status</th><th scope="col" class="text-end">Your scan</th></tr></thead>
                             <tbody>
                                 @foreach ($requirements as $row)
                                     <tr>
@@ -135,6 +148,16 @@
                                             @unless ($row['requirement']->is_required)<span class="text-secondary small fw-normal">(optional)</span>@endunless
                                         </td>
                                         <td><x-status-badge :value="$row['status']" /></td>
+                                        <td class="text-end text-nowrap">
+                                            @if ($row['row']?->file_path)
+                                                <a href="{{ route('requirements.file', $row['row']) }}" class="small me-2">Download</a>
+                                            @endif
+                                            @if ($row['status'] !== 'verified')
+                                                <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="modal" data-bs-target="#requirementModal"
+                                                    data-requirement-action="{{ route('student.requirements.upload', $row['requirement']) }}"
+                                                    data-requirement-name="{{ $row['requirement']->name }}">{{ $row['row']?->file_path ? 'Replace' : 'Upload' }}</button>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -142,6 +165,30 @@
                     </div>
                 @endif
             </div>
+        </div>
+    </div>
+
+    {{-- Upload a scan of one admission requirement; the registrar checks it and verifies. --}}
+    <div class="modal fade" id="requirementModal" tabindex="-1" aria-labelledby="requirementTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form method="POST" action="" enctype="multipart/form-data" class="modal-content" novalidate data-requirement-form>
+                @csrf
+                <div class="modal-header">
+                    <div>
+                        <h2 class="modal-title h5 fw-bold" id="requirementTitle">Upload a document</h2>
+                        <div class="small text-secondary" data-requirement-name></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <x-file-drop name="file" id="requirementFile" accept=".pdf,.jpg,.jpeg,.png" hint="PDF or photo, up to 5 MB. Make sure every page is readable." :max-mb="5" />
+                    <p class="small text-secondary mt-3 mb-0">The registrar checks it and marks it verified. Bring the original when the registrar asks for it.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-navy px-4">Upload</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -210,7 +257,7 @@
                         <div data-photo-crop>
                             <x-file-drop name="photo" id="photoFile" accept=".jpg,.jpeg,.png" hint="JPG or PNG, at least 200 × 200 pixels. You can frame it next." :max-mb="15" />
                             <div class="crop-stage" data-crop-stage hidden>
-                                <div class="crop-canvas"><img alt="Your photo, to frame" data-crop-image></div>
+                                <div class="crop-canvas" tabindex="0" role="application" aria-label="Frame your photo. Arrow keys move it, plus and minus zoom, R rotates." data-crop-canvas><img alt="Your photo, to frame" data-crop-image></div>
                                 <div class="crop-tools">
                                     <button type="button" class="crop-btn" data-crop-zoom-out aria-label="Zoom out">−</button>
                                     <input type="range" class="form-range" min="1" max="3" step="0.01" value="1" data-crop-zoom aria-label="Zoom">
@@ -243,6 +290,14 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
+                // The upload window posts to the requirement that was clicked.
+                const requirementModal = document.getElementById('requirementModal');
+                requirementModal.addEventListener('show.bs.modal', (event) => {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    requirementModal.querySelector('[data-requirement-form]').action = button.dataset.requirementAction;
+                    requirementModal.querySelector('[data-requirement-name]').textContent = button.dataset.requirementName;
+                });
                 // Locked fields explain themselves on hover or focus.
                 document.querySelectorAll('.profile-lock[data-bs-toggle="tooltip"]').forEach((el) => bootstrap.Tooltip.getOrCreateInstance(el));
                 // Reopen the dialog that had an error.

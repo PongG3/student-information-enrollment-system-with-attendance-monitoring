@@ -16,6 +16,9 @@
     :back="route('students.index')" back-label="Back to student records">
     @unless ($student->trashed())
         <x-slot:actions>
+            <a href="{{ route('students.personal-data', $student) }}" data-download class="btn btn-outline-secondary" title="Everything held about this student, for a data privacy request">
+                <x-icon name="file" :size="16" /> Personal data (PDF)
+            </a>
             <a href="{{ route('students.edit', $student) }}" data-dialog data-dialog-size="xl" class="btn btn-outline-secondary">Edit</a>
             @if ($student->status === 'active')
                 <a href="{{ route('enrollments.create', ['student' => $student->id]) }}" data-dialog data-dialog-size="xl" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add enrollment</a>
@@ -81,7 +84,12 @@
                             <div class="small text-secondary mb-2">Sent {{ $student->pending_photo_at?->format('M j, Y g:i A') }}. Check it is a clear, formal ID photo.</div>
                             <div class="d-flex gap-2">
                                 <form method="POST" action="{{ route('students.photo.approve', $student) }}">@csrf<button class="btn btn-outline-success btn-sm-sies">Approve</button></form>
-                                <form method="POST" action="{{ route('students.photo.reject', $student) }}">@csrf<button class="btn btn-quiet-danger btn-sm-sies">Reject</button></form>
+                                <button type="button" class="btn btn-quiet-danger btn-sm-sies"
+                                    data-bs-toggle="modal" data-bs-target="#reasonModal"
+                                    data-reason-title="Reject this photo?"
+                                    data-reason-message="Tell {{ $student->first_name }} what to fix (for example: not a formal photo, face not clear). They get it by email and on their profile."
+                                    data-reason-action="{{ route('students.photo.reject', $student) }}"
+                                    data-reason-button="Reject photo">Reject</button>
                             </div>
                         </div>
                     </div>
@@ -130,14 +138,19 @@
                     @else
                         <div class="table-responsive">
                             <table class="table table-sies align-middle">
-                                <thead><tr><th>Requirement</th><th>Status</th><th>Verified by</th>@unless ($student->trashed())<th class="text-end">Actions</th>@endunless</tr></thead>
+                                <thead><tr><th scope="col">Requirement</th><th scope="col">Status</th><th scope="col">Verified by</th>@unless ($student->trashed())<th scope="col" class="text-end">Actions</th>@endunless</tr></thead>
                                 <tbody>
                                     @foreach ($requirements as $row)
                                         <tr>
                                             <td class="fw-semibold">{{ $row->requirement->name }}
                                                 @unless ($row->requirement->is_required)<span class="text-secondary small fw-normal">(optional)</span>@endunless
                                             </td>
-                                            <td><x-status-badge :value="$row->status" /></td>
+                                            <td>
+                                                <x-status-badge :value="$row->status" />
+                                                @if ($row->file_path)
+                                                    <a href="{{ route('requirements.file', $row) }}" class="small ms-1">Student's scan</a>
+                                                @endif
+                                            </td>
                                             <td class="small text-secondary">
                                                 @if ($row->verified_at) {{ $row->verifier?->name ?? 'Staff' }} · {{ $row->verified_at->format('M j, Y') }} @else — @endif
                                             </td>
@@ -175,7 +188,7 @@
                     @else
                         <div class="table-responsive">
                             <table class="table table-sies table-hover">
-                                <thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Status</th></tr></thead>
+                                <thead><tr><th scope="col">Class</th><th scope="col">Subject</th><th scope="col">Term</th><th scope="col">Status</th></tr></thead>
                                 <tbody>
                                     @foreach ($enrollments as $enrollment)
                                         <tr>
@@ -202,7 +215,7 @@
                     @else
                         <div class="table-responsive">
                             <table class="table table-sies">
-                                <thead><tr><th>Name</th><th>Relationship</th><th>Contact</th><th>Emergency</th></tr></thead>
+                                <thead><tr><th scope="col">Name</th><th scope="col">Relationship</th><th scope="col">Contact</th><th scope="col">Emergency</th></tr></thead>
                                 <tbody>
                                     @foreach ($student->guardians->sortByDesc('is_emergency_contact') as $guardian)
                                         <tr>
@@ -267,4 +280,6 @@
             </div>
         </div>
     </div>
+
+    <x-reason-modal />
 </x-app-layout>

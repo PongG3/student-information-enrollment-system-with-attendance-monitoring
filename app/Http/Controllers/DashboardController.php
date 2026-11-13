@@ -57,7 +57,12 @@ class DashboardController extends Controller
         }
 
         $termCounts = DashboardStats::termCounts($term, $teacherId);
-        $data['attendanceTrend'] = DashboardStats::attendanceTrend($term, $teacherId);
+        // The registrar can narrow the weekly trend to one class (?trend_class=, Trends tab).
+        $trendClass = $isTeacher ? null : ($request->integer('trend_class') ?: null);
+        $data['attendanceTrend'] = DashboardStats::attendanceTrend($term, $teacherId, 12, $trendClass);
+        $data['trendClass'] = $trendClass;
+        $data['trendClasses'] = $isTeacher || ! $term ? collect()
+            : ClassOffering::with('subject')->where('term_id', $term->id)->orderBy('class_code')->get();
         $data['termCounts'] = $termCounts;
         $data['termPercentage'] = AttendanceStats::percentage($termCounts);
 

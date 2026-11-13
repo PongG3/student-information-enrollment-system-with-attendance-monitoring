@@ -54,7 +54,7 @@
             </div>
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies align-middle mb-0">
-                    <thead><tr><th>Line</th><th>Student</th><th>Program</th><th>Result</th></tr></thead>
+                    <thead><tr><th scope="col">Line</th><th scope="col">Student</th><th scope="col">Program</th><th scope="col">Result</th></tr></thead>
                     <tbody>
                         @foreach ($preview['rows'] as $row)
                             <tr @class(['table-danger-subtle' => $row['errors']])>

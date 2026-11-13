@@ -36,7 +36,7 @@ class StudentSelfServiceController extends Controller
             AuditLogger::log('student.contact_updated', $student, "{$student->full_name} updated their contact details", $old, $data);
         }
 
-        return redirect()->route('student.profile')->with('success', $changed === [] ? 'Nothing changed.' : 'Contact details saved.');
+        return redirect()->route('student.profile')->with($changed === [] ? 'info' : 'success', $changed === [] ? 'Nothing changed.' : 'Contact details saved.');
     }
 
     public function uploadPhoto(Request $request)
@@ -56,6 +56,8 @@ class StudentSelfServiceController extends Controller
         $student->update([
             'pending_photo_path' => $request->file('photo')->store('student-photos/pending', 'local'),
             'pending_photo_at' => now(),
+            'photo_rejected_reason' => null,   // a new photo replaces the last rejection
+            'photo_rejected_at' => null,
         ]);
         AuditLogger::log('student.photo_submitted', $student, "{$student->full_name} submitted a new photo for approval");
 

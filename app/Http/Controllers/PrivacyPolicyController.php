@@ -27,6 +27,12 @@ class PrivacyPolicyController extends Controller
             'staff' => $user->role === 'admin'
                 ? User::whereIn('role', PrivacyPolicy::STAFF)->where('is_active', true)->count()
                 : null,
+            // Who still has to agree (shown to the administrator, to follow up).
+            'waiting' => $user->role === 'admin' && PrivacyPolicy::published()
+                ? User::whereIn('role', PrivacyPolicy::STAFF)->where('is_active', true)
+                    ->where(fn ($q) => $q->whereNull('privacy_policy_version')->orWhere('privacy_policy_version', '!=', PrivacyPolicy::version()))
+                    ->orderBy('name')->get(['name', 'role'])
+                : collect(),
         ]);
     }
 

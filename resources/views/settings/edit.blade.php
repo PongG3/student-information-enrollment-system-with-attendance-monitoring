@@ -16,7 +16,7 @@
 
     // Tabs keep each part on one screen. Field lists decide the red error dot and which tab opens after a failed save.
     $tabs = [
-        'school' => ['School', 'book', ['school_name', 'school_address', 'registrar_contact', 'logo', 'remove_logo']],
+        'school' => ['School', 'book', ['school_name', 'school_address', 'registrar_contact', 'dpo_name', 'dpo_email', 'logo', 'remove_logo']],
         'rules' => ['Enrollment & attendance', 'check', ['max_units_per_term', 'attendance_edit_window_days', 'absentee_threshold_percent', 'late_counts_as_attended', 'excused_in_percentage']],
         'security' => ['Sign-in security', 'key', [SessionTimeout::SETTING]],
     ];
@@ -75,6 +75,10 @@
                                     placeholder="Email or phone" help="Shown on the sign-in page for people who need help." /></div>
                                 <div class="col-12"><x-field name="school_address" label="Address (optional)" :value="$values['school_address']" maxlength="255"
                                     placeholder="e.g. 123 Rizal Street, Quezon City" help="Printed under the school name on reports." /></div>
+                                <div class="col-md-6"><x-field name="dpo_name" label="Data Protection Officer" :value="$values['dpo_name']" maxlength="120"
+                                    placeholder="Full name" help="Named in the privacy notice (Data Privacy Act)." /></div>
+                                <div class="col-md-6"><x-field name="dpo_email" label="DPO email" type="email" :value="$values['dpo_email']" maxlength="150"
+                                    placeholder="dpo@school.edu.ph" help="Where people send privacy requests." /></div>
                             </div>
                         </div>
                         <div class="col-lg-4">

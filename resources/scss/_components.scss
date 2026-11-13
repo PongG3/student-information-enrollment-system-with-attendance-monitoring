@@ -288,3 +288,35 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 // Good news shown as an empty list (e.g. nobody over the absence limit): green, not grey.
 .empty-state.is-good .empty-state-icon { background: #e3f6ee; color: $success; }
 .empty-state.is-good .empty-state-text { color: #157a5c; font-weight: 600; }
+
+// Tables on phones (.table-stack): each row becomes a small card; cells with data-label show their label.
+@media (max-width: 575.98px) {
+    .table-stack > thead { display: none; }
+    .table-stack, .table-stack > tbody, .table-stack > tbody > tr, .table-stack > tbody > tr > td { display: block; width: 100%; }
+    .table-stack > tbody > tr { padding: 0.6rem 0.75rem; border-bottom: 1px solid $border-soft; }
+    .table-stack > tbody > tr > td { border: 0; padding: 0.15rem 0; text-align: left !important; white-space: normal; }
+    .table-stack > tbody > tr > td[data-label] { display: flex; gap: 0.5rem; }
+    .table-stack > tbody > tr > td[data-label]::before { content: attr(data-label); flex: 0 0 6.5rem; color: $text-muted; font-size: 0.75rem; font-weight: 600; }
+    .table-stack > tbody > tr > td.text-end { padding-top: 0.4rem; }
+    .table-stack.request-groups .request-line > td:first-child { padding-left: 0; }
+}
+.is-busy { pointer-events: none; opacity: 0.75; }
+
+// Reduced motion (an operating-system setting): no fades, slides, spinners or meter animations.
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    .modal.fade .modal-dialog { transform: none; }
+}
+
+// Printing a page (attendance sheet, class summary, a student record): content only, no menus or buttons.
+@media print {
+    .sidebar, .topbar, .app-footer, .skip-link, .toast-container, .page-actions, .breadcrumb-bar, .status-tabs,
+    .form-actionbar, .bulk-bar, .filter-bar, .pagination-bar nav, .btn, .btn-close, .modal, .dropdown { display: none !important; }
+    .app-shell, .app-main, .app-content { display: block !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    body { background: #fff !important; }
+    .card-sies, .stat-card { box-shadow: none !important; border-color: #bbb !important; break-inside: avoid; }
+    .table-responsive { overflow: visible !important; max-height: none !important; }
+    a { color: inherit !important; text-decoration: none !important; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+}

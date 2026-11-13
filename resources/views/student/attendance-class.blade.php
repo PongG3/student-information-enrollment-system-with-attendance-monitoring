@@ -23,7 +23,7 @@
         @else
             <div class="table-responsive">
                 <table class="table table-sies align-middle mb-0">
-                    <thead><tr><th>Date</th><th>Status</th><th>Remarks</th><th>Excuse letter</th></tr></thead>
+                    <thead><tr><th scope="col">Date</th><th scope="col">Status</th><th scope="col">Remarks</th><th scope="col">Excuse letter</th></tr></thead>
                     <tbody>
                         @foreach ($records as $record)
                             <tr>
@@ -37,6 +37,9 @@
                                     @endphp
                                     @if ($excuse && $excuse->status !== 'pending')
                                         <x-status-badge :value="$excuse->status === 'accepted' ? 'verified' : 'rejected'" :label="ucfirst($excuse->status)" />
+                                        @if ($excuse->decision_note)
+                                            <div class="small text-secondary mt-1">Teacher's note: {{ $excuse->decision_note }}</div>
+                                        @endif
                                     @elseif (in_array($record->status, ['absent', 'late'], true))
                                         @if ($excuse)<x-status-badge value="pending" label="Sent, waiting" />@endif
                                         <button type="button" class="btn btn-outline-secondary btn-sm-sies ms-1" data-bs-toggle="modal" data-bs-target="#excuseModal"
@@ -81,6 +84,13 @@
                     <label class="form-label mt-3" for="excuseFile">Letter or medical certificate <span class="text-secondary fw-normal">(optional)</span></label>
                     <x-file-drop name="file" id="excuseFile" accept=".pdf,.jpg,.jpeg,.png" hint="PDF or photo, up to 5 MB" :max-mb="5" />
 
+                    {{-- Several days off: one letter for every missed meeting up to this day. --}}
+                    <label class="form-label mt-3" for="excuseUntil">Absent for several days? Last day <span class="text-secondary fw-normal">(optional)</span></label>
+                    <input type="date" name="until" id="excuseUntil" class="form-control @error('until') is-invalid @enderror" value="{{ old('until') }}"
+                           max="{{ today()->toDateString() }}" data-excuse-field="until">
+                    @error('until')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">Covers every meeting you missed from the first day to this one.</div>
+
                     <div class="form-check excuse-all-day mt-3" data-excuse-all-day hidden>
                         <input class="form-check-input" type="checkbox" name="all_day" value="1" id="excuseAllDay" @checked(old('all_day'))>
                         <label class="form-check-label small" for="excuseAllDay">
@@ -122,6 +132,7 @@
                     if (!button) { check(); return; }   // reopened after an error: keep what was typed
                     form.reset();
                     field('date').value = button.dataset.excuseDate;
+                    field('until').min = button.dataset.excuseDate;   // the last day is on or after the first
                     field('label').textContent = '{{ $class->subject->code }} · ' + button.dataset.excuseLabel;
                     reason.value = button.dataset.excuseReason || '';
                     field('others').textContent = button.dataset.excuseOthers || '';
@@ -129,7 +140,7 @@
                     check();
                 });
 
-                @if ($errors->hasAny(['reason', 'file']) && old('date'))
+                @if ($errors->hasAny(['reason', 'file', 'until']) && old('date'))
                     field('others').textContent = @json($otherMissed[old('date')] ?? '');
                     allDay.hidden = !@json(isset($otherMissed[old('date')]));
                     bootstrap.Modal.getOrCreateInstance(modal).show();

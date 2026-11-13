@@ -67,7 +67,7 @@
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies align-middle mb-0">
-                            <thead><tr><th>Time</th><th>Subject</th><th>Room</th><th>Teacher</th></tr></thead>
+                            <thead><tr><th scope="col">Time</th><th scope="col">Subject</th><th scope="col">Room</th><th scope="col">Teacher</th></tr></thead>
                             <tbody>
                                 @foreach ($todaysClasses as $item)
                                     <tr>

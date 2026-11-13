@@ -57,8 +57,8 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="modal" data-bs-target="#reportFiltersModal"
                         aria-haspopup="dialog"><x-icon name="sliders" :size="14" /> Change filters</button>
                     <a class="btn btn-outline-secondary btn-sm-sies" target="_blank" href="{{ route('reports.print', [$slug] + $query) }}">Print</a>
-                    <a class="btn btn-outline-secondary btn-sm-sies" href="{{ route('reports.pdf', [$slug] + $query) }}">Download PDF</a>
-                    <a class="btn btn-navy btn-sm-sies" href="{{ route('reports.excel', [$slug] + $query) }}">Download Excel</a>
+                    <a class="btn btn-outline-secondary btn-sm-sies" data-download href="{{ route('reports.pdf', [$slug] + $query) }}">Download PDF</a>
+                    <a class="btn btn-navy btn-sm-sies" data-download href="{{ route('reports.excel', [$slug] + $query) }}">Download Excel</a>
                 </div>
             </div>
 

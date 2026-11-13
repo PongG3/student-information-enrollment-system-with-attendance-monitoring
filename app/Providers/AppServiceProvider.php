@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         // The top bar's notifications are cached briefly; any change they depend on refreshes them at once.
-        foreach ([Enrollment::class, AttendanceSession::class, AttendanceRecord::class, User::class, Term::class, AbsenceExcuse::class, Student::class] as $model) {
+        foreach ([Enrollment::class, AttendanceSession::class, AttendanceRecord::class, User::class, Term::class, AbsenceExcuse::class, Student::class, \App\Models\StudentRequirement::class] as $model) {
             $model::saved(fn () => Navigation::refreshNotifications());
             $model::deleted(fn () => Navigation::refreshNotifications());
         }

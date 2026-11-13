@@ -66,6 +66,25 @@ document.querySelectorAll('[data-photo-crop]').forEach((root) => {
         if (file && file.type.startsWith('image/')) open(file);
     });
 
+    // Keyboard: arrow keys move the photo, + and − zoom, R rotates (the canvas is focusable).
+    root.querySelector('[data-crop-canvas]').addEventListener('keydown', (event) => {
+        if (!cropper) return;
+        const step = event.shiftKey ? 30 : 10;
+        const moves = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+        if (moves[event.key]) {
+            cropper.move(...moves[event.key]);
+        } else if (event.key === '+' || event.key === '=') {
+            root.querySelector('[data-crop-zoom-in]').click();
+        } else if (event.key === '-' || event.key === '_') {
+            root.querySelector('[data-crop-zoom-out]').click();
+        } else if (event.key.toLowerCase() === 'r') {
+            cropper.rotate(90);
+        } else {
+            return;
+        }
+        event.preventDefault();
+    });
+
     zoom.addEventListener('input', () => cropper?.zoomTo(baseRatio * Number(zoom.value)));
     root.querySelector('[data-crop-zoom-out]').addEventListener('click', () => { zoom.value = Math.max(1, Number(zoom.value) - 0.25); zoom.dispatchEvent(new Event('input')); });
     root.querySelector('[data-crop-zoom-in]').addEventListener('click', () => { zoom.value = Math.min(3, Number(zoom.value) + 0.25); zoom.dispatchEvent(new Event('input')); });

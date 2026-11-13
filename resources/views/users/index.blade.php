@@ -39,7 +39,7 @@
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead>
-                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th class="text-end">Actions</th></tr>
+                        <tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr>
                     </thead>
                     <tbody>
                         @foreach ($users as $user)

@@ -13,7 +13,7 @@ class StudentRequirement extends Model
 
     protected $fillable = [
         'student_id', 'requirement_id', 'status', 'submitted_at',
-        'verified_by', 'verified_at', 'remarks',
+        'verified_by', 'verified_at', 'remarks', 'file_path', 'file_name',
     ];
 
     protected function casts(): array

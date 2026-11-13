@@ -12,6 +12,8 @@ use App\Models\Student;
 use App\Models\Term;
 use App\Services\AttendanceService;
 use App\Services\AttendanceStats;
+use App\Notifications\Notice;
+use App\Support\Notify;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -158,6 +160,9 @@ class AttendanceController extends Controller
             return back()->withErrors(['reason' => 'This date is outside the teacher edit window. Give a reason of at least 5 characters.'])->withInput();
         }
 
+        // Who is over the absence limit in this class before the save, to spot who has just gone over.
+        $overBefore = AttendanceStats::flagged($class->term, null, $class->id, 1000)->pluck('student.id')->all();
+
         try {
             $result = AttendanceService::save($user, $class, $date, $data['rows'], $reason ?: null);
         } catch (AttendanceException $e) {
@@ -166,12 +171,33 @@ class AttendanceController extends Controller
 
         // Excuse letters for this day: Excused accepts them, any other status declines them.
         AbsenceExcuse::settle($class, $date, $user);
+        $this->alertNewAbsences($class, $overBefore);
 
         $message = $result['new']
             ? 'Attendance saved.'
             : ($result['changes'] > 0 ? "Attendance updated ({$result['changes']} change" . ($result['changes'] === 1 ? '' : 's') . ').' : 'No changes were made.');
 
         return redirect()->route('attendance.sheet', ['class_offering' => $class->id, 'date' => $date->toDateString()])->with('success', $message);
+    }
+
+    /** Email students who have just gone over the absence limit in this class, and their guardians. */
+    private function alertNewAbsences(ClassOffering $class, array $overBefore): void
+    {
+        $rules = AttendanceStats::rules();
+        $class->loadMissing('subject');
+
+        AttendanceStats::flagged($class->term, null, $class->id, 1000)
+            ->reject(fn ($row) => in_array($row['student']->id, $overBefore, true))
+            ->each(function ($row) use ($class, $rules) {
+                $student = $row['student'];
+                $absent = $row['counts']['absent'];
+                $lines = [
+                    "{$student->first_name} has been absent in {$absent} meetings of {$class->subject->code} · {$class->subject->title}, over the school's {$rules['threshold']}% limit.",
+                    'Please talk to the teacher or the registrar\'s office. If an absence had a reason, an excuse letter can be sent from the student portal.',
+                ];
+                Notify::student($student, new Notice("Attendance alert: {$class->subject->code}", $lines, 'View my attendance', route('student.attendance.show', $class->id)));
+                Notify::guardians($student, new Notice("Attendance alert for {$student->first_name} {$student->last_name}", $lines, null, null, 'Good day,'));
+            });
     }
 
     /** Per-student attendance for one class. */

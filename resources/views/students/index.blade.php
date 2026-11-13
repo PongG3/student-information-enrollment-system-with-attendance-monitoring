@@ -67,8 +67,8 @@
             @endif
         @else
             <div class="table-responsive" data-fit-viewport>
-                <table class="table table-sies table-hover">
-                    <thead><tr><th>Student</th><th>Program</th><th>Year</th><th>Section</th><th>Type</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                <table class="table table-sies table-hover table-stack">
+                    <thead><tr><th scope="col">Student</th><th scope="col">Program</th><th scope="col">Year</th><th scope="col">Section</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr></thead>
                     <tbody>
                         @foreach ($students as $student)
                             <tr>
@@ -76,11 +76,11 @@
                                     <a href="{{ route('students.show', $student) }}" class="fw-semibold text-navy">{{ $student->full_name }}</a>
                                     <div class="small text-secondary">{{ $student->student_number }}</div>
                                 </td>
-                                <td>{{ $student->program->code }}</td>
-                                <td>{{ $student->year_level }}</td>
-                                <td>{{ $student->section ?: '—' }}</td>
-                                <td>{{ ucfirst($student->student_type) }}</td>
-                                <td>
+                                <td data-label="Program">{{ $student->program->code }}</td>
+                                <td data-label="Year">{{ $student->year_level }}</td>
+                                <td data-label="Section">{{ $student->section ?: '—' }}</td>
+                                <td data-label="Type">{{ ucfirst($student->student_type) }}</td>
+                                <td data-label="Status">
                                     @if ($student->trashed()) <x-status-badge value="inactive" label="Archived" />
                                     @else <x-status-badge :value="$student->status" />
                                     @endif

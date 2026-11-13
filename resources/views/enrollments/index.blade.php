@@ -90,9 +90,9 @@
             @endif
 
             <div class="table-responsive" data-fit-viewport>
-                <table class="table table-sies request-groups align-middle mb-0">
+                <table class="table table-sies request-groups table-stack align-middle mb-0">
                     <thead>
-                        <tr><th>Class</th><th>Schedule</th><th>Seats</th><th>Status</th><th>Requested</th><th class="text-end">Actions</th></tr>
+                        <tr><th scope="col">Class</th><th scope="col">Schedule</th><th scope="col">Seats</th><th scope="col">Status</th><th scope="col">Requested</th><th scope="col" class="text-end">Actions</th></tr>
                     </thead>
                     @foreach ($groups as $group)
                         @php
@@ -130,6 +130,8 @@
                                             <x-status-badge value="verified" label="Documents verified" />
                                         @else
                                             <x-status-badge value="pending" :label="$docs . ' of ' . $requiredCount . ' documents'" />
+                                            {{-- Straight to the student's Requirements tab, where documents are verified. --}}
+                                            <a href="{{ route('students.show', $student) }}#pane-requirements" class="small fw-semibold text-decoration-none">Verify documents →</a>
                                         @endif
 
                                         <span class="unit-meter small" title="Pending, approved and enrolled classes this term">
@@ -164,15 +166,15 @@
                                         <a href="{{ route('classes.show', $class) }}" class="fw-semibold text-decoration-none">{{ $class->subject->code }}</a>
                                         <span class="text-secondary small">· {{ $class->subject->title }} · {{ $class->class_code }}</span>
                                     </td>
-                                    <td class="small text-secondary">{{ $class->scheduleSummary() }}</td>
-                                    <td class="text-nowrap small">{{ $class->seats_taken }} / {{ $class->capacity }}</td>
-                                    <td>
+                                    <td class="small text-secondary" data-label="Schedule">{{ $class->scheduleSummary() }}</td>
+                                    <td class="text-nowrap small" data-label="Seats">{{ $class->seats_taken }} / {{ $class->capacity }}</td>
+                                    <td data-label="Status">
                                         <x-status-badge :value="$enrollment->status" />
                                         @if ($enrollment->status_reason)
                                             <div class="text-secondary small mt-1">{{ $enrollment->status_reason }}</div>
                                         @endif
                                     </td>
-                                    <td class="small text-nowrap text-secondary"
+                                    <td class="small text-nowrap text-secondary" data-label="Requested"
                                         title="Requested by {{ $enrollment->requester?->name ?? 'unknown' }}@if ($enrollment->reviewer && $enrollment->status !== 'pending') · {{ ucfirst($enrollment->status) }} by {{ $enrollment->reviewer->name }}@endif">
                                         {{ $enrollment->requested_at?->format('M j') }}
                                     </td>

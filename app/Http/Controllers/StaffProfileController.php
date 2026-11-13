@@ -48,6 +48,8 @@ class StaffProfileController extends Controller
             'user' => $user,
             'term' => $term,
             'teaching' => $teaching,
+            // The sign-in before this one (the newest "login" entry is this very session).
+            'lastSignIn' => AuditLog::where('user_id', $user->id)->where('action', 'login')->latest('created_at')->latest('id')->skip(1)->first(),
             'activity' => AuditLog::where('user_id', $user->id)->whereNotIn('action', ['login', 'logout'])
                 ->latest('created_at')->latest('id')->limit(5)->get(),
         ]);
@@ -70,7 +72,9 @@ class StaffProfileController extends Controller
             AuditLogger::log('profile.updated', $user, "{$user->name} updated their profile", $old, $data);
         }
 
-        return redirect()->route('profile.show')->with('success', $user->wasChanged() ? 'Profile saved.' : 'Nothing changed.');
+        $changed = $user->wasChanged();
+
+        return redirect()->route('profile.show')->with($changed ? 'success' : 'info', $changed ? 'Profile saved.' : 'Nothing changed.');
     }
 
     /** Staff photos need no approval: staff accounts are trusted, and the change is recorded. */

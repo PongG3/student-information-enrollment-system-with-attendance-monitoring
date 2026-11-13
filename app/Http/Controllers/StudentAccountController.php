@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use App\Models\User;
 use App\Support\AuditLogger;
+use App\Support\Notify;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -49,8 +50,10 @@ class StudentAccountController extends Controller
             'email' => $user->email,
         ]);
 
+        Notify::temporaryPassword($user, $password, true);
+
         return redirect()->route('students.show', $student)
-            ->with('success', 'Portal account created.')
+            ->with('success', 'Portal account created. The temporary password was also emailed.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }
@@ -65,8 +68,10 @@ class StudentAccountController extends Controller
 
         AuditLogger::log('student.account_password_reset', $student, "Reset portal password of {$student->full_name} ({$student->student_number})");
 
+        Notify::temporaryPassword($user, $password, false);
+
         return redirect()->route('students.show', $student)
-            ->with('success', 'Password reset.')
+            ->with('success', 'Password reset. The temporary password was also emailed.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }

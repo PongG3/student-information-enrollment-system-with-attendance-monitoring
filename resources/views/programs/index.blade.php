@@ -23,7 +23,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
-                    <thead><tr><th>Code</th><th>Name</th><th>Students</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                    <thead><tr><th scope="col">Code</th><th scope="col">Name</th><th scope="col">Students</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr></thead>
                     <tbody>
                         @foreach ($programs as $program)
                             <tr>

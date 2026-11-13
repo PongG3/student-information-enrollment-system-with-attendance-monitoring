@@ -311,3 +311,6 @@
 // A labelled date box ("From" / "To") in a filter bar.
 .date-field { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.8rem; color: $text-muted; font-weight: 600; }
 .date-field .form-control { width: auto; }
+.attention-more { border: 1px dashed $border; background: $surface; color: $navy-light; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.8rem; font-weight: 600; }
+.attention-more:hover { background: $surface-hover; }
+.crop-canvas:focus-visible { outline: 3px solid $teal-strong; outline-offset: 2px; }

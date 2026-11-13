@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 class SettingController extends Controller
 {
     private const KEYS = [
-        'school_name', 'school_address', 'registrar_contact', 'attendance_edit_window_days', 'absentee_threshold_percent',
+        'school_name', 'school_address', 'registrar_contact', 'dpo_name', 'dpo_email', 'attendance_edit_window_days', 'absentee_threshold_percent',
         'max_units_per_term', 'late_counts_as_attended', 'excused_in_percentage',
     ];
 
@@ -24,6 +24,8 @@ class SettingController extends Controller
         'school_address' => 'School address',
         'school_logo_path' => 'School logo',
         'registrar_contact' => 'Registrar contact',
+        'dpo_name' => 'Data Protection Officer',
+        'dpo_email' => 'Data Protection Officer email',
         'max_units_per_term' => 'Maximum units',
         'attendance_edit_window_days' => 'Teacher edit window',
         'absentee_threshold_percent' => 'Absence alert',
@@ -58,6 +60,8 @@ class SettingController extends Controller
             'school_name' => ['required', 'string', 'max:150'],
             'school_address' => ['nullable', 'string', 'max:255'],
             'registrar_contact' => ['nullable', 'string', 'max:150'],
+            'dpo_name' => ['nullable', 'string', 'max:120'],
+            'dpo_email' => ['nullable', 'email', 'max:150'],
             'attendance_edit_window_days' => ['required', 'integer', 'min:0', 'max:60'],
             'absentee_threshold_percent' => ['required', 'integer', 'min:1', 'max:100'],
             'max_units_per_term' => ['required', 'integer', 'min:1', 'max:40'],
@@ -105,7 +109,9 @@ class SettingController extends Controller
             AuditLogger::log('settings.updated', null, 'Updated system settings: ' . $names, $old, $new);
         }
 
-        return redirect()->route('settings.edit')->with('success', $new === [] ? 'Nothing changed.' : 'Settings saved.');
+        $nothing = $new === [];
+
+        return redirect()->route('settings.edit')->with($nothing ? 'info' : 'success', $nothing ? 'Nothing changed.' : 'Settings saved.');
     }
 
     /** The school logo is public: it appears on the sign-in page before anyone signs in. */

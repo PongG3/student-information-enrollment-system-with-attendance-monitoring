@@ -18,7 +18,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
-                    <thead><tr><th>Class</th><th>Subject</th><th>Schedule</th><th>Enrolled</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                    <thead><tr><th scope="col">Class</th><th scope="col">Subject</th><th scope="col">Schedule</th><th scope="col">Enrolled</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr></thead>
                     <tbody>
                         @foreach ($classes as $class)
                             <tr>

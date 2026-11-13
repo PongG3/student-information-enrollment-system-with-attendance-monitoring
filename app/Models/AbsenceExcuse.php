@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Notifications\Notice;
+use App\Support\Notify;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +18,7 @@ class AbsenceExcuse extends Model
     public const STATUS_ACCEPTED = 'accepted';
     public const STATUS_DECLINED = 'declined';
 
-    protected $fillable = ['student_id', 'class_offering_id', 'date', 'reason', 'file_path', 'file_name', 'status', 'reviewed_by', 'reviewed_at'];
+    protected $fillable = ['student_id', 'class_offering_id', 'date', 'reason', 'file_path', 'file_name', 'status', 'decision_note', 'reviewed_by', 'reviewed_at'];
 
     protected function casts(): array
     {
@@ -83,18 +85,35 @@ class AbsenceExcuse extends Model
     public static function settle(ClassOffering $class, Carbon $date, User $by): void
     {
         $statuses = AttendanceRecord::whereHas('session', fn ($q) => $q->where('class_offering_id', $class->id)->whereDate('session_date', $date))
-            ->pluck('status', 'student_id');
+            ->get(['student_id', 'status', 'remarks'])->keyBy('student_id');
 
         self::where('class_offering_id', $class->id)->whereDate('date', $date)->where('status', self::STATUS_PENDING)->get()
             ->each(function (self $excuse) use ($statuses, $by) {
                 if (! isset($statuses[$excuse->student_id])) {
                     return;
                 }
+                $record = $statuses[$excuse->student_id];
+                $accepted = $record->status === AttendanceRecord::EXCUSED;
+                $note = trim((string) $record->remarks);
+                $note = in_array($note, ['', 'Excuse letter'], true) ? null : $note;   // the prefilled word is not a note
+
                 $excuse->update([
-                    'status' => $statuses[$excuse->student_id] === AttendanceRecord::EXCUSED ? self::STATUS_ACCEPTED : self::STATUS_DECLINED,
+                    'status' => $accepted ? self::STATUS_ACCEPTED : self::STATUS_DECLINED,
+                    'decision_note' => $note,
                     'reviewed_by' => $by->id,
                     'reviewed_at' => now(),
                 ]);
+
+                $excuse->loadMissing(['student', 'classOffering.subject']);
+                $subject = $excuse->classOffering->subject->code;
+                Notify::student($excuse->student, new Notice(
+                    $accepted ? "Excuse letter accepted: {$subject}" : "Excuse letter not accepted: {$subject}",
+                    array_filter([
+                        "Your excuse letter for {$subject} on " . $excuse->date->format('l, F j') . ' was ' . ($accepted ? 'accepted. The meeting is marked Excused.' : 'not accepted.'),
+                        $note ? "Your teacher's note: {$note}" : null,
+                    ]),
+                    'View my attendance', route('student.attendance.show', $excuse->class_offering_id),
+                ));
             });
     }
 }

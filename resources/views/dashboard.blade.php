@@ -13,18 +13,19 @@
 
     <ul class="form-tabs dashboard-tabs" role="tablist" aria-label="Dashboard views">
         <li role="presentation">
-            <button type="button" class="form-tab active" role="tab" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview"
-                aria-controls="pane-overview" aria-selected="true"><x-icon name="dashboard" :size="16" /> Overview</button>
+            @php $onTrends = request()->filled('trend_class'); @endphp
+            <button type="button" @class(['form-tab', 'active' => ! $onTrends]) role="tab" id="tab-overview" data-bs-toggle="tab" data-bs-target="#pane-overview"
+                aria-controls="pane-overview" aria-selected="{{ $onTrends ? 'false' : 'true' }}"><x-icon name="dashboard" :size="16" /> Overview</button>
         </li>
         <li role="presentation">
-            <button type="button" class="form-tab" role="tab" id="tab-trends" data-bs-toggle="tab" data-bs-target="#pane-trends"
-                aria-controls="pane-trends" aria-selected="false"><x-icon name="chart" :size="16" /> Trends</button>
+            <button type="button" @class(['form-tab', 'active' => $onTrends]) role="tab" id="tab-trends" data-bs-toggle="tab" data-bs-target="#pane-trends"
+                aria-controls="pane-trends" aria-selected="{{ $onTrends ? 'true' : 'false' }}"><x-icon name="chart" :size="16" /> Trends</button>
         </li>
     </ul>
 
     <div class="tab-content">
         {{-- ===== Overview: today and what needs following up ===== --}}
-        <div class="tab-pane fade show active" id="pane-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+        <div @class(['tab-pane', 'fade', 'show active' => ! $onTrends]) id="pane-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
             <div class="row g-3">
                 <div class="col-lg-7">
                     @include('dashboard._today')
@@ -87,7 +88,7 @@
         </div>
 
         {{-- ===== Trends: change over time, and who needs following up ===== --}}
-        <div class="tab-pane fade" id="pane-trends" role="tabpanel" aria-labelledby="tab-trends" tabindex="0">
+        <div @class(['tab-pane', 'fade', 'show active' => $onTrends]) id="pane-trends" role="tabpanel" aria-labelledby="tab-trends" tabindex="0">
             @php
                 $attendanceChart = [
                     'type' => 'line',
@@ -96,6 +97,18 @@
                     'datasets' => [['label' => 'Attendance', 'data' => $attendanceTrend['values'], 'color' => 'navy', 'fill' => true]],
                 ];
             @endphp
+            @unless ($isTeacher)
+                {{-- The registrar can narrow the weekly attendance trend to one class. --}}
+                <form method="GET" class="filter-bar mb-3" aria-label="Trend filter">
+                    <label class="date-field" for="trendClass"><span>Weekly attendance for</span></label>
+                    <select name="trend_class" id="trendClass" class="form-select" onchange="this.form.submit()">
+                        <option value="0">All classes</option>
+                        @foreach ($trendClasses as $option)
+                            <option value="{{ $option->id }}" @selected($trendClass === $option->id)>{{ $option->class_code }} · {{ $option->subject->code }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            @endunless
             <div class="row g-3">
                 <div class="{{ $isTeacher ? 'col-lg-6' : 'col-md-6 col-xl-4' }}">
                     <x-chart title="Weekly attendance" :config="$attendanceChart" :empty="! $attendanceTrend['hasData']"

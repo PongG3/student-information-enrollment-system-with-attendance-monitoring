@@ -8,7 +8,9 @@ use App\Models\Requirement;
 use App\Models\Student;
 use App\Models\StudentRequirement;
 use App\Services\StudentNumberGenerator;
+use App\Notifications\Notice;
 use App\Support\AuditLogger;
+use App\Support\Notify;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -128,7 +130,7 @@ class StudentController extends Controller
 
         $rows = $student->guardians->sortByDesc('is_emergency_contact')->values()->map(fn ($g) => [
             'full_name' => $g->full_name, 'relationship' => $g->relationship, 'contact_number' => $g->contact_number,
-            'address' => $g->address, 'is_emergency_contact' => $g->is_emergency_contact,
+            'address' => $g->address, 'email' => $g->email, 'is_emergency_contact' => $g->is_emergency_contact,
         ])->all();
 
         return view('students.form', $this->formData($student, $rows));
@@ -219,14 +221,30 @@ class StudentController extends Controller
     }
 
     /** Reject: the submitted photo is deleted; the official one stays. */
-    public function rejectPhoto(Student $student)
+    public function rejectPhoto(Request $request, Student $student)
     {
         abort_unless($student->pending_photo_path, 404);
-        Storage::disk('local')->delete($student->pending_photo_path);
-        $student->update(['pending_photo_path' => null, 'pending_photo_at' => null]);
-        AuditLogger::log('student.photo_rejected', $student, "Rejected the photo {$student->full_name} submitted");
+        $request->validate(['reason' => ['nullable', 'string', 'max:255']]);
+        $reason = trim((string) $request->input('reason')) ?: null;
 
-        return back()->with('success', 'Photo rejected. The student can send another.');
+        Storage::disk('local')->delete($student->pending_photo_path);
+        $student->update([
+            'pending_photo_path' => null, 'pending_photo_at' => null,
+            'photo_rejected_reason' => $reason, 'photo_rejected_at' => now(),
+        ]);
+        AuditLogger::log('student.photo_rejected', $student, "Rejected the photo {$student->full_name} submitted" . ($reason ? ": {$reason}" : ''));
+
+        Notify::student($student, new Notice(
+            'Your photo was not approved',
+            array_filter([
+                'The registrar did not approve the profile photo you sent.',
+                $reason ? "Reason: {$reason}" : null,
+                'You can send another one from My Profile: a recent, formal photo with your face clearly visible.',
+            ]),
+            'Open My Profile', route('student.profile'),
+        ));
+
+        return back()->with('success', 'Photo rejected. The student is told why and can send another.');
     }
 
     private function filtered(Request $request): Builder
@@ -259,7 +277,7 @@ class StudentController extends Controller
         $rows = [];
         for ($i = 0; $i < self::GUARDIAN_ROWS; $i++) {
             $rows[$i] = $guardianRows[$i] ?? [
-                'full_name' => null, 'relationship' => null, 'contact_number' => null, 'address' => null,
+                'full_name' => null, 'relationship' => null, 'contact_number' => null, 'address' => null, 'email' => null,
                 'is_emergency_contact' => $i === 0 && ! $student->exists,
             ];
         }
@@ -321,6 +339,7 @@ class StudentController extends Controller
                 'relationship' => trim((string) ($row['relationship'] ?? '')),
                 'contact_number' => trim((string) ($row['contact_number'] ?? '')),
                 'address' => trim((string) ($row['address'] ?? '')),
+                'email' => trim((string) ($row['email'] ?? '')),
                 'is_emergency_contact' => ! empty($row['is_emergency_contact']),
             ])
             ->filter(fn ($row) => $row['full_name'] !== '' || $row['relationship'] !== '' || $row['contact_number'] !== '' || $row['address'] !== '')
@@ -332,7 +351,9 @@ class StudentController extends Controller
             'guardians.*.relationship' => ['required', 'string', 'max:50'],
             'guardians.*.contact_number' => ['required', 'regex:/^[0-9+\-\s()]{7,20}$/'],
             'guardians.*.address' => ['nullable', 'string', 'max:500'],
+            'guardians.*.email' => ['nullable', 'email', 'max:255'],
         ], [
+            'guardians.*.email.email' => 'Enter a valid guardian email address.',
             'guardians.required' => 'Add at least one parent or guardian.',
             'guardians.min' => 'Add at least one parent or guardian.',
             'guardians.*.full_name.required' => 'Each guardian needs a name.',
@@ -350,6 +371,7 @@ class StudentController extends Controller
             'relationship' => $row['relationship'],
             'contact_number' => $row['contact_number'],
             'address' => $row['address'] === '' ? null : $row['address'],
+            'email' => $row['email'] === '' ? null : $row['email'],
             'is_emergency_contact' => $row['is_emergency_contact'],
         ])->all();
     }

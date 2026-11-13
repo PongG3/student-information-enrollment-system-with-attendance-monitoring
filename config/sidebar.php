@@ -21,6 +21,7 @@ return [
             ['label' => 'Reports', 'route' => 'reports.index', 'active' => 'reports.*', 'icon' => 'chart', 'group' => 'Attendance'],
             ['label' => 'User Management', 'route' => 'users.index', 'active' => 'users.*', 'icon' => 'user', 'group' => 'System'],
             ['label' => 'Audit Logs', 'route' => 'audit-logs.index', 'active' => 'audit-logs.*', 'icon' => 'file', 'group' => 'System'],
+            ['label' => 'Data Privacy', 'route' => 'breaches.index', 'active' => ['breaches.*', 'privacy-policy.*'], 'icon' => 'shield', 'group' => 'System'],
             ['label' => 'System Settings', 'route' => 'settings.edit', 'active' => 'settings.*', 'icon' => 'sliders', 'group' => 'System'],
         ],
     ],

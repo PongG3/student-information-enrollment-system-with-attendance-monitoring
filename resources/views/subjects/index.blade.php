@@ -29,7 +29,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
-                    <thead><tr><th>Code</th><th>Title</th><th>Units</th><th>Category</th><th>Programs</th><th>Classes</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                    <thead><tr><th scope="col">Code</th><th scope="col">Title</th><th scope="col">Units</th><th scope="col">Category</th><th scope="col">Programs</th><th scope="col">Classes</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr></thead>
                     <tbody>
                         @foreach ($subjects as $subject)
                             <tr>

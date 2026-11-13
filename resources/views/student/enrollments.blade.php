@@ -19,7 +19,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies align-middle mb-0">
-                    <thead><tr><th>Class</th><th>Subject</th><th>Units</th><th>Schedule</th><th>Term</th><th>Status</th></tr></thead>
+                    <thead><tr><th scope="col">Class</th><th scope="col">Subject</th><th scope="col">Units</th><th scope="col">Schedule</th><th scope="col">Term</th><th scope="col">Status</th></tr></thead>
                     <tbody>
                         @foreach ($enrollments as $enrollment)
                             @php $class = $enrollment->classOffering; @endphp

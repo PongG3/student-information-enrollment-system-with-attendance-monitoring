@@ -7,7 +7,9 @@ use App\Models\ClassOffering;
 use App\Models\Enrollment;
 use App\Models\Student;
 use App\Models\User;
+use App\Notifications\Notice;
 use App\Support\AuditLogger;
+use App\Support\Notify;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -99,7 +101,7 @@ class EnrollmentWorkflow
 
     public static function reject(Enrollment $enrollment, User $by, string $reason): void
     {
-        DB::transaction(function () use ($enrollment, $by, $reason) {
+        [$student, $class] = DB::transaction(function () use ($enrollment, $by, $reason) {
             [$fresh, $class, $student] = self::lock($enrollment);
             self::mustBe($fresh, [Enrollment::STATUS_PENDING], 'Only pending requests can be rejected.');
             self::termMustBeOpen($class);
@@ -112,13 +114,21 @@ class EnrollmentWorkflow
             ]);
 
             self::log('enrollment.rejected', $fresh, $student, $class, Enrollment::STATUS_PENDING, $reason);
+
+            return [$student, $class];
         });
+
+        Notify::student($student, new Notice(
+            "Class request not approved: {$class->subject->code}",
+            ["Your request for {$class->subject->code} · {$class->subject->title} ({$class->class_code}) was not approved.", "Reason: {$reason}", 'Please see the registrar\'s office if you have questions.'],
+            'View my enrollments', route('student.enrollments'),
+        ));
     }
 
     /** Final confirmation: the student joins the class roster and attendance sheet. */
     public static function enroll(Enrollment $enrollment, User $by): void
     {
-        DB::transaction(function () use ($enrollment, $by) {
+        [$student, $class] = DB::transaction(function () use ($enrollment, $by) {
             [$fresh, $class, $student] = self::lock($enrollment);
             self::mustBe($fresh, [Enrollment::STATUS_APPROVED], 'Only approved requests can be enrolled.');
             self::termMustBeOpen($class);
@@ -135,7 +145,16 @@ class EnrollmentWorkflow
             ]);
 
             self::log('enrollment.enrolled', $fresh, $student, $class, Enrollment::STATUS_APPROVED);
+
+            return [$student, $class];
         });
+
+        $class->loadMissing(['subject', 'meetings']);
+        Notify::student($student, new Notice(
+            "Enrolled: {$class->subject->code}",
+            ["You are now enrolled in {$class->subject->code} · {$class->subject->title} ({$class->class_code}).", 'Schedule: ' . ($class->scheduleSummary() ?: 'to be announced') . '.'],
+            'View my schedule', route('student.schedule'),
+        ));
     }
 
     public static function cancel(Enrollment $enrollment, User $by, string $reason): void

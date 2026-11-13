@@ -23,7 +23,7 @@
                 @else
                     <div class="table-responsive">
                         <table class="table table-sies align-middle">
-                            <thead><tr><th>Student ID</th><th>Name</th><th>Program</th><th></th></tr></thead>
+                            <thead><tr><th scope="col">Student ID</th><th scope="col">Name</th><th scope="col">Program</th><th scope="col"></th></tr></thead>
                             <tbody>
                                 @foreach ($results as $result)
                                     <tr>
@@ -82,7 +82,7 @@
                 @else
                     <div class="table-responsive" data-fit-viewport>
                         <table class="table table-sies align-middle">
-                            <thead><tr><th class="col-check"><span class="visually-hidden">Choose</span></th><th>Class</th><th>Teacher</th><th>Schedule</th><th>Units</th><th>Seats left</th></tr></thead>
+                            <thead><tr><th scope="col" class="col-check"><span class="visually-hidden">Choose</span></th><th scope="col">Class</th><th scope="col">Teacher</th><th scope="col">Schedule</th><th scope="col">Units</th><th scope="col">Seats left</th></tr></thead>
                             <tbody>
                                 @foreach ($rows as $row)
                                     @php

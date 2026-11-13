@@ -20,11 +20,14 @@
     <p>Registrar staff and administrators see student records. Teachers see the students in their own classes. Each student sees only their own record. Every sign-in and change is recorded.</p>
 
     <h2>How long it is kept</h2>
-    <p>While the student is enrolled and afterwards for as long as school records must be kept. Records of students who leave are archived, not deleted.</p>
+    <p>While the student is enrolled and afterwards for as long as school records must be kept. Records of students who leave are archived, not deleted. The record of who signed in and who changed what (the audit log) is kept for the same time and cannot be edited.</p>
 
     <h2>Your rights</h2>
-    <p>You may ask to see your data, have it corrected, or object to its use, and you may complain to the National Privacy Commission.
-        @if (filter_var($noticeContact, FILTER_VALIDATE_EMAIL))
+    <p>You may ask to see your data (students can download it from My Profile), have it corrected, or object to its use, and you may complain to the National Privacy Commission.
+        @if (\App\Support\PrivacyContact::line() !== '')
+            Our Data Protection Officer:
+            {{ \App\Support\PrivacyContact::name() }}@if (\App\Support\PrivacyContact::email()) (<a href="mailto:{{ \App\Support\PrivacyContact::email() }}">{{ \App\Support\PrivacyContact::email() }}</a>)@endif.
+        @elseif (filter_var($noticeContact, FILTER_VALIDATE_EMAIL))
             Write to the registrar at <a href="mailto:{{ $noticeContact }}">{{ $noticeContact }}</a>.
         @elseif ($noticeContact !== '')
             Contact the registrar: {{ $noticeContact }}.

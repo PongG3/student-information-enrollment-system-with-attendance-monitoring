@@ -109,7 +109,7 @@ class SystemSettingsTest extends TestCase
     public function test_saving_without_changes_says_so_and_logs_nothing(): void
     {
         $this->save();
-        $this->save()->assertSessionHas('success', 'Nothing changed.');
+        $this->save()->assertSessionHas('info', 'Nothing changed.');
 
         $this->assertSame(1, \App\Models\AuditLog::where('action', 'settings.updated')->count());
     }

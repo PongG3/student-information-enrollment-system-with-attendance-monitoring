@@ -126,12 +126,17 @@
                                             <input id="g{{ $i }}tel" type="tel" name="guardians[{{ $i }}][contact_number]" maxlength="20" class="form-control mb-3"
                                                 value="{{ old("guardians.$i.contact_number", $row['contact_number']) }}">
                                         </div>
-                                        <div class="col-md-8">
+                                        <div class="col-md-4">
+                                            <label class="form-label" for="g{{ $i }}email">Email (optional)</label>
+                                            <input id="g{{ $i }}email" type="email" name="guardians[{{ $i }}][email]" maxlength="255" class="form-control mb-3"
+                                                placeholder="For absence alerts" value="{{ old("guardians.$i.email", $row['email'] ?? null) }}">
+                                        </div>
+                                        <div class="col-md-5">
                                             <label class="form-label" for="g{{ $i }}addr">Address (optional)</label>
                                             <input id="g{{ $i }}addr" type="text" name="guardians[{{ $i }}][address]" maxlength="500" class="form-control mb-3"
                                                 value="{{ old("guardians.$i.address", $row['address']) }}">
                                         </div>
-                                        <div class="col-md-4 d-flex align-items-end">
+                                        <div class="col-md-3 d-flex align-items-end">
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" type="checkbox" id="g{{ $i }}em" name="guardians[{{ $i }}][is_emergency_contact]" value="1"
                                                     @checked(session()->hasOldInput() ? (bool) old("guardians.$i.is_emergency_contact") : (bool) $row['is_emergency_contact'])>

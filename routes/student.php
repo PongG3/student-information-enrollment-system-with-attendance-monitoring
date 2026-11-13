@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AbsenceExcuseController;
+use App\Http\Controllers\RequirementUploadController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\StudentSelfServiceController;
 use App\Http\Middleware\StudentPortal;
@@ -27,7 +28,14 @@ Route::middleware(['auth', 'role:student', StudentPortal::class])
         Route::post('profile/photo', [StudentSelfServiceController::class, 'uploadPhoto'])->middleware('throttle:10,1')->name('profile.photo');
         Route::delete('profile/photo', [StudentSelfServiceController::class, 'cancelPhoto'])->name('profile.photo.cancel');
         Route::get('photo', [StudentSelfServiceController::class, 'photo'])->name('photo');
+        Route::get('personal-data', [\App\Http\Controllers\PersonalDataController::class, 'mine'])->middleware('throttle:5,1')->name('personal-data');
+        Route::post('requirements/{requirement}', [RequirementUploadController::class, 'store'])
+            ->whereNumber('requirement')->middleware('throttle:20,1')->name('requirements.upload');
     });
+
+// An uploaded admission document: its student, the registrar and administrators (always downloaded).
+Route::get('requirement-files/{studentRequirement}', [RequirementUploadController::class, 'file'])
+    ->middleware(['auth', 'role:admin,registrar,student'])->whereNumber('studentRequirement')->name('requirements.file');
 
 // An excuse letter's attached file: its student, the class's teacher, the registrar and administrators.
 Route::get('excuse-letters/{excuse}/file', [AbsenceExcuseController::class, 'file'])

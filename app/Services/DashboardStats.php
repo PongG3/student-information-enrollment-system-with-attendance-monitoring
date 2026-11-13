@@ -117,7 +117,7 @@ class DashboardStats
      *
      * @return array{labels: string[], values: array<int, ?float>, hasData: bool}
      */
-    public static function attendanceTrend(?Term $term, ?int $teacherId = null, int $weeks = 12): array
+    public static function attendanceTrend(?Term $term, ?int $teacherId = null, int $weeks = 12, ?int $classId = null): array
     {
         $none = ['labels' => [], 'values' => [], 'hasData' => false];
 
@@ -146,6 +146,7 @@ class DashboardStats
             ->whereDate('s.session_date', '>=', $mondays[0]->toDateString())
             ->whereDate('s.session_date', '<=', $end->toDateString())
             ->when($teacherId, fn ($q) => $q->where('c.teacher_id', $teacherId))
+            ->when($classId, fn ($q) => $q->where('c.id', $classId))
             ->select('s.session_date', 'r.status', DB::raw('count(*) as total'))
             ->groupBy('s.session_date', 'r.status')
             ->get();

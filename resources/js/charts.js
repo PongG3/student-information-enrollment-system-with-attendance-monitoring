@@ -98,6 +98,8 @@ const build = (canvas) => {
 
     const options = {
         responsive: true,
+        // Charts draw without animation when the person has asked their device for reduced motion.
+        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
         maintainAspectRatio: false,
         plugins: {
             legend: {

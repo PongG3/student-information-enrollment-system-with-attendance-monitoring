@@ -3,7 +3,7 @@
     <thead>
         <tr>
             @foreach ($report->headings as $i => $heading)
-                <th @if (in_array($i, $numeric, true)) style="text-align: right" @endif>{{ $heading }}</th>
+                <th scope="col" @if (in_array($i, $numeric, true)) style="text-align: right" @endif>{{ $heading }}</th>
             @endforeach
         </tr>
     </thead>

@@ -53,7 +53,7 @@
                     <div class="table-responsive">
                         <table class="table table-sies table-hover">
                             <thead>
-                                <tr><th>Student ID</th><th>Name</th><th>Program</th><th>Year</th>@if ($isStaff)<th>Status</th>@endif</tr>
+                                <tr><th scope="col">Student ID</th><th scope="col">Name</th><th scope="col">Program</th><th scope="col">Year</th>@if ($isStaff)<th scope="col">Status</th>@endif</tr>
                             </thead>
                             <tbody>
                                 @foreach ($roster as $enrollment)

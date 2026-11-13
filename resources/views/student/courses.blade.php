@@ -25,7 +25,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover align-middle mb-0">
-                    <thead><tr><th>Class</th><th>Subject</th><th>Units</th><th>Schedule</th><th>Teacher</th><th>Seats left</th><th>My status</th></tr></thead>
+                    <thead><tr><th scope="col">Class</th><th scope="col">Subject</th><th scope="col">Units</th><th scope="col">Schedule</th><th scope="col">Teacher</th><th scope="col">Seats left</th><th scope="col">My status</th></tr></thead>
                     <tbody>
                         @foreach ($classes as $class)
                             @php $left = max(0, $class->capacity - $class->seats_taken); @endphp

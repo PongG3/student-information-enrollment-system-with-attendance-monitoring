@@ -365,7 +365,7 @@ class SystemImprovementsTest extends TestCase
         $this->actingAs($this->anaUser)->post(route('student.attendance.excuse', $this->class), [
             'date' => '2026-11-04', 'reason' => 'I had a fever and stayed home.', 'all_day' => 1,
             'file' => UploadedFile::fake()->create('certificate.pdf', 80, 'application/pdf'),
-        ])->assertSessionHas('success', fn ($message) => str_contains($message, 'for 2 classes (CS101, CS202)'));
+        ])->assertSessionHas('success', fn ($message) => str_contains($message, 'for 2 missed meetings (CS101, CS202)'));
 
         $letters = AbsenceExcuse::orderBy('class_offering_id')->get();
         $this->assertCount(2, $letters);

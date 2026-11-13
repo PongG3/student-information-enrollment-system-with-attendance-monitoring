@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Guardian extends Model
 {
     protected $fillable = [
-        'student_id', 'full_name', 'relationship', 'contact_number', 'address', 'is_emergency_contact',
+        'student_id', 'full_name', 'relationship', 'contact_number', 'email', 'address', 'is_emergency_contact',
     ];
 
     protected function casts(): array

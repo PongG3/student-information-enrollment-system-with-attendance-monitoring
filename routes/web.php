@@ -12,6 +12,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StudentAccountController;
+use App\Http\Controllers\PersonalDataController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\StaffProfileController;
 use App\Http\Controllers\StudentController;
@@ -91,6 +92,8 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::delete('students/{student}', [StudentController::class, 'archive'])->name('students.archive')->whereNumber('student');
     Route::post('students/{student}/restore', [StudentController::class, 'restore'])->name('students.restore')->whereNumber('student')->withTrashed();
     Route::get('students/{student}/photo', [StudentController::class, 'photo'])->name('students.photo')->whereNumber('student')->withTrashed();
+    // Everything held about one student, as a PDF (Data Privacy Act access request).
+    Route::get('students/{student}/personal-data', [PersonalDataController::class, 'staff'])->name('students.personal-data')->whereNumber('student')->withTrashed();
     // A photo the student submitted: shown to the registrar, then approved (becomes official) or rejected.
     Route::get('students/{student}/photo/pending', [StudentController::class, 'pendingPhoto'])->name('students.photo.pending')->whereNumber('student');
     Route::post('students/{student}/photo/approve', [StudentController::class, 'approvePhoto'])->name('students.photo.approve')->whereNumber('student');
@@ -107,7 +110,7 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::get('enrollments', [EnrollmentController::class, 'index'])->name('enrollments.index');
     Route::get('enrollments/create', [EnrollmentController::class, 'create'])->name('enrollments.create');
     Route::post('enrollments', [EnrollmentController::class, 'store'])->name('enrollments.store');
-    Route::post('enrollments/bulk', [EnrollmentController::class, 'bulk'])->name('enrollments.bulk');
+    Route::post('enrollments/bulk', [EnrollmentController::class, 'bulk'])->middleware('throttle:30,1')->name('enrollments.bulk');
     foreach (['approve', 'reject', 'enroll', 'cancel', 'reopen'] as $action) {
         Route::post("enrollments/{enrollment}/{$action}", [EnrollmentController::class, $action])
             ->name("enrollments.{$action}")->whereNumber('enrollment');
@@ -154,6 +157,10 @@ Route::get('staff/{user}/photo', [StaffProfileController::class, 'photo'])
 // Administrator only.
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('privacy-policy/edit', [PrivacyPolicyController::class, 'edit'])->name('privacy-policy.edit');
+    // Breach register (Data Privacy Act): recorded and updated, never deleted.
+    Route::get('data-privacy/breaches', [\App\Http\Controllers\DataBreachController::class, 'index'])->name('breaches.index');
+    Route::post('data-privacy/breaches', [\App\Http\Controllers\DataBreachController::class, 'store'])->name('breaches.store');
+    Route::put('data-privacy/breaches/{breach}', [\App\Http\Controllers\DataBreachController::class, 'update'])->whereNumber('breach')->name('breaches.update');
     Route::put('privacy-policy', [PrivacyPolicyController::class, 'update'])->name('privacy-policy.update');
 
     Route::resource('users', UserController::class)->except(['show', 'destroy']);

@@ -75,7 +75,7 @@ if (document.body.hasAttribute('data-embedded')) {
         const maxHeight = () => Math.max(240, window.innerHeight - 150);
 
         const setSize = (size) => {
-            sizeBox.className = 'modal-dialog modal-dialog-centered' + (size ? ` modal-${size}` : '');
+            sizeBox.className = 'modal-dialog modal-dialog-centered modal-fullscreen-sm-down' + (size ? ` modal-${size}` : '');   // full screen on phones
         };
 
         const open = (href, size, label) => {

@@ -35,7 +35,7 @@
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
                     <thead>
-                        <tr><th>Class</th><th>Subject</th><th>Teacher</th><th>Schedule</th><th>Seats</th><th>Status</th><th class="text-end">Actions</th></tr>
+                        <tr><th scope="col">Class</th><th scope="col">Subject</th><th scope="col">Teacher</th><th scope="col">Schedule</th><th scope="col">Seats</th><th scope="col">Status</th><th scope="col" class="text-end">Actions</th></tr>
                     </thead>
                     <tbody>
                         @foreach ($classes as $class)

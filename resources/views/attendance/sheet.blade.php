@@ -77,6 +77,9 @@
                         <div>
                             <h2 class="h6 fw-bold mb-0">{{ $students->count() }} {{ \Illuminate\Support\Str::plural('student', $students->count()) }}</h2>
                             @if ($editable && $session) <span class="small text-secondary">Editing a saved sheet. Changes are logged.</span> @endif
+                            @if ($editable && $students->isNotEmpty())
+                                <span class="small text-secondary d-none d-lg-block">Keyboard: Tab to a student, then the arrow keys to change the status.</span>
+                            @endif
                         </div>
                         @if ($editable && $students->isNotEmpty())
                             <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="present">Mark everyone present</button>
@@ -88,7 +91,7 @@
                     @else
                         <div class="table-responsive" data-fit-viewport>
                             <table class="table table-sies align-middle">
-                                <thead><tr><th>Student</th><th>Status</th><th>Remarks</th></tr></thead>
+                                <thead><tr><th scope="col">Student</th><th scope="col">Status</th><th scope="col">Remarks</th></tr></thead>
                                 <tbody>
                                     @foreach ($students as $student)
                                         @php

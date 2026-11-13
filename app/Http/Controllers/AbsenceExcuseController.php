@@ -27,7 +27,11 @@ class AbsenceExcuseController extends Controller
             'reason' => ['required', 'string', 'min:10', 'max:500'],
             'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
             'all_day' => ['nullable', 'boolean'],
+            // Several days off (e.g. a week of illness): every missed meeting from "date" to "until".
+            'until' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date', 'before_or_equal:today'],
         ], [
+            'until.after_or_equal' => 'The last day must be on or after the first day.',
+            'until.before_or_equal' => 'The last day cannot be in the future.',
             'reason.min' => 'Explain the reason in at least 10 characters.',
             'file.mimes' => 'Attach a PDF or a photo (JPG or PNG).',
             'file.max' => 'The file may not be larger than 5 MB.',
@@ -47,27 +51,39 @@ class AbsenceExcuseController extends Controller
             return back()->withErrors(['excuse' => 'Your teacher already decided on this letter.']);
         }
 
-        // This class, plus (if asked) every other class missed that day that still accepts a letter.
-        $classIds = [$offering->id];
-        if ($request->boolean('all_day')) {
-            $classIds = array_unique(array_merge($classIds, array_keys(AbsenceExcuse::missedByDay($student)[$data['date']] ?? [])));
+        // Which meetings the letter covers: this one; plus, if asked, the other classes missed that day;
+        // plus, with an end date, every missed meeting up to it (this class, or all classes with "all_day").
+        $targets = [[$offering->id, $data['date']]];
+        $until = $data['until'] ?? null;
+        foreach (AbsenceExcuse::missedByDay($student) as $date => $classes) {
+            $inRange = $date === $data['date'] || ($until && $date > $data['date'] && $date <= $until);
+            if (! $inRange) {
+                continue;
+            }
+            foreach (array_keys($classes) as $classId) {
+                if ($classId === $offering->id || $request->boolean('all_day')) {
+                    $targets[] = [$classId, $date];
+                }
+            }
         }
+        $targets = collect($targets)->unique(fn ($t) => $t[0] . '|' . $t[1])->sortBy(fn ($t) => $t[1] . '|' . $t[0])->values();
 
         $file = $request->file('file');
         $upload = $file?->store('excuse-letters', 'local');
         $sent = [];
 
-        foreach ($classIds as $i => $classId) {
-            // Each class keeps its own copy of the file, so replacing one letter never affects another.
+        foreach ($targets as $i => [$classId, $date]) {
+            // Each meeting keeps its own copy of the file, so replacing one letter never affects another.
             $path = $upload === null ? null : ($i === 0 ? $upload : $this->copyOf($upload));
-            $sent[] = $this->saveLetter($student, (int) $classId, $data['date'], trim($data['reason']), $path, $file?->getClientOriginalName());
+            $sent[] = $this->saveLetter($student, (int) $classId, $date, trim($data['reason']), $path, $file?->getClientOriginalName());
         }
 
-        $codes = ClassOffering::with('subject')->whereIn('id', $classIds)->get()->pluck('subject.code')->implode(', ');
-        AuditLogger::log('excuse.sent', $sent[0], "Excuse letter sent for {$codes} on {$data['date']}");
+        $codes = ClassOffering::with('subject')->whereIn('id', $targets->pluck(0))->get()->pluck('subject.code')->implode(', ');
+        $days = $targets->pluck(1)->unique()->count();
+        AuditLogger::log('excuse.sent', $sent[0], "Excuse letter sent for {$codes}: " . count($sent) . ' meeting(s) from ' . $data['date'] . ($until ? " to {$until}" : ''));
 
         return back()->with('success', count($sent) > 1
-            ? 'Excuse letter submitted for ' . count($sent) . " classes ({$codes}). Each teacher reviews it on their attendance sheet."
+            ? 'Excuse letter submitted for ' . count($sent) . ' missed meetings' . ($days > 1 ? " over {$days} days" : '') . " ({$codes}). Each teacher reviews it on their attendance sheet."
             : 'Excuse letter submitted. Your teacher will review it on the attendance sheet.');
     }
 

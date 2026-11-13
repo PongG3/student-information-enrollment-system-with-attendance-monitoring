@@ -43,6 +43,19 @@ class ReadinessCheck
             ? $add('https', 'ok', 'HTTPS address', 'APP_URL uses https://.')
             : $add('https', 'warn', 'HTTPS address', 'APP_URL is ' . config('app.url') . '. Passwords travel in plain text without HTTPS. Use an https:// address.');
 
+        // ---- Email (docs/EMAIL.md)
+        in_array(config('mail.default'), ['log', 'array'], true)
+            ? $add('mail', 'warn', 'Email', 'Emails only go to the log file. Set an SMTP account in .env (see docs/EMAIL.md) so students and guardians get them.')
+            : $add('mail', 'ok', 'Email', 'Sending with ' . config('mail.default') . ' as ' . config('mail.from.address') . '.');
+
+        // ---- Backups (php artisan sies:backup, scheduled daily)
+        $latest = Backup::latest();
+        match (true) {
+            $latest === null => $add('backup', 'warn', 'Backups', 'No backup found. Run: php artisan sies:backup, and schedule it daily (see docs).'),
+            $latest['at']->lt(now()->subDays(2)) => $add('backup', 'warn', 'Backups', 'The newest backup is from ' . $latest['at']->diffForHumans() . '. Is the daily schedule running?'),
+            default => $add('backup', 'ok', 'Backups', 'Newest backup ' . $latest['at']->diffForHumans() . '.'),
+        };
+
         config('app.timezone') === 'Asia/Manila'
             ? $add('timezone', 'ok', 'Time zone', 'Asia/Manila.')
             : $add('timezone', 'warn', 'Time zone', "Time zone is '" . config('app.timezone') . "'. Attendance times need Asia/Manila.");

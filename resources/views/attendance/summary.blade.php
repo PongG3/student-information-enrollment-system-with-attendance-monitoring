@@ -31,7 +31,7 @@
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover align-middle">
-                    <thead><tr><th>Student</th><th class="text-center">Meetings</th><th class="text-center">Present</th><th class="text-center">Late</th><th class="text-center">Absent</th><th class="text-center">Excused</th><th>Attendance</th></tr></thead>
+                    <thead><tr><th scope="col">Student</th><th scope="col" class="text-center">Meetings</th><th scope="col" class="text-center">Present</th><th scope="col" class="text-center">Late</th><th scope="col" class="text-center">Absent</th><th scope="col" class="text-center">Excused</th><th scope="col">Attendance</th></tr></thead>
                     <tbody>
                         @foreach ($rows as $row)
                             <tr>

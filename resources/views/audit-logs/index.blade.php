@@ -35,7 +35,7 @@
         @else
             <div class="table-responsive" data-fit-viewport>
                 <table class="table table-sies table-hover">
-                    <thead><tr><th>When</th><th>User</th><th>Role</th><th>Action</th><th>Description</th><th>IP address</th></tr></thead>
+                    <thead><tr><th scope="col">When</th><th scope="col">User</th><th scope="col">Role</th><th scope="col">Action</th><th scope="col">Description</th><th scope="col">IP address</th></tr></thead>
                     <tbody>
                         @foreach ($logs as $log)
                             <tr>

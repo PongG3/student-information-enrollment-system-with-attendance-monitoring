@@ -36,7 +36,7 @@
         @else
             <div class="table-responsive">
                 <table class="table table-sies table-hover align-middle mb-0">
-                    <thead><tr><th>Class</th><th class="text-center">Meetings</th><th class="text-center">Present</th><th class="text-center">Late</th><th class="text-center">Absent</th><th class="text-center">Excused</th><th>Attendance</th><th></th></tr></thead>
+                    <thead><tr><th scope="col">Class</th><th scope="col" class="text-center">Meetings</th><th scope="col" class="text-center">Present</th><th scope="col" class="text-center">Late</th><th scope="col" class="text-center">Absent</th><th scope="col" class="text-center">Excused</th><th scope="col">Attendance</th><th scope="col"></th></tr></thead>
                     <tbody>
                         @foreach ($attendance['rows'] as $row)
                             <tr>

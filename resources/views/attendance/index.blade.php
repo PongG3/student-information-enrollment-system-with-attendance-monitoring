@@ -19,14 +19,14 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><h3 class="dropdown-header">Class summary · {{ $oneDay ? $from->format('M j') : $from->format('M j') . '–' . $to->format('M j') }}</h3></li>
-                <li><a class="dropdown-item" href="{{ route('reports.pdf', ['class-summary'] + $reportQuery) }}">PDF</a></li>
-                <li><a class="dropdown-item" href="{{ route('reports.excel', ['class-summary'] + $reportQuery) }}">Excel</a></li>
+                <li><a class="dropdown-item" data-download href="{{ route('reports.pdf', ['class-summary'] + $reportQuery) }}">PDF</a></li>
+                <li><a class="dropdown-item" data-download href="{{ route('reports.excel', ['class-summary'] + $reportQuery) }}">Excel</a></li>
                 <li><a class="dropdown-item" target="_blank" href="{{ route('reports.print', ['class-summary'] + $reportQuery) }}">Print</a></li>
                 @if ($oneDay)
                     <li><hr class="dropdown-divider"></li>
                     <li><h3 class="dropdown-header">Daily report · every student, {{ $from->format('M j') }}</h3></li>
-                    <li><a class="dropdown-item" href="{{ route('reports.pdf', ['attendance-daily'] + $dailyQuery) }}">PDF</a></li>
-                    <li><a class="dropdown-item" href="{{ route('reports.excel', ['attendance-daily'] + $dailyQuery) }}">Excel</a></li>
+                    <li><a class="dropdown-item" data-download href="{{ route('reports.pdf', ['attendance-daily'] + $dailyQuery) }}">PDF</a></li>
+                    <li><a class="dropdown-item" data-download href="{{ route('reports.excel', ['attendance-daily'] + $dailyQuery) }}">Excel</a></li>
                 @endif
             </ul>
         </div>
@@ -72,7 +72,7 @@
             @unless (in_array($range, ['today', 'week', 'month'], true))
                 <span class="badge rounded-pill text-bg-light border">Custom dates</span>
             @endunless
-            <span class="text-secondary align-self-center ms-2">Showing {{ $from->format('M j') }}@if (! $oneDay) to {{ $to->format('M j, Y') }}@else, {{ $from->format('Y') }}@endif</span>
+            <span class="text-secondary align-self-center ms-2">Showing {{ $oneDay ? $from->format('l, F j, Y') : $from->format('M j') . ' to ' . $to->format('M j, Y') }}</span>
         </div>
     </div>
 
@@ -118,7 +118,7 @@
                 @else
                     <div class="table-responsive" data-fit-viewport>
                         <table class="table table-sies table-hover align-middle">
-                            <thead><tr><th>Date</th><th>Class</th><th>Teacher</th><th class="text-center">P</th><th class="text-center">L</th><th class="text-center">A</th><th class="text-center">E</th><th class="text-end"></th></tr></thead>
+                            <thead><tr><th scope="col">Date</th><th scope="col">Class</th><th scope="col">Teacher</th><th scope="col" class="text-center">P</th><th scope="col" class="text-center">L</th><th scope="col" class="text-center">A</th><th scope="col" class="text-center">E</th><th scope="col" class="text-end"></th></tr></thead>
                             <tbody>
                                 @foreach ($sessions as $session)
                                     <tr>

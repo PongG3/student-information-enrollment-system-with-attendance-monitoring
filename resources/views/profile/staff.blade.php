@@ -9,6 +9,7 @@
             ['Email (sign-in)', $user->email, true],
             ['Role', $roleLabel, false],
             ['Member since', $user->created_at?->format('M j, Y') ?? '—', false],
+            ['Last sign-in', $lastSignIn ? $lastSignIn->created_at->format('M j, Y g:i A') . ' · ' . $lastSignIn->created_at->diffForHumans() : 'This is your first sign-in', true],
         ]],
         ['Work details', false, [
             ['Department / specialization', $user->department ?: 'Not set', true],
@@ -176,7 +177,7 @@
                         <div data-photo-crop>
                             <x-file-drop name="photo" id="photoFile" accept=".jpg,.jpeg,.png" hint="JPG or PNG, at least 200 × 200 pixels. You can frame it next." :max-mb="15" />
                             <div class="crop-stage" data-crop-stage hidden>
-                                <div class="crop-canvas"><img alt="Your photo, to frame" data-crop-image></div>
+                                <div class="crop-canvas" tabindex="0" role="application" aria-label="Frame your photo. Arrow keys move it, plus and minus zoom, R rotates." data-crop-canvas><img alt="Your photo, to frame" data-crop-image></div>
                                 <div class="crop-tools">
                                     <button type="button" class="crop-btn" data-crop-zoom-out aria-label="Zoom out">−</button>
                                     <input type="range" class="form-range" min="1" max="3" step="0.01" value="1" data-crop-zoom aria-label="Zoom">

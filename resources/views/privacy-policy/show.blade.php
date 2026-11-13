@@ -28,6 +28,16 @@
                         <div class="progress mb-3" style="height: 6px" role="progressbar" aria-label="Staff who agreed" aria-valuenow="{{ $agreed }}" aria-valuemin="0" aria-valuemax="{{ $staff }}">
                             <div class="progress-bar" style="width: {{ $staff ? round($agreed / $staff * 100) : 0 }}%"></div>
                         </div>
+                        @if ($waiting->isNotEmpty())
+                            <div class="small text-secondary mb-1">Still to agree</div>
+                            <ul class="list-unstyled small mb-3">
+                                @foreach ($waiting as $person)
+                                    <li>{{ $person->name }} <span class="text-secondary">· {{ ucfirst($person->role) }}</span></li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="small text-success mb-3">Everyone has agreed.</p>
+                        @endif
                     @endif
 
                     @if ($agreedAt)

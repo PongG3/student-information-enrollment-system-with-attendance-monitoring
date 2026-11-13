@@ -326,3 +326,15 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.querySelector('[data-photo-crop]')) {
     import('./photo-crop.js');
 }
+
+// Downloads that take a moment to build (PDF and Excel exports): show "Preparing…" so nobody clicks twice.
+document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[data-download]');
+    if (!link || link.getAttribute('aria-busy') === 'true') return;
+    const label = link.innerHTML;
+    link.setAttribute('aria-busy', 'true');
+    link.classList.add('is-busy');
+    link.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Preparing…';
+    // The page does not change on a download, so put the label back after a few seconds.
+    setTimeout(() => { link.innerHTML = label; link.removeAttribute('aria-busy'); link.classList.remove('is-busy'); }, 4000);
+});

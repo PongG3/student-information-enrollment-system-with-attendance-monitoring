@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Support\AuditLogger;
+use App\Support\Notify;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -62,8 +63,10 @@ class UserController extends Controller
             'name' => $user->name, 'email' => $user->email, 'role' => $user->role,
         ]);
 
+        Notify::temporaryPassword($user, $password, true);
+
         return redirect()->route('users.index')
-            ->with('success', 'User created.')
+            ->with('success', 'User created. The temporary password was also emailed.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }
@@ -147,8 +150,10 @@ class UserController extends Controller
 
         AuditLogger::log('user.password_reset', $user, "Reset password of {$user->name}");
 
+        Notify::temporaryPassword($user, $password, false);
+
         return redirect()->route('users.index')
-            ->with('success', 'Password reset.')
+            ->with('success', 'Password reset. The temporary password was also emailed.')
             ->with('temp_password', $password)
             ->with('temp_for', $user->email);
     }
