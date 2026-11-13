@@ -211,6 +211,14 @@
 .excuse-note { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; max-width: 28rem; }
 
 // A document the registrar sent back, with the reason, on the student's profile.
+// Document viewer on the student record: the scan fills the window, scrolled inside it.
+.doc-viewer-body { background: $surface-muted; }
+.doc-viewer-frame { display: block; width: 100%; height: min(70vh, 760px); border: 1px solid $border; border-radius: 8px; background: #fff; }
+.doc-viewer-image { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border: 1px solid $border; border-radius: 8px; background: #fff; object-fit: contain; }
+.doc-viewer-loading { padding: 0.25rem 0 0.5rem; }
+@media (max-width: 575.98px) { .doc-viewer-frame { height: calc(100vh - 170px); } }
+.doc-open { text-decoration: none; font-weight: 600; }
+
 .returned-note { max-width: 24rem; white-space: normal; padding: 0.35rem 0.55rem; border-radius: 6px; background: #fdf3f5; color: #7a2236; }
 
 // Attendance sheet on phones: name above the status buttons, and buttons small enough that all four fit.

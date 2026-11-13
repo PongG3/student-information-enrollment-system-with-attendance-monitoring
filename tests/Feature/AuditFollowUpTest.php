@@ -179,6 +179,44 @@ class AuditFollowUpTest extends TestCase
         $this->assertNull($row->fresh()->returned_reason);
     }
 
+    public function test_the_registrar_opens_a_submitted_document_in_the_viewer(): void
+    {
+        Storage::fake('local');
+        $requirement = Requirement::create(['name' => 'PSA Birth Certificate', 'is_required' => true, 'is_active' => true]);
+        Storage::disk('local')->put('requirements/psa.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF");
+        $row = StudentRequirement::create(['student_id' => $this->ana->id, 'requirement_id' => $requirement->id, 'status' => 'submitted',
+            'submitted_at' => now(), 'file_path' => 'requirements/psa.pdf', 'file_name' => 'psa.pdf']);
+
+        // "Open document" opens the viewer window, which has Download and Back.
+        $this->actingAs($this->registrar)->get(route('students.show', $this->ana))
+            ->assertSee('Open document')->assertSee('data-doc-kind="pdf"', false)
+            ->assertSee(route('requirements.view', $row), false)
+            ->assertSee('id="docViewer"', false)->assertSee('← Back')->assertSee('Download');
+
+        // The viewer gets the file inline, with its exact type and no-script rules; the download stays an attachment.
+        $view = $this->actingAs($this->registrar)->get(route('requirements.view', $row))->assertOk();
+        $this->assertSame('application/pdf', $view->headers->get('content-type'));
+        $this->assertStringStartsWith('inline', $view->headers->get('content-disposition'));
+        $this->assertSame('nosniff', $view->headers->get('x-content-type-options'));
+        $this->assertStringContainsString("default-src 'none'", $view->headers->get('content-security-policy'));
+        $this->assertStringStartsWith('attachment', $this->actingAs($this->registrar)->get(route('requirements.file', $row))->headers->get('content-disposition'));
+
+        // Teachers cannot open it.
+        $this->actingAs($this->teacher)->get(route('requirements.view', $row))->assertForbidden();
+    }
+
+    public function test_a_file_that_is_not_a_pdf_or_image_is_download_only(): void
+    {
+        Storage::fake('local');
+        $requirement = Requirement::create(['name' => 'Form 138', 'is_required' => true, 'is_active' => true]);
+        Storage::disk('local')->put('requirements/form.pdf', 'plain text pretending to be a pdf');
+        $row = StudentRequirement::create(['student_id' => $this->ana->id, 'requirement_id' => $requirement->id, 'status' => 'submitted',
+            'submitted_at' => now(), 'file_path' => 'requirements/form.pdf', 'file_name' => 'form.pdf']);
+
+        $this->actingAs($this->registrar)->get(route('requirements.view', $row))->assertStatus(415);
+        $this->actingAs($this->registrar)->get(route('students.show', $this->ana))->assertSee('Download document')->assertDontSee('data-doc-kind=', false);
+    }
+
     public function test_the_upload_window_checks_for_a_file_before_sending(): void
     {
         Requirement::create(['name' => 'ID Photo', 'is_required' => true, 'is_active' => true]);

@@ -148,7 +148,17 @@
                                             <td>
                                                 <x-status-badge :value="$row->status" />
                                                 @if ($row->file_path)
-                                                    <a href="{{ route('requirements.file', $row) }}" class="small ms-1">Student's scan</a>
+                                                    @php $kind = \App\Http\Controllers\RequirementUploadController::viewKind($row); @endphp
+                                                    @if ($kind)
+                                                        {{-- Opens the scan in the viewer window (Download and Back inside). --}}
+                                                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline small doc-open" data-bs-toggle="modal" data-bs-target="#docViewer"
+                                                            data-doc-name="{{ $row->requirement->name }}" data-doc-file="{{ $row->file_name }}" data-doc-kind="{{ $kind }}"
+                                                            data-doc-view="{{ route('requirements.view', $row) }}" data-doc-download="{{ route('requirements.file', $row) }}">
+                                                            <x-icon name="file" :size="13" /> Open document
+                                                        </button>
+                                                    @else
+                                                        <a href="{{ route('requirements.file', $row) }}" class="small ms-1">Download document</a>
+                                                    @endif
                                                 @endif
                                                 @if ($row->isReturned())
                                                     <div class="small text-secondary mt-1">Returned {{ $row->returned_at->format('M j') }}{{ $row->returner ? ' by ' . $row->returner->name : '' }}: “{{ $row->returned_reason }}”</div>
@@ -314,6 +324,31 @@
 
     <x-reason-modal />
 
+    {{-- Document viewer: the student's scan (PDF or photo) shown here, with Download and Back. --}}
+    <div class="modal fade" id="docViewer" tabindex="-1" aria-labelledby="docViewerTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="min-w-0">
+                        <h2 class="modal-title h5 fw-bold" id="docViewerTitle" data-doc-title>Document</h2>
+                        <div class="small text-secondary text-truncate" data-doc-filename></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body doc-viewer-body">
+                    <div class="doc-viewer-loading small text-secondary" data-doc-loading>Opening the document…</div>
+                    <iframe class="doc-viewer-frame" title="Submitted document" data-doc-frame hidden></iframe>
+                    <img class="doc-viewer-image" alt="Submitted document" data-doc-image hidden>
+                    <div class="small text-secondary mt-2 d-none d-sm-block">Check that every part is readable before you verify it.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">← Back</button>
+                    <a href="#" class="btn btn-navy px-4" data-doc-download data-download><x-icon name="download" :size="16" /> Download</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Return a document to the student: confirm, and say why (the student sees the reason and gets an email). --}}
     <div class="modal fade" id="returnDocModal" tabindex="-1" aria-labelledby="returnDocTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -352,6 +387,31 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
+                // Document viewer: load the clicked scan; empty it again on close (nothing keeps loading behind).
+                const viewer = document.getElementById('docViewer');
+                const frame = viewer.querySelector('[data-doc-frame]');
+                const image = viewer.querySelector('[data-doc-image]');
+                const loading = viewer.querySelector('[data-doc-loading]');
+                const loaded = () => { loading.hidden = true; };
+                frame.addEventListener('load', loaded);
+                image.addEventListener('load', loaded);
+                image.addEventListener('error', () => { loading.hidden = false; loading.textContent = 'The document could not be shown. Use Download to open it.'; });
+                viewer.addEventListener('show.bs.modal', (event) => {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    viewer.querySelector('[data-doc-title]').textContent = button.dataset.docName;
+                    viewer.querySelector('[data-doc-filename]').textContent = button.dataset.docFile || '';
+                    viewer.querySelector('[data-doc-download]').href = button.dataset.docDownload;
+                    loading.hidden = false;
+                    loading.textContent = 'Opening the document…';
+                    const isPdf = button.dataset.docKind === 'pdf';
+                    frame.hidden = !isPdf;
+                    image.hidden = isPdf;
+                    // PDFs open fitted to the width, without the browser's page-thumbnail panel.
+                    if (isPdf) { frame.src = button.dataset.docView + '#navpanes=0&view=FitH'; } else { image.src = button.dataset.docView; }
+                });
+                viewer.addEventListener('hidden.bs.modal', () => { frame.src = 'about:blank'; image.removeAttribute('src'); });
+
                 const modal = document.getElementById('returnDocModal');
                 const form = modal.querySelector('[data-return-form]');
                 const reason = modal.querySelector('#returnReason');

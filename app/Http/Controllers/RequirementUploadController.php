@@ -54,16 +54,65 @@ class RequirementUploadController extends Controller
         return redirect()->route('student.profile')->with('success', "{$requirement->name} uploaded. The registrar will check it.");
     }
 
+    /** Types that may be shown inside the portal's document viewer (everything else is download-only). */
+    public const VIEWABLE = ['application/pdf' => 'pdf', 'image/jpeg' => 'image', 'image/png' => 'image'];
+
+    /**
+     * The scan shown in the registrar's document viewer. Only real PDFs and JPG/PNG images (checked from the file's
+     * content, not its name) are sent inline, with their exact type, "nosniff" and a no-script policy.
+     */
+    public function view(Request $request, StudentRequirement $studentRequirement)
+    {
+        $this->authorizeFile($request, $studentRequirement);
+
+        $mime = self::contentType($studentRequirement->file_path);
+        abort_unless(isset(self::VIEWABLE[$mime]), 415, 'This file cannot be previewed. Download it instead.');
+
+        return Storage::disk('local')->response($studentRequirement->file_path, $studentRequirement->file_name ?? 'document', [
+            'Content-Type' => $mime,
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; frame-ancestors 'self'",
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
     /** The uploaded scan: the student who sent it, the registrar and administrators. */
     public function file(Request $request, StudentRequirement $studentRequirement)
+    {
+        $this->authorizeFile($request, $studentRequirement);
+
+        // Downloaded, never shown inside the portal: a PDF opened on this site could run script.
+        return Storage::disk('local')->download($studentRequirement->file_path, $studentRequirement->file_name ?? 'document');
+    }
+
+    private function authorizeFile(Request $request, StudentRequirement $studentRequirement): void
     {
         $user = $request->user();
         $allowed = in_array($user->role, ['admin', 'registrar'], true)
             || ($user->role === 'student' && $studentRequirement->student?->user_id === $user->id);
 
         abort_unless($allowed && $studentRequirement->file_path && Storage::disk('local')->exists($studentRequirement->file_path), 404);
+    }
 
-        // Downloaded, never shown inside the portal: a PDF opened on this site could run script.
-        return Storage::disk('local')->download($studentRequirement->file_path, $studentRequirement->file_name ?? 'document');
+    /** "pdf", "image", or null when the scan can only be downloaded. */
+    public static function viewKind(StudentRequirement $row): ?string
+    {
+        if (! $row->file_path || ! Storage::disk('local')->exists($row->file_path)) {
+            return null;
+        }
+
+        return self::VIEWABLE[self::contentType($row->file_path)] ?? null;
+    }
+
+    /** The file's real type, read from its first bytes (never from its name). */
+    private static function contentType(string $path): string
+    {
+        $stream = Storage::disk('local')->readStream($path);
+        $head = $stream ? (string) fread($stream, 4096) : '';
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+
+        return (new \finfo(FILEINFO_MIME_TYPE))->buffer($head) ?: 'application/octet-stream';
     }
 }

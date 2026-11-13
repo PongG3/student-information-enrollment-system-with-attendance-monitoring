@@ -37,6 +37,9 @@ Route::middleware(['auth', 'role:student', StudentPortal::class])
 // An uploaded admission document: its student, the registrar and administrators (always downloaded).
 Route::get('requirement-files/{studentRequirement}', [RequirementUploadController::class, 'file'])
     ->middleware(['auth', 'role:admin,registrar,student'])->whereNumber('studentRequirement')->name('requirements.file');
+// The same scan shown inside the document viewer (PDF and images only).
+Route::get('requirement-files/{studentRequirement}/view', [RequirementUploadController::class, 'view'])
+    ->middleware(['auth', 'role:admin,registrar,student'])->whereNumber('studentRequirement')->name('requirements.view');
 
 // An excuse letter's attached file: its student, the class's teacher, the registrar and administrators.
 Route::get('excuse-letters/{excuse}/file', [AbsenceExcuseController::class, 'file'])
