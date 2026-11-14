@@ -78,6 +78,12 @@ class Student extends Model
         return $this->hasMany(Enrollment::class);
     }
 
+    /** Subjects completed at another school and accepted by the registrar. */
+    public function creditedSubjects(): HasMany
+    {
+        return $this->hasMany(CreditedSubject::class);
+    }
+
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);

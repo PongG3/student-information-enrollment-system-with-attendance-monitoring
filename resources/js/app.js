@@ -308,6 +308,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = confirmModal.querySelector('form');
             form.action = button.dataset.confirmAction;
             form.querySelector('input[name="_method"]').value = button.dataset.confirmMethod || 'POST';
+            // Extra values to send with the confirmed action, e.g. data-confirm-fields='{"status":"verified"}'.
+            form.querySelectorAll('[data-confirm-extra]').forEach((el) => el.remove());
+            Object.entries(JSON.parse(button.dataset.confirmFields || '{}')).forEach(([name, value]) => {
+                const input = document.createElement('input');
+                Object.assign(input, { type: 'hidden', name, value });
+                input.dataset.confirmExtra = '';
+                form.appendChild(input);
+            });
 
             const submit = confirmModal.querySelector('[data-confirm-submit]');
             submit.textContent = button.dataset.confirmButton || 'Confirm';

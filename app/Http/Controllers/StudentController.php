@@ -121,6 +121,8 @@ class StudentController extends Controller
                 ->where('student_id', $student->id)->get()
                 ->sortBy(fn ($row) => $row->requirement->name),
             'enrollments' => $student->enrollments()->with(['classOffering.subject', 'classOffering.term.academicYear'])->latest()->get(),
+            'credits' => $student->creditedSubjects()->with(['subject', 'creditor'])->get()->sortBy(fn ($c) => $c->subject->code)->values(),
+            'creditOptions' => \App\Models\Subject::where('is_active', true)->orderBy('code')->get(['id', 'code', 'title']),
         ]);
     }
 

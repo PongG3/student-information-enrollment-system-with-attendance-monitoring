@@ -71,6 +71,9 @@ Route::middleware(['auth', 'role:admin,registrar,teacher,student'])->group(funct
 Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::resource('subjects', SubjectController::class)->only(['index', 'store', 'update']);
 
+    // Start a term from an earlier one: copy its classes.
+    Route::post('classes/copy', [\App\Http\Controllers\ClassCopyController::class, 'store'])->name('classes.copy');
+
     Route::resource('classes', ClassOfferingController::class)
         ->parameters(['classes' => 'class_offering'])
         ->except(['show', 'destroy']);
@@ -80,6 +83,9 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::get('students/export', [StudentController::class, 'export'])->name('students.export');
     Route::get('students/create', [StudentController::class, 'create'])->name('students.create');
     // Import from CSV: upload -> preview (every row checked) -> confirm.
+    // End of the academic year: move students up one year level (preview, then confirm).
+    Route::get('students/promote', [\App\Http\Controllers\StudentPromotionController::class, 'create'])->name('students.promote');
+    Route::post('students/promote', [\App\Http\Controllers\StudentPromotionController::class, 'store'])->name('students.promote.store');
     Route::get('students/import', [StudentImportController::class, 'create'])->name('students.import');
     Route::get('students/import/template', [StudentImportController::class, 'template'])->name('students.import.template');
     Route::post('students/import/preview', [StudentImportController::class, 'preview'])->name('students.import.preview');
@@ -102,6 +108,9 @@ Route::middleware(['auth', 'role:admin,registrar'])->group(function () {
     Route::post('students/{student}/photo/reject', [StudentController::class, 'rejectPhoto'])->name('students.photo.reject')->whereNumber('student');
     Route::post('students/{student}/requirements/{requirement}', [StudentRequirementController::class, 'update'])
         ->name('students.requirements.update')->whereNumber(['student', 'requirement']);
+    // Credited subjects (transferees): count as completed for prerequisites.
+    Route::post('students/{student}/credits', [\App\Http\Controllers\CreditedSubjectController::class, 'store'])->name('students.credits.store')->whereNumber('student');
+    Route::delete('students/{student}/credits/{credit}', [\App\Http\Controllers\CreditedSubjectController::class, 'destroy'])->name('students.credits.destroy')->whereNumber(['student', 'credit']);
     // Send a document back to the student with a reason (they are told on their profile and by email).
     Route::post('students/{student}/requirements/{requirement}/return', [StudentRequirementController::class, 'returnToStudent'])
         ->name('students.requirements.return')->whereNumber(['student', 'requirement']);
@@ -132,6 +141,12 @@ Route::get('classes/{class_offering}', [ClassOfferingController::class, 'show'])
     ->middleware(['auth', 'role:admin,registrar,teacher'])
     ->whereNumber('class_offering')
     ->name('classes.show');
+
+// Printable class list (PDF): staff for any class, a teacher for their own.
+Route::get('classes/{class_offering}/class-list', \App\Http\Controllers\ClassRosterController::class)
+    ->middleware(['auth', 'role:admin,registrar,teacher', 'throttle:20,1'])
+    ->whereNumber('class_offering')
+    ->name('classes.roster');
 
 // Attendance: teachers record their own classes, the registrar monitors, the administrator can correct.
 Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {

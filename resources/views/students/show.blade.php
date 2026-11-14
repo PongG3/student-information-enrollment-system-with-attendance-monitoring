@@ -113,19 +113,22 @@
                 if (! $student->trashed()) {
                     $tabs['account'] = ['Portal account', 'key', $student->user ? ($student->user->is_active ? 'active' : 'off') : 'none'];
                 }
+                // After a change on another tab (e.g. crediting a subject), open that tab again.
+                $openTab = session('tab') ?? ($errors->hasAny(['subject_id', 'school', 'note']) ? 'enrollments' : 'requirements');
+                $openTab = isset($tabs[$openTab]) ? $openTab : 'requirements';
             @endphp
             <ul class="form-tabs" role="tablist" aria-label="Student record">
                 @foreach ($tabs as $key => [$label, $icon, $count])
                     <li role="presentation">
                         <button type="button" role="tab" id="tab-{{ $key }}" data-bs-toggle="tab" data-bs-target="#pane-{{ $key }}"
-                            aria-controls="pane-{{ $key }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}" @class(['form-tab', 'active' => $loop->first])>
+                            aria-controls="pane-{{ $key }}" aria-selected="{{ $key === $openTab ? 'true' : 'false' }}" @class(['form-tab', 'active' => $key === $openTab])>
                             <x-icon :name="$icon" :size="16" /> {{ $label }} <span class="status-tab-count">{{ $count }}</span>
                         </button>
                     </li>
                 @endforeach
             </ul>
             <div class="tab-content">
-            <div class="tab-pane fade show active" id="pane-requirements" role="tabpanel" aria-labelledby="tab-requirements" tabindex="0">
+            <div @class(['tab-pane fade', 'show active' => $openTab === 'requirements']) id="pane-requirements" role="tabpanel" aria-labelledby="tab-requirements" tabindex="0">
                 <div class="card-sies">
                     <div class="card-header-sies">
                         <h2 class="h6 fw-bold mb-0">Requirements</h2>
@@ -169,14 +172,24 @@
                                             </td>
                                             @unless ($student->trashed())
                                                 <td class="text-end text-nowrap">
-                                                    @foreach (['submitted' => ['Mark submitted', 'secondary'], 'verified' => ['Verify', 'success']] as $status => [$label, $variant])
+                                                    @php
+                                                        $docName = $row->requirement->name;
+                                                        $docActions = [
+                                                            'submitted' => ['Mark submitted', 'secondary', "Mark {$docName} as submitted?",
+                                                                $row->status === 'verified'
+                                                                    ? "It is verified now. This takes the verification back; the document stays on file."
+                                                                    : "Use this when {$student->first_name} handed in the paper copy at the office.", 'Mark submitted'],
+                                                            'verified' => ['Verify', 'success', "Verify {$docName}?",
+                                                                ($row->file_path ? 'Check the scan first (Open document). ' : '') . "Verified documents count toward enrollment approval, and {$student->first_name} can no longer replace it.", 'Verify'],
+                                                        ];
+                                                    @endphp
+                                                    @foreach ($docActions as $status => [$label, $variant, $title, $message, $button])
                                                         @if ($row->status !== $status)
-                                                            <form method="POST" class="d-inline"
-                                                                  action="{{ route('students.requirements.update', [$student, $row->requirement]) }}">
-                                                                @csrf
-                                                                <input type="hidden" name="status" value="{{ $status }}">
-                                                                <button class="btn btn-outline-{{ $variant }} btn-sm-sies">{{ $label }}</button>
-                                                            </form>
+                                                            <button type="button" class="btn btn-outline-{{ $variant }} btn-sm-sies" data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-confirm-title="{{ $title }}" data-confirm-message="{{ $message }}"
+                                                                data-confirm-action="{{ route('students.requirements.update', [$student, $row->requirement]) }}"
+                                                                data-confirm-fields="{{ json_encode(['status' => $status]) }}"
+                                                                data-confirm-button="{{ $button }}">{{ $label }}</button>
                                                         @endif
                                                     @endforeach
                                                     {{-- Sending a document back always asks for a reason, which the student is told. --}}
@@ -197,7 +210,7 @@
                     @endif
                 </div>
             </div>
-            <div class="tab-pane fade" id="pane-enrollments" role="tabpanel" aria-labelledby="tab-enrollments" tabindex="0">
+            <div @class(['tab-pane fade', 'show active' => $openTab === 'enrollments']) id="pane-enrollments" role="tabpanel" aria-labelledby="tab-enrollments" tabindex="0">
                 <div class="card-sies">
                     @php
                         // Terms with officially enrolled classes: each has a Certificate of Registration.
@@ -240,6 +253,85 @@
                                                 <x-status-badge :value="$enrollment->status" />
                                                 @if ($enrollment->status_reason)<div class="text-secondary small">{{ $enrollment->status_reason }}</div>@endif
                                             </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Credited subjects (transferees): passed at another school; they count as completed for prerequisites. --}}
+                <div class="card-sies mt-3" id="credited-subjects">
+                    <div class="card-header-sies">
+                        <div>
+                            <h2 class="h6 fw-bold mb-0">Credited subjects</h2>
+                            <span class="small text-secondary">Passed at another school. They count as completed for prerequisites.</span>
+                        </div>
+                        @unless ($student->trashed())
+                            <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="collapse" data-bs-target="#creditForm"
+                                aria-expanded="{{ $errors->hasAny(['subject_id', 'school', 'note']) ? 'true' : 'false' }}" aria-controls="creditForm">
+                                <x-icon name="plus" :size="14" /> Credit a subject
+                            </button>
+                        @endunless
+                    </div>
+                    @unless ($student->trashed())
+                        <div class="collapse {{ $errors->hasAny(['subject_id', 'school', 'note']) ? 'show' : '' }}" id="creditForm">
+                            <form method="POST" action="{{ route('students.credits.store', $student) }}" class="credit-form" novalidate>
+                                @csrf
+                                <div class="row g-2 align-items-start">
+                                    <div class="col-md-4">
+                                        <label for="creditSubject" class="form-label small fw-semibold">Subject <span class="text-danger">*</span></label>
+                                        <select id="creditSubject" name="subject_id" class="form-select @error('subject_id') is-invalid @enderror">
+                                            <option value="">Choose a subject</option>
+                                            @foreach ($creditOptions as $option)
+                                                @unless ($credits->contains('subject_id', $option->id))
+                                                    <option value="{{ $option->id }}" @selected((string) old('subject_id') === (string) $option->id)>{{ $option->code }} · {{ $option->title }}</option>
+                                                @endunless
+                                            @endforeach
+                                        </select>
+                                        @error('subject_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="creditSchool" class="form-label small fw-semibold">Taken at (school) <span class="text-danger">*</span></label>
+                                        <input id="creditSchool" name="school" maxlength="150" value="{{ old('school', $student->previous_school) }}" class="form-control @error('school') is-invalid @enderror" placeholder="e.g. Sample State University">
+                                        @error('school')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="creditNote" class="form-label small fw-semibold">Note <span class="text-secondary fw-normal">(optional)</span></label>
+                                        <input id="creditNote" name="note" maxlength="255" value="{{ old('note') }}" class="form-control" placeholder="e.g. Grade 1.75, TOR checked">
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="collapse" data-bs-target="#creditForm">Cancel</button>
+                                    <button class="btn btn-navy btn-sm-sies">Credit subject</button>
+                                </div>
+                            </form>
+                        </div>
+                    @endunless
+                    @if ($credits->isEmpty())
+                        <div class="px-3 py-3 small text-secondary">No credited subjects.{{ $student->student_type === 'transferee' ? ' Add the subjects this transferee already passed.' : '' }}</div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-sies align-middle mb-0">
+                                <thead><tr><th scope="col">Subject</th><th scope="col">Taken at</th><th scope="col">Credited</th>@unless ($student->trashed())<th scope="col" class="text-end"><span class="visually-hidden">Actions</span></th>@endunless</tr></thead>
+                                <tbody>
+                                    @foreach ($credits as $credit)
+                                        <tr>
+                                            <td><span class="fw-semibold">{{ $credit->subject->code }}</span> · {{ $credit->subject->title }}
+                                                @if ($credit->note)<div class="small text-secondary">{{ $credit->note }}</div>@endif
+                                            </td>
+                                            <td>{{ $credit->school }}</td>
+                                            <td class="small text-secondary">{{ $credit->created_at->format('M j, Y') }}{{ $credit->creditor ? ' · ' . $credit->creditor->name : '' }}</td>
+                                            @unless ($student->trashed())
+                                                <td class="text-end">
+                                                    <button type="button" class="btn btn-quiet-danger btn-sm-sies" data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                        data-confirm-title="Remove the credit for {{ $credit->subject->code }}?"
+                                                        data-confirm-message="{{ $student->first_name }} will need to take {{ $credit->subject->code }} here before any subject that requires it."
+                                                        data-confirm-action="{{ route('students.credits.destroy', [$student, $credit]) }}"
+                                                        data-confirm-method="DELETE" data-confirm-variant="danger" data-confirm-button="Remove">Remove</button>
+                                                </td>
+                                            @endunless
                                         </tr>
                                     @endforeach
                                 </tbody>

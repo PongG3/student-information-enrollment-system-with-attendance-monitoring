@@ -43,8 +43,13 @@
         <div class="col-lg-8">
             <div class="card-sies">
                 <div class="card-header-sies">
-                    <h2 class="h6 fw-bold mb-0">{{ $isStaff ? 'Students who requested this class' : 'Class roster' }}</h2>
-                    <span class="text-secondary small">{{ $roster->count() }} {{ \Illuminate\Support\Str::plural('student', $roster->count()) }}</span>
+                    <div>
+                        <h2 class="h6 fw-bold mb-0">{{ $isStaff ? 'Students who requested this class' : 'Class roster' }}</h2>
+                        <span class="text-secondary small">{{ $roster->count() }} {{ \Illuminate\Support\Str::plural('student', $roster->count()) }}</span>
+                    </div>
+                    <a href="{{ route('classes.roster', $class) }}" data-download class="btn btn-outline-secondary btn-sm-sies">
+                        <x-icon name="download" :size="14" /> Print class list (PDF)
+                    </a>
                 </div>
 
                 @if ($roster->isEmpty())

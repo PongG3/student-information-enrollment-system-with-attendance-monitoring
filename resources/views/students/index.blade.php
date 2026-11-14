@@ -3,6 +3,7 @@
 @endphp
 <x-app-layout title="Student Records" subtitle="Register students, keep their records, and archive instead of deleting.">
     <x-slot:actions>
+        <a href="{{ route('students.promote') }}" class="btn btn-outline-secondary"><x-icon name="layers" :size="16" /> Promote year level</a>
         <a href="{{ route('students.import') }}" class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Import CSV</a>
         <a href="{{ route('students.export', request()->query()) }}" class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Export CSV</a>
         <a href="{{ route('students.create') }}" data-dialog data-dialog-size="xl" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add student</a>

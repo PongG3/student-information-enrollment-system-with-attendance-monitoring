@@ -16,6 +16,8 @@ erDiagram
     SUBJECTS ||--o{ CLASS_OFFERINGS : "taught as"
     CLASS_OFFERINGS ||--|{ CLASS_MEETINGS : "meets on"
     STUDENTS ||--o{ GUARDIANS : "has"
+    STUDENTS ||--o{ CREDITED_SUBJECTS : "transferred in"
+    SUBJECTS ||--o{ CREDITED_SUBJECTS : "credited as"
     STUDENTS ||--o{ STUDENT_REQUIREMENTS : "submits"
     REQUIREMENTS ||--o{ STUDENT_REQUIREMENTS : "checked as"
     STUDENTS ||--o{ ENROLLMENTS : "requests"
@@ -65,6 +67,12 @@ erDiagram
     PROGRAM_SUBJECT {
         bigint program_id FK
         bigint subject_id FK
+    }
+    CREDITED_SUBJECTS {
+        bigint id PK
+        bigint student_id FK
+        bigint subject_id FK
+        string school "where it was passed"
     }
     SUBJECT_PREREQUISITES {
         bigint subject_id FK "the subject"

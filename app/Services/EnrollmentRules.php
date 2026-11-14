@@ -43,6 +43,10 @@ class EnrollmentRules
             ->with('classOffering:id,subject_id')->get()
             ->map(fn ($row) => (int) $row->classOffering->subject_id)->unique()->values()->all();
 
+        // Subjects credited from another school (transferees) also count as completed.
+        $credited = \App\Models\CreditedSubject::where('student_id', $student->id)->pluck('school', 'subject_id')->all();
+        $completed = array_values(array_unique(array_merge($completed, array_map('intval', array_keys($credited)))));
+
         $verified = StudentRequirement::where('student_id', $student->id)
             ->where('status', StudentRequirement::STATUS_VERIFIED)
             ->pluck('requirement_id')->all();
@@ -53,6 +57,7 @@ class EnrollmentRules
             'units' => (float) $holding->sum(fn ($class) => (float) $class->subject->units),
             'maxUnits' => (float) Setting::get('max_units_per_term', '24'),
             'completed' => $completed,
+            'credited' => $credited,   // subject id => school
             'unverified' => Requirement::where('is_active', true)->where('is_required', true)
                 ->whereNotIn('id', $verified ?: [0])->orderBy('name')->pluck('name')->all(),
         ];
@@ -81,6 +86,11 @@ class EnrollmentRules
         // Curriculum: the subject must belong to the student's program (general subjects are open to all).
         if (! $class->subject->isOpenTo($student->program_id)) {
             $problems[] = "{$class->subject->code} is a major subject for {$class->subject->programsLabel()} students only.";
+        }
+
+        // Already credited from another school: no need to take it again.
+        if (isset($context['credited'][$class->subject_id])) {
+            $problems[] = "{$class->subject->code} is already credited (taken at {$context['credited'][$class->subject_id]}).";
         }
 
         // Prerequisites: every one must be completed in an earlier term (taking both in the same term is not enough).

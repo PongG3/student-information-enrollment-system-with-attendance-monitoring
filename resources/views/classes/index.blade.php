@@ -1,7 +1,23 @@
 <x-app-layout title="Class Management" subtitle="Subjects offered each term, with teacher, schedule and seats.">
+    @php
+        $targetTerm = $terms->firstWhere('id', (int) $termId);
+        $canCopy = $targetTerm && ! $targetTerm->isClosed() && $terms->count() > 1;
+    @endphp
     <x-slot:actions>
+        @if ($canCopy)
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#copyClassesModal"><x-icon name="layers" :size="16" /> Copy from another term</button>
+        @endif
         <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#addClassModal"><x-icon name="plus" :size="16" /> Add class</button>
     </x-slot:actions>
+
+    @if (session('copy_skipped'))
+        <div class="alert alert-warning small">
+            <div class="fw-semibold mb-1">{{ count(session('copy_skipped')) }} {{ \Illuminate\Support\Str::plural('class', count(session('copy_skipped'))) }} not copied:</div>
+            <ul class="mb-0 ps-3">
+                @foreach (session('copy_skipped') as $reason)<li>{{ $reason }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
 
     <div class="card-sies">
         <div class="card-header-sies">
@@ -29,6 +45,9 @@
 
         @if ($classes->isEmpty())
             <x-empty-state icon="classes" message="No classes found for this term.">
+                @if ($canCopy && ! request()->hasAny(['search', 'status']))
+                    <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-bs-toggle="modal" data-bs-target="#copyClassesModal"><x-icon name="layers" :size="14" /> Copy from another term</button>
+                @endif
                 <button type="button" class="btn btn-navy btn-sm-sies" data-bs-toggle="modal" data-bs-target="#addClassModal"><x-icon name="plus" :size="14" /> Add class</button>
             </x-empty-state>
         @else
@@ -65,4 +84,40 @@
     </div>
 
     @include('classes._add-dialog')
+
+    @if ($canCopy)
+        {{-- Copy another term's classes into the term shown on this page. --}}
+        <div class="modal fade" id="copyClassesModal" tabindex="-1" aria-labelledby="copyClassesTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form method="POST" action="{{ route('classes.copy') }}" class="modal-content" novalidate>
+                    @csrf
+                    <input type="hidden" name="to_term" value="{{ $targetTerm->id }}">
+                    <div class="modal-header">
+                        <div>
+                            <h2 class="modal-title h5 fw-bold" id="copyClassesTitle">Copy classes into this term</h2>
+                            <div class="small text-secondary">Into {{ $targetTerm->name }} · {{ $targetTerm->academicYear->name }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="copyFrom" class="form-label fw-semibold small">Copy from</label>
+                        <select id="copyFrom" name="from_term" class="form-select" required>
+                            @foreach ($terms->where('id', '!=', $targetTerm->id) as $option)
+                                <option value="{{ $option->id }}">{{ $option->name }} · {{ $option->academicYear->name }}{{ $option->is_current ? ' (current)' : '' }}</option>
+                            @endforeach
+                        </select>
+                        <ul class="small text-secondary mt-3 mb-0 ps-3">
+                            <li>Each class is copied with its subject, block, teacher, capacity and weekly schedule, and gets a new schedule code.</li>
+                            <li>Copies start <strong>open</strong> with no students. Enrollment requests are not copied.</li>
+                            <li>A class is skipped if this term already has it, its subject or teacher is inactive, or its time clashes here. You will see the list.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-navy px-4">Copy classes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </x-app-layout>
