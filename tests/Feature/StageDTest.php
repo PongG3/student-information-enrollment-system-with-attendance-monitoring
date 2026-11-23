@@ -206,6 +206,23 @@ class StageDTest extends TestCase
         $this->assertDatabaseHas('student_requirements', ['student_id' => $student->id, 'status' => 'pending', 'verified_by' => null, 'returned_reason' => 'Wrong document attached.']);
     }
 
+    public function test_the_student_list_filters_live_without_a_filter_button(): void
+    {
+        $registrar = $this->makeUser('registrar');
+        $this->makeStudent('2026-0001');
+
+        // The form updates by itself (live-filter.js); the button is only there without JavaScript.
+        $this->actingAs($registrar)->get(route('students.index'))
+            ->assertSee('data-live-filter', false)
+            ->assertSee('data-live-region="results"', false)
+            ->assertSee('<noscript><button class="btn btn-outline-secondary btn-sm-sies">Filter</button></noscript>', false)
+            ->assertSee('1 student found');
+
+        // The live request is an ordinary GET of the same page, so filters still combine on the server.
+        $this->actingAs($registrar)->get(route('students.index', ['search' => 'nobody', 'status' => 'active']), ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk()->assertSee('No students match your filters.')->assertSee('data-live-clear', false);
+    }
+
     public function test_search_and_filters_narrow_the_list(): void
     {
         $registrar = $this->makeUser('registrar');

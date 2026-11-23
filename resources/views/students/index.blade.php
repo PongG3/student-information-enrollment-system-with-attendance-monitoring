@@ -5,14 +5,16 @@
     <x-slot:actions>
         <a href="{{ route('students.promote') }}" class="btn btn-outline-secondary"><x-icon name="layers" :size="16" /> Promote year level</a>
         <a href="{{ route('students.import') }}" class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Import CSV</a>
-        <a href="{{ route('students.export', request()->query()) }}" class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Export CSV</a>
+        <a href="{{ route('students.export', request()->query()) }}" data-live-query class="btn btn-outline-secondary"><x-icon name="file" :size="16" /> Export CSV</a>
         <a href="{{ route('students.create') }}" data-dialog data-dialog-size="xl" class="btn btn-navy"><x-icon name="plus" :size="16" /> Add student</a>
     </x-slot:actions>
 
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar" role="search" aria-label="Filter students">
-                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search name, ID or email" aria-label="Search name, ID or email">
+            {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('students.index') }}" class="filter-bar" role="search" aria-label="Filter students" data-live-filter>
+                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search name, ID or email" aria-label="Search name, ID or email"
+                    autocomplete="off" aria-controls="studentResults">
                 <select name="program" class="form-select" aria-label="Program">
                     <option value="">All programs</option>
                     @foreach ($programs as $program)
@@ -49,17 +51,22 @@
                     <input class="form-check-input" type="checkbox" name="archived" value="1" id="archived" @checked($archived)>
                     <label class="form-check-label small" for="archived">Archived only</label>
                 </div>
-                <button class="btn btn-outline-secondary btn-sm-sies">Filter</button>
-                @if ($filtered)
-                    <a href="{{ route('students.index') }}" class="small">Clear filters</a>
-                @endif
+                {{-- Without JavaScript the button applies the filters; with it, filters apply by themselves. --}}
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Filter</button></noscript>
+                <span data-live-region="clear">
+                    @if ($filtered)
+                        <a href="{{ route('students.index') }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear filters</a>
+                    @endif
+                </span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($students->total()) }} {{ \Illuminate\Support\Str::plural('student', $students->total()) }} found</span>
+        <div id="studentResults" class="live-results" data-live-region="results">
         @if ($students->isEmpty())
             @if ($filtered)
                 <x-empty-state :message="$archived ? 'No archived students.' : 'No students match your filters.'">
-                    <a href="{{ route('students.index') }}" class="btn btn-outline-secondary btn-sm-sies">Clear filters</a>
+                    <a href="{{ route('students.index') }}" class="btn btn-outline-secondary btn-sm-sies" data-live-clear>Clear filters</a>
                 </x-empty-state>
             @else
                 <x-empty-state icon="students" message="No students are registered yet.">
@@ -106,5 +113,6 @@
             </div>
             <x-table-footer :items="$students" noun="student" />
         @endif
+        </div>
     </div>
 </x-app-layout>

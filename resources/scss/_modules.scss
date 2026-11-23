@@ -213,6 +213,11 @@
 // A document the registrar sent back, with the reason, on the student's profile.
 // Document viewer on the student record: the scan fills the window, scrolled inside it.
 .doc-viewer-body { background: $surface-muted; }
+
+// Live filters: the results fade slightly while the new list loads (no layout jump).
+.live-results { transition: opacity 0.15s ease; }
+.live-results[aria-busy="true"] { opacity: 0.55; }
+@media (prefers-reduced-motion: reduce) { .live-results { transition: none; } }
 .doc-viewer-frame { display: block; width: 100%; height: min(70vh, 760px); border: 1px solid $border; border-radius: 8px; background: #fff; }
 .doc-viewer-image { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border: 1px solid $border; border-radius: 8px; background: #fff; object-fit: contain; }
 .doc-viewer-loading { padding: 0.25rem 0 0.5rem; }

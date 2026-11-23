@@ -3,6 +3,7 @@ import * as bootstrap from 'bootstrap';
 import './page-dialog.js';
 import './bulk-select.js';
 import './file-drop.js';
+import './live-filter.js';
 
 window.bootstrap = bootstrap;
 
@@ -271,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('shown.bs.tab', refit);
     document.addEventListener('shown.bs.collapse', refit);  // e.g. report filters opened
     document.addEventListener('hidden.bs.collapse', refit);
+    document.addEventListener('live-filter:updated', refit); // a live filter swapped the rows
 
     // Form dialogs: put the cursor in the first field when they open, so typing can start at once.
     // (Dialogs without fields, such as confirmations, are left alone.)
