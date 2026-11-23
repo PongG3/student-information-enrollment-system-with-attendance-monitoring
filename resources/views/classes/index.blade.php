@@ -23,6 +23,8 @@
         <div class="card-header-sies">
             {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
             <form method="GET" action="{{ route('classes.index') }}" class="filter-bar" role="search" aria-label="Filter classes" data-live-filter>
+                {{-- Search first, then the narrowing filters. --}}
+                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search code, subject or teacher" aria-label="Search code, subject or teacher" autocomplete="off">
                 <select name="term" class="form-select" aria-label="Term" data-live-keep data-live-reload>
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" @selected((string) $termId === (string) $term->id)>
@@ -30,7 +32,6 @@
                         </option>
                     @endforeach
                 </select>
-                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search code, subject or teacher">
                 <select name="status" class="form-select">
                     <option value="">All statuses</option>
                     @foreach (['open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled'] as $value => $label)

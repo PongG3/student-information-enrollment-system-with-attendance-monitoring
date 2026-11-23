@@ -158,6 +158,15 @@ Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {
 Route::post('attendance/sheet', [AttendanceController::class, 'save'])
     ->middleware(['auth', 'role:admin,teacher'])->name('attendance.save');
 
+// Archive: staff see what they archived, administrators everything. Students have no access.
+Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {
+    Route::get('archive', [\App\Http\Controllers\ArchiveController::class, 'index'])->name('archive.index');
+    Route::post('archive/{type}/{id}/restore', [\App\Http\Controllers\ArchiveController::class, 'restore'])
+        ->whereIn('type', array_keys(\App\Http\Controllers\ArchiveController::TYPES))->whereNumber('id')->name('archive.restore');
+    Route::delete('archive/{type}/{id}', [\App\Http\Controllers\ArchiveController::class, 'destroy'])
+        ->whereIn('type', array_keys(\App\Http\Controllers\ArchiveController::TYPES))->whereNumber('id')->name('archive.destroy');
+});
+
 // Staff data privacy policy: every staff member reads and agrees; the administrator writes and publishes it.
 Route::middleware(['auth', 'role:admin,registrar,teacher'])->group(function () {
     Route::get('privacy-policy', [PrivacyPolicyController::class, 'show'])->name('privacy-policy.show');

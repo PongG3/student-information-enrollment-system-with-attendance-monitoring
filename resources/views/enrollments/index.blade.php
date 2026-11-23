@@ -39,6 +39,9 @@
             {{-- Live: the list updates as you type (after a short pause) and when any filter changes. --}}
             <form method="GET" action="{{ route('enrollments.index') }}" class="filter-bar" role="search" aria-label="Filter enrollment requests" data-live-filter>
                 <input type="hidden" name="status" value="{{ $status }}">
+                {{-- Search first, then the narrowing filters. --}}
+                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Student, class or subject" aria-label="Search student, class or subject"
+                    autocomplete="off" aria-controls="requestResults">
                 <select name="term" class="form-select" aria-label="Term" data-live-keep>
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" @selected((string) $termId === (string) $term->id)>
@@ -56,8 +59,6 @@
                     <input type="checkbox" class="btn-check" name="docs" value="incomplete" id="docsIncomplete" @checked(request('docs') === 'incomplete')>
                     <label class="btn btn-outline-warning btn-sm-sies text-nowrap" for="docsIncomplete">Documents incomplete</label>
                 @endif
-                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Student, class or subject" aria-label="Search student, class or subject"
-                    autocomplete="off" aria-controls="requestResults">
                 {{-- Without JavaScript the button applies the filters; with it, they apply by themselves. --}}
                 <noscript><button class="btn btn-outline-secondary btn-sm-sies">Search</button></noscript>
                 <span data-live-region="clear">

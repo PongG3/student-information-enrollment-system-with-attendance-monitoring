@@ -175,6 +175,7 @@ class StudentController extends Controller
             return back()->with('error', 'This student still has pending, approved or enrolled classes in an open term. Cancel those first.');
         }
 
+        $student->forceFill(['archived_by' => auth()->id()])->save();
         $student->delete();
 
         AuditLogger::log('student.archived', $student, "Archived student {$student->student_number} ({$student->full_name})");
@@ -185,6 +186,7 @@ class StudentController extends Controller
     public function restore(Student $student)
     {
         $student->restore();
+        $student->forceFill(['archived_by' => null])->save();
 
         AuditLogger::log('student.restored', $student, "Restored student {$student->student_number} ({$student->full_name})");
 

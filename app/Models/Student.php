@@ -63,6 +63,12 @@ class Student extends Model
         return $this->belongsTo(Program::class);
     }
 
+    /** The staff member who archived this student (shown on the Archive page). */
+    public function archiver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'archived_by');
+    }
+
     public function guardians(): HasMany
     {
         return $this->hasMany(Guardian::class);
