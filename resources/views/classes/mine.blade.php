@@ -1,8 +1,9 @@
 <x-app-layout title="My Classes" subtitle="Classes assigned to you. Open a class to see its enrolled students.">
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
-                <select name="term" class="form-select" onchange="this.form.submit()">
+            {{-- Live: choosing a term updates the list in place. --}}
+            <form method="GET" action="{{ route('teacher.classes') }}" class="filter-bar" aria-label="Choose a term" data-live-filter>
+                <select name="term" class="form-select" aria-label="Term">
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" @selected((string) $termId === (string) $term->id)>
                             {{ $term->name }} · {{ $term->academicYear->name }}{{ $term->is_current ? ' (current)' : '' }}
@@ -13,6 +14,7 @@
             </form>
         </div>
 
+        <div class="live-results" data-live-region="results">
         @if ($classes->isEmpty())
             <x-empty-state icon="classes" message="You have no classes in this term." />
         @else
@@ -38,5 +40,6 @@
                 </table>
             </div>
         @endif
+        </div>
     </div>
 </x-app-layout>

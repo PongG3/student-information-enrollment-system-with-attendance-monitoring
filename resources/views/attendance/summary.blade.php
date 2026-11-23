@@ -6,12 +6,13 @@
     @endphp
 
     <div class="card-sies p-3 mb-4">
-        <form method="GET" class="filter-bar">
+        {{-- Live: changing a date updates the list in place. --}}
+        <form method="GET" action="{{ route('attendance.summary', $class) }}" class="filter-bar" role="search" aria-label="Choose the dates" data-live-filter>
             <label class="small text-secondary" for="from">From</label>
             <input id="from" type="date" name="from" value="{{ $from->toDateString() }}" class="form-control">
             <label class="small text-secondary" for="to">To</label>
             <input id="to" type="date" name="to" value="{{ $to->toDateString() }}" class="form-control">
-            <button class="btn btn-outline-secondary btn-sm-sies">Show</button>
+            <noscript><button class="btn btn-outline-secondary btn-sm-sies">Show</button></noscript>
             <a href="{{ route('attendance.sheet', ['class_offering' => $class->id]) }}" class="btn btn-navy btn-sm-sies ms-auto">Open attendance sheet</a>
         </form>
     </div>
@@ -26,6 +27,7 @@
             </span>
         </div>
 
+        <div class="live-results" data-live-region="results">
         @if ($rows->isEmpty())
             <x-empty-state icon="students" message="No enrolled students yet." />
         @else
@@ -54,5 +56,6 @@
                 </table>
             </div>
         @endif
+        </div>
     </div>
 </x-app-layout>

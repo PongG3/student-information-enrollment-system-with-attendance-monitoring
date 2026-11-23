@@ -13,7 +13,8 @@
     @endphp
 
     <x-slot:actions>
-        <div class="dropdown">
+        {{-- Refreshed by the live filter: the export links follow the chosen class and dates. --}}
+        <div class="dropdown" data-live-region="export">
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                 <x-icon name="file" :size="16" /> Export
             </button>
@@ -99,9 +100,9 @@
     @endif
 
     <div class="card-sies p-3 mb-4">
-        {{-- Term and class apply at once; quick ranges are links; Apply is only for your own From–To dates. --}}
-        <form method="GET" class="filter-bar">
-            <select name="term" class="form-select" onchange="this.form.submit()" aria-label="Term">
+        {{-- Live: class and dates update the page in place; the term reloads it (its class list changes). Quick ranges are links. --}}
+        <form method="GET" action="{{ route('attendance.index') }}" class="filter-bar" role="search" aria-label="Filter attendance" data-live-filter>
+            <select name="term" class="form-select" aria-label="Term" data-live-keep data-live-reload>
                 @foreach ($terms as $option)
                     <option value="{{ $option->id }}" @selected($term && $term->id === $option->id)>
                         {{ $option->name }} · {{ $option->academicYear->name }}{{ $option->is_current ? ' (current)' : '' }}
@@ -112,7 +113,7 @@
                 {{-- Keeps the quick range when the term or class changes; editing a date drops it (custom dates). --}}
                 <input type="hidden" name="range" value="{{ $range }}" data-quick-range>
             @endif
-            <select name="class_offering" class="form-select" onchange="this.form.submit()" aria-label="Class">
+            <select name="class_offering" class="form-select" aria-label="Class">
                 <option value="">All classes</option>
                 @foreach ($classes as $class)
                     <option value="{{ $class->id }}" @selected($classId === $class->id)>{{ $class->class_code }} · {{ $class->subject->code }}</option>
@@ -126,9 +127,9 @@
                 <span>To</span>
                 <input type="date" name="to" value="{{ $to->toDateString() }}" class="form-control" aria-label="To date" oninput="this.form.querySelector('[data-quick-range]')?.remove()">
             </label>
-            <button class="btn btn-outline-secondary btn-sm-sies">Apply</button>
+            <noscript><button class="btn btn-outline-secondary btn-sm-sies">Apply</button></noscript>
         </form>
-        <div class="d-flex flex-wrap align-items-center gap-2 mt-3 small">
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-3 small" data-live-region="range">
             <span class="text-secondary">Quick range:</span>
             <div class="segmented" role="group" aria-label="Quick range">
                 @foreach (['today' => 'Today', 'week' => 'This week', 'month' => 'This month'] as $key => $label)
@@ -142,6 +143,8 @@
         </div>
     </div>
 
+    {{-- Everything below follows the filters and is refreshed in place by the live filter. --}}
+    <div class="live-results" data-live-region="body">
     <div class="row g-3 mb-4">
         {{-- Each status has its colour (same as the sheet): green present, red absent, amber late, blue excused. --}}
         @foreach ([
@@ -232,5 +235,6 @@
                 <div class="px-3 py-2 small text-secondary border-top">Flagged after at least {{ \App\Services\AttendanceStats::MIN_MEETINGS_FOR_ALERT }} recorded meetings.</div>
             </div>
         </div>
+    </div>
     </div>
 </x-app-layout>

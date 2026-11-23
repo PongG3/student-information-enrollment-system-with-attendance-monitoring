@@ -1,23 +1,25 @@
 <x-app-layout title="Available Courses" subtitle="Classes of your program and general subjects offered this term. To add or drop a class, please see the registrar's office.">
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
-                <select name="term" class="form-select" onchange="this.form.submit()" aria-label="Term">
+            {{-- Live: results update as you type (after a short pause) and when the term changes. --}}
+            <form method="GET" action="{{ route('student.courses') }}" class="filter-bar" role="search" aria-label="Search classes" data-live-filter>
+                <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Search subject or schedule code" aria-label="Search subject or schedule code" maxlength="60" autocomplete="off">
+                <select name="term" class="form-select" aria-label="Term" data-live-keep>
                     @foreach ($terms as $option)
                         <option value="{{ $option->id }}" @selected($term && $term->id === $option->id)>
                             {{ $option->name }} · {{ $option->academicYear->name }}{{ $option->is_current ? ' (current)' : '' }}
                         </option>
                     @endforeach
                 </select>
-                <input type="search" name="q" value="{{ $search }}" class="form-control" placeholder="Search subject or schedule code" maxlength="60">
-                <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
-                @if ($search !== '')<a href="{{ route('student.courses', array_filter(['term' => $term?->id])) }}" class="small">Clear</a>@endif
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Search</button></noscript>
+                <span data-live-region="clear">@if ($search !== '')<a href="{{ route('student.courses', array_filter(['term' => $term?->id])) }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear</a>@endif</span>
             </form>
-            @if ($term)
+            <span data-live-region="term-note">@if ($term)
                 <span class="small text-secondary">Enrollment is {{ $term->enrollment_open ? 'open' : 'closed' }} for this term.</span>
-            @endif
+            @endif</span>
         </div>
 
+        <div class="live-results" data-live-region="results">
         @if (! $term)
             <x-empty-state icon="calendar" message="There is no open term right now." />
         @elseif ($classes->isEmpty())
@@ -52,5 +54,6 @@
                 </table>
             </div>
         @endif
+        </div>
     </div>
 </x-app-layout>

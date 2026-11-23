@@ -5,8 +5,9 @@
 
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
-                <select name="year" class="form-select" onchange="this.form.submit()">
+            {{-- Live: choosing a year updates the list in place. --}}
+            <form method="GET" action="{{ route('holidays.index') }}" class="filter-bar" aria-label="Choose a year" data-live-filter>
+                <select name="year" class="form-select" aria-label="Year">
                     @foreach ($years as $y)
                         <option value="{{ $y }}" @selected($y === $year)>{{ $y }}</option>
                     @endforeach
@@ -15,6 +16,7 @@
             </form>
         </div>
 
+        <div class="live-results" data-live-region="results">
         @if ($holidays->isEmpty())
             <x-empty-state icon="calendar" :message="'No non-class days recorded for ' . $year . '.'" />
         @else
@@ -47,6 +49,7 @@
                 </table>
             </div>
         @endif
+        </div>
     </div>
 
     <x-form-modal id="holidayModal" add-title="Add non-class day" edit-title="Edit non-class day"
