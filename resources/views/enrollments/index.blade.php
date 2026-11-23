@@ -25,7 +25,8 @@
     <div class="card-sies">
         {{-- One toolbar: status, then term, program, documents and search. --}}
         <div class="card-header-sies request-toolbar">
-            <ul class="status-tabs" aria-label="Filter by status">
+            {{-- The counts follow the filters, so this list is refreshed by the live filter too. --}}
+            <ul class="status-tabs" aria-label="Filter by status" data-live-region="tabs">
                 @foreach (['all' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'enrolled' => 'Enrolled', 'rejected' => 'Rejected', 'cancelled' => 'Cancelled'] as $value => $label)
                     <li class="nav-item">
                         <a class="nav-link {{ $status === $value ? 'active' : '' }}" @if ($status === $value) aria-current="page" @endif
@@ -35,33 +36,40 @@
                     </li>
                 @endforeach
             </ul>
-            <form method="GET" class="filter-bar">
+            {{-- Live: the list updates as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('enrollments.index') }}" class="filter-bar" role="search" aria-label="Filter enrollment requests" data-live-filter>
                 <input type="hidden" name="status" value="{{ $status }}">
-                <select name="term" class="form-select" aria-label="Term" onchange="this.form.submit()">
+                <select name="term" class="form-select" aria-label="Term" data-live-keep>
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" @selected((string) $termId === (string) $term->id)>
                             {{ $term->name }} · {{ $term->academicYear->name }}{{ $term->is_current ? ' (current)' : '' }}
                         </option>
                     @endforeach
                 </select>
-                <select name="program" class="form-select" aria-label="Program" onchange="this.form.submit()">
+                <select name="program" class="form-select" aria-label="Program">
                     <option value="">All programs</option>
                     @foreach ($programs as $id => $code)
                         <option value="{{ $id }}" @selected((string) request('program') === (string) $id)>{{ $code }}</option>
                     @endforeach
                 </select>
                 @if ($requiredCount > 0)
-                    <input type="checkbox" class="btn-check" name="docs" value="incomplete" id="docsIncomplete" onchange="this.form.submit()" @checked(request('docs') === 'incomplete')>
+                    <input type="checkbox" class="btn-check" name="docs" value="incomplete" id="docsIncomplete" @checked(request('docs') === 'incomplete')>
                     <label class="btn btn-outline-warning btn-sm-sies text-nowrap" for="docsIncomplete">Documents incomplete</label>
                 @endif
-                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Student, class or subject" aria-label="Search student, class or subject">
-                <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
-                @if ($filtering)
-                    <a href="{{ route('enrollments.index', ['term' => $termId, 'status' => $status]) }}" class="small text-nowrap">Clear filters</a>
-                @endif
+                <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Student, class or subject" aria-label="Search student, class or subject"
+                    autocomplete="off" aria-controls="requestResults">
+                {{-- Without JavaScript the button applies the filters; with it, they apply by themselves. --}}
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Search</button></noscript>
+                <span data-live-region="clear">
+                    @if ($filtering)
+                        <a href="{{ route('enrollments.index', ['term' => $termId, 'status' => $status]) }}" class="btn btn-link btn-sm p-0 small text-nowrap" data-live-clear>Clear filters</a>
+                    @endif
+                </span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($students->total()) }} {{ \Illuminate\Support\Str::plural('student', $students->total()) }} found</span>
+        <div id="requestResults" class="live-results" data-live-region="results">
         @if ($groups->isEmpty())
             <x-empty-state icon="clipboard" :message="$filtering ? 'No enrollment requests match.' : ($status === 'pending' ? 'No requests are waiting. Everything is reviewed.' : 'No enrollment requests here.')">
                 <a href="{{ route('enrollments.create') }}" data-dialog data-dialog-size="lg" class="btn btn-navy btn-sm-sies"><x-icon name="plus" :size="14" /> New request</a>
@@ -241,6 +249,7 @@
                 <div class="flex-grow-1"><x-table-footer :items="$students" noun="student" /></div>
             </div>
         @endif
+        </div>
     </div>
 
     <x-reason-modal />

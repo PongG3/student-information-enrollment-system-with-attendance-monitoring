@@ -82,9 +82,10 @@ document.querySelectorAll('form[data-live-filter]').forEach((form) => {
     document.addEventListener('click', (event) => {
         if (!event.target.closest('[data-live-clear]')) return;
         event.preventDefault();
-        form.querySelectorAll('input[type="search"], input[type="text"]').forEach((el) => { el.value = ''; });
-        form.querySelectorAll('select').forEach((el) => { el.selectedIndex = 0; });
-        form.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach((el) => { el.checked = false; });
+        // Fields marked data-live-keep (e.g. the term) are not filters to clear.
+        form.querySelectorAll('input[type="search"]:not([data-live-keep]), input[type="text"]:not([data-live-keep])').forEach((el) => { el.value = ''; });
+        form.querySelectorAll('select:not([data-live-keep])').forEach((el) => { el.selectedIndex = 0; });
+        form.querySelectorAll('input[type="checkbox"]:not([data-live-keep]), input[type="radio"]:not([data-live-keep])').forEach((el) => { el.checked = false; });
         run();
         form.querySelector('input[type="search"]')?.focus();
     });

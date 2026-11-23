@@ -184,6 +184,19 @@ class SystemImprovementsTest extends TestCase
 
     // ---------- Requests grouped by student ----------
 
+    public function test_the_request_filters_apply_live_without_a_search_button(): void
+    {
+        $this->enroll($this->makeStudent('2026-0005', 'Eli'), $this->class, 'pending');
+
+        $this->actingAs($this->registrar)->get(route('enrollments.index'))->assertOk()
+            ->assertSee('data-live-filter', false)
+            ->assertSee('data-live-region="results"', false)
+            ->assertSee('data-live-region="tabs"', false)
+            ->assertSee('name="term" class="form-select" aria-label="Term" data-live-keep', false)   // Clear keeps the term
+            ->assertSee('<noscript><button class="btn btn-outline-secondary btn-sm-sies">Search</button></noscript>', false)
+            ->assertDontSee('onchange="this.form.submit()"', false);
+    }
+
     public function test_requests_are_grouped_by_student_and_the_page_opens_on_pending(): void
     {
         $eli = $this->makeStudent('2026-0005', 'Eli');

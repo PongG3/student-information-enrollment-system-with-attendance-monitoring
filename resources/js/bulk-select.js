@@ -1,7 +1,10 @@
 // Bulk actions on a list ([data-bulk-form]): tick rows, then press one of the bulk buttons.
 // Each ticked item says how many requests it holds (data-bulk-pending / data-bulk-approved), so the
 // buttons only turn on when there is something to approve or enroll, and the count says what will happen.
-document.querySelectorAll('[data-bulk-form]').forEach((form) => {
+// Set up every bulk form on the page that is not set up yet. Runs on load, and again when a live filter
+// replaces the list (the new list brings a new bulk form and new tick boxes).
+const wireBulkForms = () => document.querySelectorAll('[data-bulk-form]:not([data-bulk-wired])').forEach((form) => {
+    form.dataset.bulkWired = '';
     const items = () => [...document.querySelectorAll(`[data-bulk-item][form="${form.id}"]`)];
     const all = form.querySelector('[data-bulk-all]') || document.querySelector('[data-bulk-all]');
     const count = form.querySelector('[data-bulk-count]');
@@ -34,11 +37,17 @@ document.querySelectorAll('[data-bulk-form]').forEach((form) => {
         items().forEach((box) => { box.checked = all.checked; });
         update();
     });
-    document.addEventListener('change', (event) => {
-        if (event.target.matches?.('[data-bulk-item]')) update();
-    });
+    form.bulkUpdate = update;
     update();
 });
+
+// One listener for every tick box, whichever list it came with.
+document.addEventListener('change', (event) => {
+    if (!event.target.matches?.('[data-bulk-item]')) return;
+    document.getElementById(event.target.getAttribute('form'))?.bulkUpdate?.();
+});
+wireBulkForms();
+document.addEventListener('live-filter:updated', wireBulkForms);
 
 // Grouped lists: the arrow beside a student shows or hides their class lines.
 document.addEventListener('click', (event) => {

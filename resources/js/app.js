@@ -404,7 +404,7 @@ document.addEventListener('click', (event) => {
     const label = link.innerHTML;
     link.setAttribute('aria-busy', 'true');
     link.classList.add('is-busy');
-    link.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Preparing…';
+    link.textContent = 'Preparing…';   // the spinner itself comes from .is-busy (one shared style)
     // The page does not change on a download, so put the label back after a few seconds.
     setTimeout(() => { link.innerHTML = label; link.removeAttribute('aria-busy'); link.classList.remove('is-busy'); }, 4000);
 });

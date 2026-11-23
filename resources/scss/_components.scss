@@ -38,12 +38,14 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 }
 // Small row-action buttons in tables and cards.
 .btn-sm-sies { --bs-btn-padding-y: 0.3rem; --bs-btn-padding-x: 0.7rem; --bs-btn-font-size: 0.78rem; --bs-btn-border-radius: #{$radius-sm}; }
-// While a form is being sent: the button shows a spinner and cannot be pressed twice.
-.btn.is-busy { pointer-events: none; opacity: 0.8; }
-.btn.is-busy::before {
-    content: ''; width: 0.9em; height: 0.9em; border-radius: 50%;
+// While something is being sent or prepared: ONE spinner, drawn here for every button and link with .is-busy
+// (forms, downloads, menu items). Nothing else adds its own spinner, so there is never a second one.
+.btn.is-busy, a.is-busy { pointer-events: none; opacity: 0.8; }
+.btn.is-busy::before, a.is-busy::before {
+    content: ''; display: inline-block; flex-shrink: 0; width: 0.9em; height: 0.9em; border-radius: 50%; vertical-align: -0.125em;
     border: 2px solid currentColor; border-right-color: transparent; animation: sies-spin 0.7s linear infinite;
 }
+a.is-busy:not(.btn)::before { margin-right: 0.45em; }   // buttons space it with their own gap
 @keyframes sies-spin { to { transform: rotate(360deg); } }
 
 // ---- Forms ----
@@ -160,7 +162,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 { letter-spacing: -0.01em; 
 .progress { --bs-progress-height: 0.5rem; }
 
 @media (prefers-reduced-motion: reduce) {
-    .btn.is-busy::before, .skeleton { animation: none; }
+    .btn.is-busy::before, a.is-busy::before, .skeleton { animation: none; }
 }
 .min-w-0 { min-width: 0; }
 
