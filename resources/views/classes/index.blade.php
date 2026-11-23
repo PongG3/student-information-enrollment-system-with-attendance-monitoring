@@ -21,8 +21,9 @@
 
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
-                <select name="term" class="form-select" onchange="this.form.submit()">
+            {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('classes.index') }}" class="filter-bar" role="search" aria-label="Filter classes" data-live-filter>
+                <select name="term" class="form-select" aria-label="Term" data-live-keep data-live-reload>
                     @foreach ($terms as $term)
                         <option value="{{ $term->id }}" @selected((string) $termId === (string) $term->id)>
                             {{ $term->name }} · {{ $term->academicYear->name }}{{ $term->is_current ? ' (current)' : '' }}
@@ -36,13 +37,13 @@
                         <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <button class="btn btn-outline-secondary btn-sm-sies">Filter</button>
-                @if (request()->hasAny(['search', 'status']))
-                    <a href="{{ route('classes.index', ['term' => $termId]) }}" class="small">Clear</a>
-                @endif
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Filter</button></noscript>
+                <span data-live-region="clear">@if (request()->hasAny(['search', 'status'])) <a href="{{ route('classes.index', ['term' => $termId]) }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear</a> @endif</span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($classes->total()) }} {{ \Illuminate\Support\Str::plural('class', $classes->total()) }} found</span>
+        <div class="live-results" data-live-region="results">
         @if ($classes->isEmpty())
             <x-empty-state icon="classes" message="No classes found for this term.">
                 @if ($canCopy && ! request()->hasAny(['search', 'status']))
@@ -81,6 +82,7 @@
             </div>
             <x-table-footer :items="$classes" noun="class" />
         @endif
+        </div>
     </div>
 
     @include('classes._add-dialog')

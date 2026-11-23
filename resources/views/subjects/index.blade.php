@@ -5,7 +5,8 @@
 
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
+            {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('subjects.index') }}" class="filter-bar" role="search" aria-label="Filter subjects" data-live-filter>
                 <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search code or title" aria-label="Search code or title">
                 <select name="category" class="form-select" aria-label="Category">
                     <option value="">Major and minor</option>
@@ -13,11 +14,13 @@
                         <option value="{{ $value }}" @selected(request('category') === $value)>{{ $label }} subjects</option>
                     @endforeach
                 </select>
-                <button class="btn btn-outline-secondary btn-sm-sies">Filter</button>
-                @if (request()->hasAny(['search', 'category'])) <a href="{{ route('subjects.index') }}" class="small">Clear</a> @endif
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Filter</button></noscript>
+                <span data-live-region="clear">@if (request()->hasAny(['search', 'category'])) <a href="{{ route('subjects.index') }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear</a> @endif</span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($subjects->total()) }} {{ \Illuminate\Support\Str::plural('subject', $subjects->total()) }} found</span>
+        <div class="live-results" data-live-region="results">
         @if ($subjects->isEmpty())
             @if (request()->hasAny(['search', 'category']))
                 <x-empty-state message="Nothing matches your filters." />
@@ -65,6 +68,7 @@
             </div>
             <x-table-footer :items="$subjects" noun="subject" />
         @endif
+        </div>
     </div>
 
     <x-form-modal id="subjectModal" add-title="Add subject" edit-title="Edit subject"

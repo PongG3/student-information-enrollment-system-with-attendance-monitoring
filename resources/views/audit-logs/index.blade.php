@@ -1,7 +1,8 @@
 <x-app-layout title="Audit Logs" subtitle="A permanent record of important actions. Entries cannot be edited or deleted.">
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
+            {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('audit-logs.index') }}" class="filter-bar" role="search" aria-label="Filter audit logs" data-live-filter>
                 <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search description">
                 <select name="action" class="form-select">
                     <option value="">All actions</option>
@@ -23,13 +24,13 @@
                 </select>
                 <input type="date" name="from" value="{{ request('from') }}" class="form-control" aria-label="From date">
                 <input type="date" name="to" value="{{ request('to') }}" class="form-control" aria-label="To date">
-                <button class="btn btn-outline-secondary btn-sm-sies">Filter</button>
-                @if (request()->hasAny(['search', 'action', 'role', 'user', 'from', 'to']))
-                    <a href="{{ route('audit-logs.index') }}" class="small">Clear</a>
-                @endif
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Filter</button></noscript>
+                <span data-live-region="clear">@if (request()->hasAny(['search', 'action', 'role', 'user', 'from', 'to'])) <a href="{{ route('audit-logs.index') }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear</a> @endif</span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($logs->total()) }} {{ \Illuminate\Support\Str::plural('entry', $logs->total()) }} found</span>
+        <div class="live-results" data-live-region="results">
         @if ($logs->isEmpty())
             <x-empty-state icon="file" message="No log entries match your filters." />
         @else
@@ -67,5 +68,6 @@
             </div>
             <x-table-footer :items="$logs" noun="entry" />
         @endif
+        </div>
     </div>
 </x-app-layout>

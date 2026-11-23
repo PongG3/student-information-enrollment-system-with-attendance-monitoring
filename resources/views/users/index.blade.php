@@ -13,7 +13,8 @@
 
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
+            {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('users.index') }}" class="filter-bar" role="search" aria-label="Filter users" data-live-filter>
                 <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search name or email">
                 <select name="role" class="form-select">
                     <option value="">All roles</option>
@@ -26,13 +27,13 @@
                     <option value="active" @selected(request('status') === 'active')>Active</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Inactive</option>
                 </select>
-                <button class="btn btn-outline-secondary btn-sm-sies">Filter</button>
-                @if (request()->hasAny(['search', 'role', 'status']))
-                    <a href="{{ route('users.index') }}" class="small">Clear</a>
-                @endif
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Filter</button></noscript>
+                <span data-live-region="clear">@if (request()->hasAny(['search', 'role', 'status'])) <a href="{{ route('users.index') }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear</a> @endif</span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($users->total()) }} {{ \Illuminate\Support\Str::plural('user', $users->total()) }} found</span>
+        <div class="live-results" data-live-region="results">
         @if ($users->isEmpty())
             <x-empty-state icon="user" message="No users match your filters." />
         @else
@@ -76,5 +77,6 @@
             </div>
             <x-table-footer :items="$users" noun="user" />
         @endif
+        </div>
     </div>
 </x-app-layout>

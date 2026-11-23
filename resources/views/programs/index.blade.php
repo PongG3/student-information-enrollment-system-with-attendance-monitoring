@@ -5,13 +5,16 @@
 
     <div class="card-sies">
         <div class="card-header-sies">
-            <form method="GET" class="filter-bar">
+            {{-- Live: results update as you type (after a short pause) and when any filter changes. --}}
+            <form method="GET" action="{{ route('programs.index') }}" class="filter-bar" role="search" aria-label="Search programs" data-live-filter>
                 <input type="search" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search code or name">
-                <button class="btn btn-outline-secondary btn-sm-sies">Search</button>
-                @if (request('search')) <a href="{{ route('programs.index') }}" class="small">Clear</a> @endif
+                <noscript><button class="btn btn-outline-secondary btn-sm-sies">Search</button></noscript>
+                <span data-live-region="clear">@if (request('search')) <a href="{{ route('programs.index') }}" class="btn btn-link btn-sm p-0 small" data-live-clear>Clear</a> @endif</span>
             </form>
         </div>
 
+        <span class="visually-hidden" data-live-region="status" aria-live="polite">{{ number_format($programs->total()) }} {{ \Illuminate\Support\Str::plural('program', $programs->total()) }} found</span>
+        <div class="live-results" data-live-region="results">
         @if ($programs->isEmpty())
             @if (request('search'))
                 <x-empty-state message="Nothing matches your search." />
@@ -45,6 +48,7 @@
             </div>
             <x-table-footer :items="$programs" noun="program" />
         @endif
+        </div>
     </div>
 
     <x-form-modal id="programModal" add-title="Add program" edit-title="Edit program"

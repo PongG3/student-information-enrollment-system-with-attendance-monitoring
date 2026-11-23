@@ -26,7 +26,9 @@ document.querySelectorAll('form[data-live-filter]').forEach((form) => {
     const run = async () => {
         clearTimeout(timer);
         const qs = query();
-        const url = form.action.split('?')[0] + (qs ? `?${qs}` : '');
+        // Read the address from the attribute: a field named "action" (audit logs) would hide form.action.
+        const base = new URL(form.getAttribute('action') || location.href, location.href);
+        const url = base.origin + base.pathname + (qs ? `?${qs}` : '');
 
         controller?.abort();
         controller = new AbortController();
@@ -71,6 +73,13 @@ document.querySelectorAll('form[data-live-filter]').forEach((form) => {
         if (event.target.matches('input[type="search"], input[type="text"]')) later();
     });
     form.addEventListener('change', (event) => {
+        // A field marked data-live-reload (e.g. the term on Class Management) changes the whole page: reload it.
+        if (event.target.matches('[data-live-reload]')) {
+            clearTimeout(timer);
+            controller?.abort();
+            HTMLFormElement.prototype.submit.call(form);
+            return;
+        }
         if (event.target.matches('select, input[type="checkbox"], input[type="radio"], input[type="date"]')) run();
     });
     // Enter (or the button) applies at once instead of reloading the page.
@@ -83,7 +92,7 @@ document.querySelectorAll('form[data-live-filter]').forEach((form) => {
         if (!event.target.closest('[data-live-clear]')) return;
         event.preventDefault();
         // Fields marked data-live-keep (e.g. the term) are not filters to clear.
-        form.querySelectorAll('input[type="search"]:not([data-live-keep]), input[type="text"]:not([data-live-keep])').forEach((el) => { el.value = ''; });
+        form.querySelectorAll('input[type="search"]:not([data-live-keep]), input[type="text"]:not([data-live-keep]), input[type="date"]:not([data-live-keep])').forEach((el) => { el.value = ''; });
         form.querySelectorAll('select:not([data-live-keep])').forEach((el) => { el.selectedIndex = 0; });
         form.querySelectorAll('input[type="checkbox"]:not([data-live-keep]), input[type="radio"]:not([data-live-keep])').forEach((el) => { el.checked = false; });
         run();
