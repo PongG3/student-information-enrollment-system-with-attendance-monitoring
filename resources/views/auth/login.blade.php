@@ -24,7 +24,10 @@
         </div>
 
         <div class="mb-4">
-            <label for="password" class="form-label fw-semibold small">Password</label>
+            <div class="d-flex justify-content-between align-items-baseline">
+                <label for="password" class="form-label fw-semibold small">Password</label>
+                <a href="{{ route('password.request') }}" class="small fw-semibold text-decoration-none">Forgot password?</a>
+            </div>
             {{-- The eye sits inside the field's right edge; the label already says what to type. --}}
             <div class="password-field">
                 <input id="password" type="password" name="password"
@@ -42,7 +45,7 @@
         <button type="submit" class="btn btn-navy w-100">Sign in to portal</button>
 
         <p class="text-center text-secondary small mt-4 mb-0">
-            Forgot your password? Ask the registrar or an administrator to reset it.
+            No access to your email? Ask the registrar or an administrator to reset your password.
         </p>
     </form>
 

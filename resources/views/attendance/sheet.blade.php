@@ -85,7 +85,10 @@
                         @if ($editable && $students->isNotEmpty())
                             <div class="d-flex flex-wrap gap-2">
                                 <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="present">Mark everyone present</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="absent" data-mark-confirm="Mark every student absent? You can still change any of them before saving.">Mark everyone absent</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm-sies" data-mark-all="absent"
+                                    data-mark-title="Mark everyone absent?"
+                                    data-mark-confirm="All {{ $students->count() }} {{ \Illuminate\Support\Str::plural('student', $students->count()) }} will be set to Absent. You can still change any of them before saving."
+                                    data-mark-button="Mark all absent">Mark everyone absent</button>
                             </div>
                         @endif
                     </div>

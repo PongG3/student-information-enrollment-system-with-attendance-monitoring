@@ -103,6 +103,12 @@ class UserController extends Controller
         $data['email'] = strtolower($data['email']);
         $user->forceFill($data)->save();
 
+        // A student's sign-in email is also the email on their record: keep them the same.
+        if ($user->role === 'student' && $user->wasChanged('email')) {
+            \App\Models\Student::withTrashed()->where('user_id', $user->id)->first()
+                ?->forceFill(['email' => $user->email, 'pending_email' => null, 'pending_email_at' => null])->save();
+        }
+
         // A changed email or role takes effect at the next sign-in, on every device.
         if ($user->wasChanged(['email', 'role']) && ! $user->is($request->user())) {
             $this->endSessions($user);

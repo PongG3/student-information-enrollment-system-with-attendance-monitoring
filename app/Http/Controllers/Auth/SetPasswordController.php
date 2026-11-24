@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\Notify;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -31,14 +32,20 @@ class SetPasswordController extends Controller
             'password' => ['required', 'confirmed', Password::min(12)->letters()->mixedCase()->numbers()],
         ]);
 
-        $user->forceFill(['password' => Hash::make($data['password']), 'must_change_password' => false])->save();
+        $user->forceFill(['password' => Hash::make($data['password']), 'must_change_password' => false, 'remember_token' => null])->save();
         AuditLogger::log('password.set_by_link', $user, "{$user->name} chose a password from the emailed link");
+
+        // Anyone still signed in with the old password is signed out, and the owner is told it changed.
+        if (config('session.driver') === 'database') {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+        \Illuminate\Support\defer(fn () => Notify::passwordChanged($user));
 
         return redirect()->route('login')->with('status', 'Your password is set. Sign in with it.');
     }
 
     private function check(Request $request, User $user): void
     {
-        abort_unless($user->is_active && hash_equals(Notify::fingerprint($user), (string) $request->query('v')), 403, 'This link has already been used or is no longer valid. Ask the registrar for a new one.');
+        abort_unless($user->is_active && hash_equals(Notify::fingerprint($user), (string) $request->query('v')), 403, 'This link has already been used or is no longer valid. Use "Forgot password?" on the sign-in page for a new one, or ask the registrar.');
     }
 }

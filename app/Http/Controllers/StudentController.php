@@ -153,6 +153,11 @@ class StudentController extends Controller
             $student->update($data);
             $student->guardians()->delete();
             $student->guardians()->createMany($guardians);
+
+            // One email per student: the record's email is also the portal sign-in email.
+            if ($student->user_id && ! empty($data['email'])) {
+                \App\Support\StudentEmail::sync($student->fresh('user'), $data['email']);
+            }
         });
 
         if ($request->hasFile('photo') && $oldPhoto) {
@@ -307,7 +312,12 @@ class StudentController extends Controller
             'birth_date' => ['required', 'date', 'before:today', 'after:1900-01-01'],
             'address' => ['nullable', 'string', 'max:500'],
             'contact_number' => ['nullable', 'regex:/^[0-9+\-\s()]{7,20}$/'],
-            'email' => ['nullable', 'email', 'max:255'],
+            // With a portal account this is also the sign-in email, so no other account may use it.
+            'email' => ['nullable', 'email', 'max:255', function ($attribute, $value, $fail) use ($student) {
+                if ($student && $student->user_id && $value && ! \App\Support\StudentEmail::available($value, $student)) {
+                    $fail('Another account already uses this email.');
+                }
+            }],
             'program_id' => ['required', Rule::exists('programs', 'id')->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $student?->program_id))],
             'year_level' => ['required', 'integer', 'between:1,6'],
             'section' => ['nullable', 'string', 'max:20', 'regex:/^[\pL0-9]+([ \-][\pL0-9]+)*$/u'],

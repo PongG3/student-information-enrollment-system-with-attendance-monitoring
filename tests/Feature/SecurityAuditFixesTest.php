@@ -102,8 +102,10 @@ class SecurityAuditFixesTest extends TestCase
         $user = $this->makeUser('teacher');
         $url = \App\Support\Notify::setPasswordUrl($user);
 
-        $this->get($url . 'x')->assertForbidden();
-        $this->get(route('password.set', $user) . '?v=' . \App\Support\Notify::fingerprint($user))->assertForbidden();
+        // Refused, and sent to "Forgot password" to ask for a fresh link (no password page is shown).
+        $this->get($url . 'x')->assertRedirect(route('password.request'))->assertSessionHasErrors('email');
+        $this->get(route('password.set', $user) . '?v=' . \App\Support\Notify::fingerprint($user))
+            ->assertRedirect(route('password.request'))->assertSessionHasErrors('email');
     }
 
     public function test_a_dropped_student_stays_on_sheets_from_before_the_drop(): void

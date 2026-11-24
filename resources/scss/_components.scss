@@ -120,6 +120,23 @@ a.is-busy:not(.btn)::before { margin-right: 0.45em; }   // buttons space it with
 .toast-sies {
     background: $surface; color: $text; border: 1px solid $border; border-left: 4px solid var(--toast-accent);
     border-radius: $radius; box-shadow: $shadow; min-width: 300px; max-width: 420px;
+    position: relative; overflow: hidden;
+}
+// Slides in from the right and back out (Bootstrap adds .showing while a toast appears and while it hides).
+.toast-sies.fade { transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.toast-sies.showing { transform: translateX(calc(100% + 1.5rem)); }
+// A thin bar along the bottom counts down the 5 seconds; it stops while the pointer is on the toast.
+.toast-sies::after {
+    content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+    background: var(--toast-accent); opacity: 0.45; transform-origin: left;
+}
+.toast-sies.is-timing::after { animation: toast-countdown var(--toast-delay, 5000ms) linear forwards; }
+.toast-sies:hover::after, .toast-sies:focus-within::after { animation-play-state: paused; }
+@keyframes toast-countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) {
+    .toast-sies.fade { transition: opacity 0.2s linear; }
+    .toast-sies.showing { transform: none; }
+    .toast-sies.is-timing::after { animation: none; }
 }
 .toast-sies .toast-body { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.8rem 0.9rem; font-size: 0.86rem; }
 .toast-sies .toast-icon { color: var(--toast-accent); flex: none; margin-top: 0.05rem; }

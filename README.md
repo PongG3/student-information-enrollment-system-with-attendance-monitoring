@@ -223,6 +223,8 @@ docs/                 ERD, deployment, backup and email guides
 ## Security and data privacy
 
 - **Passwords and accounts:** passwords are hashed, sign-in attempts are rate-limited, and inactive accounts are signed out at once. New accounts and password resets use a one-time "choose my password" link instead of emailing a password.
+- **Forgot password:** students enter their student number (teachers and staff their email); the link goes to the email on the account, works once and expires in 60 minutes.
+- **One email per student:** the profile email is also the sign-in email. A new email only takes effect after the student opens a confirmation link sent to it, and the old address is told. The page never reveals whether an account exists, requests are rate-limited, and after a reset the user is signed out everywhere else and emailed that the password changed.
 - **Access:** every page checks the role on the server, and teachers and students only reach their own records.
 - **Files:** uploads are checked by their content, stored privately, and served only to the people allowed to see them.
 - **Data Privacy Act of 2012 (RA 10173):** a privacy notice, consent recorded on each student, a staff privacy policy that staff agree to, a breach register with the 72-hour deadline, and a "download my data" PDF.

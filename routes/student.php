@@ -25,6 +25,7 @@ Route::middleware(['auth', 'role:student', StudentPortal::class])
 
         // Self-service: contact details change at once; a new photo waits for the registrar.
         Route::put('profile/contact', [StudentSelfServiceController::class, 'updateContact'])->middleware('throttle:20,1')->name('profile.contact');
+        Route::delete('profile/email', [StudentSelfServiceController::class, 'cancelEmail'])->name('profile.email.cancel');
         Route::post('profile/photo', [StudentSelfServiceController::class, 'uploadPhoto'])->middleware('throttle:10,1')->name('profile.photo');
         Route::delete('profile/photo', [StudentSelfServiceController::class, 'cancelPhoto'])->name('profile.photo.cancel');
         Route::get('photo', [StudentSelfServiceController::class, 'photo'])->name('photo');
@@ -44,3 +45,7 @@ Route::get('requirement-files/{studentRequirement}/view', [RequirementUploadCont
 // An excuse letter's attached file: its student, the class's teacher, the registrar and administrators.
 Route::get('excuse-letters/{excuse}/file', [AbsenceExcuseController::class, 'file'])
     ->middleware(['auth', 'role:admin,registrar,teacher,student'])->whereNumber('excuse')->name('excuses.file');
+
+// "Confirm your new email" link: signed, tied to the requested address, works signed in or not.
+Route::get('student/email/confirm/{student}', [StudentSelfServiceController::class, 'confirmEmail'])
+    ->middleware(['signed', 'throttle:10,1'])->whereNumber('student')->name('student.email.confirm');

@@ -433,9 +433,12 @@ class SystemImprovementsTest extends TestCase
             'email' => 'ana.new@example.com', 'contact_number' => '0917 555 1234', 'address' => 'Imus, Cavite',
             // Not allowed to change these: ignored.
             'last_name' => 'Hacker', 'program_id' => 999, 'birth_date' => '2000-01-01',
-        ])->assertRedirect(route('student.profile'))->assertSessionHas('success', 'Contact details saved.');
+        ])->assertRedirect(route('student.profile'))
+            // The new email is the sign-in email, so it waits for confirmation from that inbox (StudentEmailTest).
+            ->assertSessionHas('success', 'Contact details saved. We sent a confirmation link to ana.new@example.com. Your email changes when you open it.');
 
         $ana = $this->ana->fresh();
+        $this->assertSame('ana.new@example.com', $ana->pending_email);
         $this->assertSame('0917 555 1234', $ana->contact_number);
         $this->assertSame('Imus, Cavite', $ana->address);
         $this->assertSame('Tester', $ana->last_name);
@@ -567,6 +570,7 @@ class SystemImprovementsTest extends TestCase
             $this->assertFileDoesNotExist(app_path("Http/Controllers/Auth/{$controller}.php"));
         }
         $this->get('/register')->assertNotFound();
-        $this->get('/forgot-password')->assertNotFound();
+        // The old Breeze reset code is gone; "Forgot password" is now the system's own (ForgotPasswordController).
+        $this->get('/forgot-password')->assertOk()->assertSee('Student number');
     }
 }

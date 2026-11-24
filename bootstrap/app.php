@@ -52,6 +52,15 @@ return Application::configure(basePath: dirname(__DIR__))
         };
 
         $exceptions->render(fn (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) => $expired($e, $request));
+
+        // An emailed "choose a password" link that expired or was changed: offer a new one instead of a bare 403.
+        $exceptions->render(function (\Illuminate\Routing\Exceptions\InvalidSignatureException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson() || ! $request->routeIs('password.set', 'password.set.update')) {
+                return null;
+            }
+
+            return redirect()->route('password.request')->withErrors(['email' => 'That link has expired or is not valid any more. Enter your details to get a new one.']);
+        });
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, \Illuminate\Http\Request $request) use ($expired) {
             return $e->getStatusCode() === 419 ? $expired($e, $request) : null;
         });

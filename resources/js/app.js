@@ -7,6 +7,38 @@ import './live-filter.js';
 
 window.bootstrap = bootstrap;
 
+// Ask before an action done on the page itself (no form to send), in the system's own confirmation window
+// (#confirmModal, the one Restore and Verify use) instead of the browser's plain pop-up.
+// Resolves true for the confirm button, false for Cancel, Esc or a click outside.
+window.siesConfirm = ({ title = 'Are you sure?', message = '', button = 'Confirm', variant = 'warning' } = {}) => new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    if (!modal) { resolve(true); return; }
+    const form = modal.querySelector('form');
+    const submit = modal.querySelector('[data-confirm-submit]');
+    const danger = variant === 'danger';
+
+    modal.querySelector('[data-confirm-title]').textContent = title;
+    modal.querySelector('[data-confirm-message]').textContent = message;
+    submit.textContent = button;
+    submit.className = 'btn flex-fill ' + (danger ? 'btn-danger' : 'btn-navy');
+    modal.querySelector('[data-confirm-icon]').className = 'dialog-icon ' + (danger ? 'is-danger' : 'is-warning');
+
+    let answer = false;
+    // The confirm button only closes the window here; nothing is sent to the server.
+    const onSubmit = (event) => {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        answer = true;
+        bootstrap.Modal.getInstance(modal)?.hide();
+    };
+    form.addEventListener('submit', onSubmit, true);
+    modal.addEventListener('hidden.bs.modal', () => {
+        form.removeEventListener('submit', onSubmit, true);
+        resolve(answer);
+    }, { once: true });
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Charts load only on pages that contain one.
     if (document.querySelector('canvas[data-chart]')) {
@@ -70,8 +102,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMenu(); });
     document.querySelectorAll('.sidebar .nav-link').forEach((link) => link.addEventListener('click', closeMenu));
 
-    // Toast notifications appear automatically.
-    document.querySelectorAll('.toast').forEach((el) => bootstrap.Toast.getOrCreateInstance(el).show());
+    // Toast notifications: slide in, close by themselves after 5 seconds (data-bs-delay), and slide out.
+    // The bottom bar shows the time left. Bootstrap pauses the timer while the pointer is on a toast and starts
+    // the full 5 seconds again when it leaves, so the bar starts again too.
+    document.querySelectorAll('.toast').forEach((el) => {
+        el.style.setProperty('--toast-delay', `${Number(el.dataset.bsDelay || 5000)}ms`);
+        const restartBar = () => { el.classList.remove('is-timing'); void el.offsetWidth; el.classList.add('is-timing'); };
+        el.addEventListener('shown.bs.toast', restartBar);
+        el.addEventListener('mouseleave', restartBar);
+        el.addEventListener('focusout', restartBar);
+        bootstrap.Toast.getOrCreateInstance(el).show();
+    });
 
     // Every form that saves something (POST/PUT/DELETE) can only be sent once: a second press is
     // ignored and the pressed button shows a spinner. Search/filter (GET) forms and forms that open
@@ -138,9 +179,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 dirty = true;
             }
         });
-        sheet.querySelectorAll('[data-mark-all]').forEach((button) => button.addEventListener('click', () => {
+        sheet.querySelectorAll('[data-mark-all]').forEach((button) => button.addEventListener('click', async () => {
             const message = button.dataset.markConfirm;
-            if (message && !window.confirm(message)) return;
+            if (message && !(await window.siesConfirm({
+                title: button.dataset.markTitle || 'Are you sure?',
+                message,
+                button: button.dataset.markButton || 'Confirm',
+                variant: 'danger',
+            }))) return;
             sheet.querySelectorAll(`input[type="radio"][value="${button.dataset.markAll}"]`).forEach((r) => {
                 r.checked = true;
                 const row = r.closest('[data-student-row]');

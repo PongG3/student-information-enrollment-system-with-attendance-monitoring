@@ -41,7 +41,8 @@ class StudentAccountController extends Controller
                 'email_verified_at' => now(),
             ])->save();
 
-            $student->forceFill(['user_id' => $user->id])->save();
+            // One email per student: the record takes the sign-in email too.
+            $student->forceFill(['user_id' => $user->id, 'email' => $user->email, 'pending_email' => null, 'pending_email_at' => null])->save();
 
             return $user;
         });

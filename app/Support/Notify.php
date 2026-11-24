@@ -53,10 +53,38 @@ class Notify
         ));
     }
 
-    /** A signed link tied to the password the account has now, so it stops working once the password changes. */
-    public static function setPasswordUrl(User $user): string
+    /** "Forgot password": a link good for one hour and one use. */
+    public static function passwordResetLink(User $user): void
     {
-        return URL::temporarySignedRoute('password.set', now()->addDays(3), [
+        self::user($user, new Notice(
+            'Reset your password',
+            [
+                'Someone asked to reset the password of your SIES Campus Portal account. If it was you, use the button below.',
+                'The link works once and expires in 60 minutes.',
+                'If you did not ask for this, ignore this email: your password stays the same. Tell the registrar\'s office if it keeps happening.',
+            ],
+            'Choose a new password', self::setPasswordUrl($user, 60),
+        ));
+    }
+
+    /** After any password change by link: so the owner notices a change they did not make. */
+    public static function passwordChanged(User $user): void
+    {
+        self::user($user, new Notice(
+            'Your password was changed',
+            [
+                'The password of your SIES Campus Portal account was just changed, and you were signed out on your other devices.',
+                'If this was you, there is nothing to do.',
+                'If it was not you, contact the registrar\'s office right away so they can lock the account.',
+            ],
+            'Sign in', route('login'),
+        ));
+    }
+
+    /** A signed link tied to the password the account has now, so it stops working once the password changes. */
+    public static function setPasswordUrl(User $user, int $minutes = 60 * 24 * 3): string
+    {
+        return URL::temporarySignedRoute('password.set', now()->addMinutes($minutes), [
             'user' => $user->id,
             'v' => self::fingerprint($user),
         ]);

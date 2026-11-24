@@ -18,7 +18,7 @@
                 ['Previous school', $student->previous_school ?: '—', true],
             ]],
             ['Contact details', false, [
-                ['Email', $student->email ?: '—', false],
+                ['Email (sign-in)', $student->user?->email ?? ($student->email ?: '—'), true],
                 ['Contact number', $student->contact_number ?: '—', false],
                 ['Address', $student->address ?: '—', true],
             ]],
@@ -59,6 +59,17 @@
                         @error('file')<div class="small mt-1 text-danger">{{ $message }}</div>@enderror
                     </div>
                 </div>
+
+                @if ($student->pending_email)
+                    {{-- A requested email waits for the student to open the link sent to it. --}}
+                    <div class="alert alert-info small py-2 mt-3 mb-0 d-flex flex-wrap align-items-center gap-2">
+                        <span>Waiting for you to confirm <strong>{{ $student->pending_email }}</strong>: open the link we emailed there (check spam). Until then you keep using your current email.</span>
+                        <form method="POST" action="{{ route('student.profile.email.cancel') }}" class="ms-auto">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-link btn-sm p-0">Cancel the change</button>
+                        </form>
+                    </div>
+                @endif
 
                 @foreach ($groups as [$heading, $locked, $fields])
                     <section class="profile-group" aria-label="{{ $heading }}">
@@ -220,8 +231,9 @@
                 </div>
                 <div class="modal-body">
                     <label class="form-label" for="contactEmail">Email</label>
-                    <input type="email" name="email" id="contactEmail" maxlength="255" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $student->email) }}">
+                    <input type="email" name="email" id="contactEmail" maxlength="255" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $student->user?->email ?? $student->email) }}" autocomplete="email">
                     @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">You sign in with this email, and portal messages and password-reset links go here. A new email starts working after you open the confirmation link we send to it.</div>
 
                     <label class="form-label mt-3" for="contactNumber">Contact number</label>
                     <input type="tel" name="contact_number" id="contactNumber" maxlength="20" class="form-control @error('contact_number') is-invalid @enderror" value="{{ old('contact_number', $student->contact_number) }}" placeholder="e.g. 0917 123 4567">

@@ -16,9 +16,9 @@ class ExampleTest extends TestCase
         $this->get('/login')->assertOk();
     }
 
-    public function test_public_registration_and_email_reset_do_not_exist(): void
+    public function test_public_registration_does_not_exist_but_forgot_password_does(): void
     {
         $this->get('/register')->assertNotFound();
-        $this->get('/forgot-password')->assertNotFound();
+        $this->get('/forgot-password')->assertOk();
     }
 }

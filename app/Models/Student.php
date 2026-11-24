@@ -31,7 +31,7 @@ class Student extends Model
 
     protected function casts(): array
     {
-        return ['birth_date' => 'date', 'privacy_consent_at' => 'datetime', 'pending_photo_at' => 'datetime', 'photo_rejected_at' => 'datetime'];
+        return ['birth_date' => 'date', 'privacy_consent_at' => 'datetime', 'pending_photo_at' => 'datetime', 'photo_rejected_at' => 'datetime', 'pending_email_at' => 'datetime'];
     }
 
     /** "Last, First Middle Suffix" */

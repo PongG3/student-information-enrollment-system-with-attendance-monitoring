@@ -12,7 +12,7 @@
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
         @foreach ($toasts as $key => [$variant, $icon])
             <div class="toast toast-sies is-{{ $variant }}" role="{{ $variant === 'danger' ? 'alert' : 'status' }}"
-                 aria-live="{{ $variant === 'danger' ? 'assertive' : 'polite' }}" aria-atomic="true" data-bs-delay="{{ $variant === 'danger' ? 9000 : 6000 }}">
+                 aria-live="{{ $variant === 'danger' ? 'assertive' : 'polite' }}" aria-atomic="true" data-bs-delay="5000">
                 <div class="toast-body">
                     <span class="toast-icon" aria-hidden="true"><x-icon :name="$icon" :size="18" /></span>
                     <div class="flex-grow-1">{{ session($key) }}</div>
