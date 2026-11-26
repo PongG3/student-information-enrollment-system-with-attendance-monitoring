@@ -324,6 +324,42 @@ class SystemImprovementsTest extends TestCase
 
     // ---------- Excuse letters ----------
 
+    public function test_the_teacher_is_notified_of_each_student_who_sent_an_excuse_letter(): void
+    {
+        $letter = fn (Student $student, ClassOffering $class, string $date) => AbsenceExcuse::create([
+            'student_id' => $student->id, 'class_offering_id' => $class->id, 'date' => $date,
+            'reason' => 'I was sick with the flu.', 'status' => AbsenceExcuse::STATUS_PENDING,
+        ]);
+
+        // One letter covering three meetings of the same class is one line.
+        foreach (['2026-11-04', '2026-11-05', '2026-11-06'] as $date) {
+            $letter($this->ana, $this->class, $date);
+        }
+        $items = \App\Services\DashboardAttention::items($this->teacher, $this->class->term, ['expected' => 0, 'recorded' => 0], null);
+        $lines = collect($items)->filter(fn ($item) => str_contains($item['label'], 'excuse letter'))->values();
+        $this->assertCount(1, $lines);
+        $this->assertSame('Ana Tester sent an excuse letter for CS101 (3 meetings from Nov 4)', $lines[0]['label']);
+        $this->assertSame(3, $lines[0]['count']);
+        $this->assertStringContainsString('date=2026-11-04', $lines[0]['url']);
+
+        // Past a few students, the oldest are summed up in one line (Ana's three meetings plus one other letter).
+        AbsenceExcuse::query()->update(['created_at' => now()->subDay()]);
+        foreach (range(2, 7) as $n) {
+            $letter($this->makeStudent("2026-01{$n}0", "Student{$n}"), $this->class, '2026-11-04');
+        }
+        $items = \App\Services\DashboardAttention::items($this->teacher, $this->class->term, ['expected' => 0, 'recorded' => 0], null);
+        $lines = collect($items)->filter(fn ($item) => str_contains($item['label'], 'excuse letter'))->values();
+        $this->assertCount(\App\Services\DashboardAttention::LETTERS_LISTED + 1, $lines);
+        $this->assertFalse($lines->take(\App\Services\DashboardAttention::LETTERS_LISTED)->contains(fn ($item) => str_contains($item['label'], 'Ana')));
+        $this->assertSame('more excuse letters are waiting for your decision', $lines->last()['label']);
+        $this->assertSame(4, $lines->last()['count']);   // shown as the number beside the line
+
+        // Once decided, the letter leaves the list.
+        AbsenceExcuse::query()->update(['status' => AbsenceExcuse::STATUS_ACCEPTED]);
+        $items = \App\Services\DashboardAttention::items($this->teacher, $this->class->term, ['expected' => 0, 'recorded' => 0], null);
+        $this->assertFalse(collect($items)->contains(fn ($item) => str_contains($item['label'], 'excuse letter')));
+    }
+
     public function test_a_student_sends_an_excuse_letter_and_the_teacher_accepts_it_on_the_sheet(): void
     {
         Storage::fake('local');
@@ -342,7 +378,8 @@ class SystemImprovementsTest extends TestCase
         Storage::disk('local')->assertExists($excuse->file_path);
 
         // The teacher is told, and sees the letter on that day's sheet.
-        $this->actingAs($this->teacher)->get(route('teacher.dashboard'))->assertSee('excuse letter is waiting for your decision');
+        $this->actingAs($this->teacher)->get(route('teacher.dashboard'))->assertSee('Ana Tester sent an excuse letter for CS101 (Nov 4)');
+        $this->actingAs($this->otherTeacher)->get(route('teacher.dashboard'))->assertDontSee('sent an excuse letter');
         $this->actingAs($this->teacher)->get(route('attendance.sheet', ['class_offering' => $this->class->id, 'date' => '2026-11-04']))->assertOk()
             ->assertSee('I had a fever and saw a doctor.')->assertSee('View file')->assertSee('1 excuse letter waiting.');
         $this->actingAs($this->teacher)->get(route('excuses.file', $excuse))->assertOk();

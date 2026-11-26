@@ -9,6 +9,9 @@ use App\Models\User;
 /** The "Needs attention" list on the dashboards: only things that actually need someone to act. */
 class DashboardAttention
 {
+    /** Excuse letters named one by one in a teacher's notifications; any more are summed up in one line. */
+    public const LETTERS_LISTED = 5;
+
     /**
      * @param  array  $today     DashboardStats::today() result
      * @param  array|null  $overview  DashboardStats::overview() result (admin and registrar only)
@@ -58,17 +61,38 @@ class DashboardAttention
             }
         }
 
-        // Excuse letters waiting for the teacher's decision (made on that day's sheet).
+        // Excuse letters waiting for the teacher's decision (made on that day's sheet): one line per student and
+        // class, newest first, naming who sent it, so the teacher sees at once that a student sent a letter.
+        // A letter covering several days of the same class is one line. Beyond a few, the rest are summed up.
         if ($term && $isTeacher) {
-            $waiting = AbsenceExcuse::where('status', AbsenceExcuse::STATUS_PENDING)
+            $letters = AbsenceExcuse::with(['student:id,first_name,last_name', 'classOffering.subject:id,code'])
+                ->where('status', AbsenceExcuse::STATUS_PENDING)
                 ->whereHas('classOffering', fn ($q) => $q->where('term_id', $term->id)->where('teacher_id', $user->id))
-                ->orderBy('date')->get(['class_offering_id', 'date']);
-            if ($waiting->isNotEmpty()) {
-                $first = $waiting->first();
+                ->orderBy('date')->get()
+                ->groupBy(fn ($letter) => $letter->student_id . '|' . $letter->class_offering_id)
+                ->sortByDesc(fn ($group) => $group->max('created_at'))
+                ->values();
+
+            foreach ($letters->take(self::LETTERS_LISTED) as $group) {
+                $first = $group->first();
+                $meetings = $group->count();
+                $when = $meetings === 1 ? $first->date->format('M j') : "{$meetings} meetings from " . $first->date->format('M j');
                 $items[] = [
-                    'count' => $waiting->count(),
-                    'label' => trans_choice('{1} excuse letter is waiting for your decision|[2,*] excuse letters are waiting for your decision', $waiting->count()),
+                    'count' => $meetings,
+                    'label' => "{$first->student->first_name} {$first->student->last_name} sent an excuse letter for {$first->classOffering->subject->code} ({$when})",
                     'url' => route('attendance.sheet', ['class_offering' => $first->class_offering_id, 'date' => $first->date->toDateString()]),
+                    'tone' => 'info',
+                ];
+            }
+
+            $rest = $letters->slice(self::LETTERS_LISTED);
+            if ($rest->isNotEmpty()) {
+                $count = $rest->sum(fn ($group) => $group->count());
+                $oldest = $rest->flatten()->sortBy('date')->first();
+                $items[] = [
+                    'count' => $count,
+                    'label' => trans_choice('{1} more excuse letter is waiting for your decision|[2,*] more excuse letters are waiting for your decision', $count),
+                    'url' => route('attendance.sheet', ['class_offering' => $oldest->class_offering_id, 'date' => $oldest->date->toDateString()]),
                     'tone' => 'info',
                 ];
             }
