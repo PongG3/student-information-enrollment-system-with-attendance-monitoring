@@ -103,15 +103,36 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.sidebar .nav-link').forEach((link) => link.addEventListener('click', closeMenu));
 
     // Toast notifications: slide in, close by themselves after 5 seconds (data-bs-delay), and slide out.
-    // The bottom bar shows the time left. Bootstrap pauses the timer while the pointer is on a toast and starts
-    // the full 5 seconds again when it leaves, so the bar starts again too.
+    // The bottom bar shows the time left. Pointing at a toast (or focusing its close button) pauses the timer,
+    // and leaving it carries on with the time that was left, not the full 5 seconds again. The CSS pauses the bar
+    // the same way. We keep our own timer because Bootstrap's restarts from the full delay.
     document.querySelectorAll('.toast').forEach((el) => {
-        el.style.setProperty('--toast-delay', `${Number(el.dataset.bsDelay || 5000)}ms`);
-        const restartBar = () => { el.classList.remove('is-timing'); void el.offsetWidth; el.classList.add('is-timing'); };
-        el.addEventListener('shown.bs.toast', restartBar);
-        el.addEventListener('mouseleave', restartBar);
-        el.addEventListener('focusout', restartBar);
-        bootstrap.Toast.getOrCreateInstance(el).show();
+        const delay = Number(el.dataset.bsDelay || 5000);
+        el.style.setProperty('--toast-delay', `${delay}ms`);
+        const toast = bootstrap.Toast.getOrCreateInstance(el, { autohide: false });
+        let remaining = delay;
+        let startedAt = 0;
+        let timer = null;
+        const resume = () => {
+            if (timer || ! el.classList.contains('is-timing')) return;
+            startedAt = Date.now();
+            timer = setTimeout(() => toast.hide(), Math.max(remaining, 0));
+        };
+        const pause = () => {
+            if (! timer) return;
+            clearTimeout(timer);
+            timer = null;
+            remaining -= Date.now() - startedAt;
+        };
+        el.addEventListener('shown.bs.toast', () => {
+            el.classList.add('is-timing');
+            if (! el.matches(':hover') && ! el.contains(document.activeElement)) resume();
+        });
+        el.addEventListener('mouseenter', pause);
+        el.addEventListener('focusin', pause);
+        el.addEventListener('mouseleave', () => { if (! el.contains(document.activeElement)) resume(); });
+        el.addEventListener('focusout', (event) => { if (! el.contains(event.relatedTarget) && ! el.matches(':hover')) resume(); });
+        toast.show();
     });
 
     // Every form that saves something (POST/PUT/DELETE) can only be sent once: a second press is

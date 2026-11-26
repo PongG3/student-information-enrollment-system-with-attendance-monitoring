@@ -72,6 +72,12 @@ a.is-busy:not(.btn)::before { margin-right: 0.45em; }   // buttons space it with
 }
 .card-sies .card-header-sies h2 { color: $navy; }
 .card-body-sies { padding: 1.25rem; }
+// A flush list at the bottom of a card follows the card's rounded corners instead of painting square corners over them.
+.card-sies > .list-group-flush:last-child {
+    overflow: hidden;
+    border-bottom-left-radius: calc(#{$radius-lg} - 1px);
+    border-bottom-right-radius: calc(#{$radius-lg} - 1px);
+}
 
 // ---- Tables ----
 .table-sies { margin-bottom: 0; --bs-table-bg: transparent; }
